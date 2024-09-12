@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "rag-api"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = { extras = ["standard"], version = "^0.114.1" }
+crawlee = { extras = ["beautifulsoup", "playwright"], version = "^0.3.5" }
+html2text = "^2024.2.26"
+langchain = "^0.2.16"
+langchain-chroma = "^0.1.3"
+langchain-openai = "^0.1.23"
+celery = {extras = ["redis"], version = "^5.4.0"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
