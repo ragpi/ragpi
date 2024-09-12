@@ -38,6 +38,7 @@ class SearchInput(BaseModel):
 class CollectionTask(BaseModel):
     task_id: str
     status: str
+    error: str | None = None
     # collection: CollectionResponse | None = None
 
 

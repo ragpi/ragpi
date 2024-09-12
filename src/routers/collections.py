@@ -17,7 +17,7 @@ router = APIRouter(
 @router.get("/status")
 def status(task_id: str) -> CollectionTask:
     task = celery_app.AsyncResult(task_id)  # type: ignore
-    return CollectionTask(task_id=task.task_id, status=task.status)  # type: ignore
+    return CollectionTask(task_id=task.task_id, status=task.status, error=str(task.result) if task.failed() else None)  # type: ignore
 
 
 @router.get("/")
