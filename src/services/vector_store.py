@@ -37,7 +37,7 @@ class VectorStoreService:
             num_pages=num_pages,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
-        ).model_dump()
+        ).model_dump(exclude_none=True)
 
         vector_collection = self.client.create_collection(
             name,
