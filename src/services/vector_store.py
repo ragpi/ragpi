@@ -2,7 +2,6 @@ import chromadb
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
-from langchain_core.vectorstores import VectorStoreRetriever
 
 from src.schemas.collections import CollectionResponse
 
@@ -101,10 +100,6 @@ class VectorStoreService:
             for collection in collections
         ]
 
-    def get_collection_retriever(self, collection_name: str) -> VectorStoreRetriever:
-        vector_store = self._get_vector_store(collection_name)
-        return vector_store.as_retriever(search_type="mmr", search_kwargs={"k": 6})
-
     def delete_collection(self, collection_name: str):
         self.client.delete_collection(collection_name)
 
@@ -116,3 +111,7 @@ class VectorStoreService:
         collection.delete(ids=doc_ids)
 
         return True
+
+    def search_collection(self, collection_name: str, query: str):
+        vector_store = self._get_vector_store(collection_name)
+        return vector_store.search(query, search_type="mmr", k=5)

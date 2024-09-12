@@ -88,10 +88,10 @@ def get_collection_documents(collection_name: str):
         return HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{collection_name}/query")
+@router.get("/{collection_name}/search")
 def query_collection(collection_name: str, query_input: QueryInput):
     try:
-        results = collection_service.query_collection(
+        results = collection_service.search_collection(
             collection_name, query_input.query
         )
 

@@ -51,11 +51,9 @@ async def create_collection(collection_input: CollectionCreate):
     )
 
 
-def query_collection(collection_name: str, query: str):
+def search_collection(collection_name: str, query: str):
     vector_store_service = VectorStoreService()
-    retriever = vector_store_service.get_collection_retriever(collection_name)
-    results = retriever.invoke(query)
-    return results
+    return vector_store_service.search_collection(collection_name, query)
 
 
 def get_collection(collection_name: str):
