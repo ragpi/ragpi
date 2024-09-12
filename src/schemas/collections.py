@@ -30,7 +30,7 @@ class CollectionResponse(Collection):
     num_documents: int
 
 
-class QueryInput(BaseModel):
+class SearchInput(BaseModel):
     query: str
     # TODO: Fields to add: search_type, search_kwargs, etc.
 
@@ -39,3 +39,11 @@ class CollectionTask(BaseModel):
     task_id: str
     status: str
     # collection: CollectionResponse | None = None
+
+
+class CollectionMetadata(BaseModel):
+    source: str
+    start_url: str
+    num_pages: int
+    include_pattern: str | None
+    exclude_pattern: str | None

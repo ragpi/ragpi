@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 
 from src.celery import celery_app
-from src.schemas.collections import CollectionTask, CollectionCreate, QueryInput
+from src.schemas.collections import CollectionTask, CollectionCreate, SearchInput
 from src.services import collections as collection_service
 
 router = APIRouter(
@@ -14,7 +14,6 @@ router = APIRouter(
 )
 
 
-# TODO: Have separate tasks router?
 @router.get("/status")
 def status(task_id: str) -> CollectionTask:
     task = celery_app.AsyncResult(task_id)  # type: ignore
@@ -89,7 +88,7 @@ def get_collection_documents(collection_name: str):
 
 
 @router.get("/{collection_name}/search")
-def query_collection(collection_name: str, query_input: QueryInput):
+def query_collection(collection_name: str, query_input: SearchInput):
     try:
         results = collection_service.search_collection(
             collection_name, query_input.query

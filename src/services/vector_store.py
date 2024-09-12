@@ -3,7 +3,7 @@ from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 
-from src.schemas.collections import CollectionResponse
+from src.schemas.collections import CollectionResponse, CollectionMetadata
 
 
 # This service will be more useful when dealing with multiple vector stores
@@ -31,18 +31,13 @@ class VectorStoreService:
         exclude_pattern: str | None,
     ):
 
-        # TODO: Create CollectionMetadata schema
-        metadata = {  # type: ignore
-            key: value
-            for key, value in {  # type: ignore
-                "source": source,
-                "start_url": start_url,
-                "num_pages": num_pages,
-                "include_pattern": include_pattern,
-                "exclude_pattern": exclude_pattern,
-            }.items()
-            if value is not None and value != ""
-        }
+        metadata = CollectionMetadata(
+            source=source,
+            start_url=start_url,
+            num_pages=num_pages,
+            include_pattern=include_pattern,
+            exclude_pattern=exclude_pattern,
+        ).model_dump()
 
         vector_collection = self.client.create_collection(
             name,
