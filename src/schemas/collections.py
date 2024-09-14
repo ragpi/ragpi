@@ -22,6 +22,11 @@ class Collection(BaseModel):
 
 class CollectionCreate(Collection):
     max_pages: int | None = 3
+    proxy_urls: list[str] | None = None
+
+
+class CollectionUpdate(BaseModel):
+    proxy_urls: list[str] | None = None
 
 
 class CollectionResponse(Collection):

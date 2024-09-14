@@ -2,7 +2,12 @@ from fastapi import APIRouter, HTTPException
 
 
 from src.celery import celery_app
-from src.schemas.collections import CollectionTask, CollectionCreate, SearchInput
+from src.schemas.collections import (
+    CollectionTask,
+    CollectionCreate,
+    CollectionUpdate,
+    SearchInput,
+)
 from src.services import collections as collection_service
 
 router = APIRouter(
@@ -72,9 +77,11 @@ def delete_collection(collection_name: str):
 
 
 @router.put("/{collection_name}")
-async def update_collection(collection_name: str):
+async def update_collection(
+    collection_name: str, collection_input: CollectionUpdate | None = None
+):
     try:
-        await collection_service.update_collection(collection_name)
+        await collection_service.update_collection(collection_name, collection_input)
 
         return {"message": f"Collection '{collection_name}' updated"}
 

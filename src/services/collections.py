@@ -3,7 +3,11 @@ from typing import Any
 from celery import current_task
 
 from src.celery import celery_app
-from src.schemas.collections import CollectionCreate, CollectionResponse
+from src.schemas.collections import (
+    CollectionCreate,
+    CollectionResponse,
+    CollectionUpdate,
+)
 from src.services.vector_store import VectorStoreService
 from src.utils.web_scraper import extract_docs_from_website
 
@@ -18,6 +22,7 @@ async def create_collection(collection_input: CollectionCreate):
         max_pages=collection_input.max_pages,
         include_pattern=collection_input.include_pattern,
         exclude_pattern=collection_input.exclude_pattern,
+        proxy_urls=collection_input.proxy_urls,
     )
 
     print(f"Successfully extracted {len(docs)} documents from {num_pages} pages")
@@ -78,8 +83,9 @@ def delete_collection(collection_name: str):
     vector_store_service.delete_collection(collection_name)
 
 
-# update
-async def update_collection(collection_name: str):
+async def update_collection(
+    collection_name: str, collection_input: CollectionUpdate | None = None
+):
     vector_store_service = VectorStoreService()
     existing_collection = vector_store_service.get_collection(collection_name)
 
@@ -88,6 +94,7 @@ async def update_collection(collection_name: str):
         max_pages=existing_collection.num_pages,
         include_pattern=existing_collection.include_pattern,
         exclude_pattern=existing_collection.exclude_pattern,
+        proxy_urls=collection_input.proxy_urls if collection_input else None,
     )
 
     vector_store_service.delete_collection_documents(collection_name)
