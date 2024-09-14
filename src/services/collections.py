@@ -1,4 +1,5 @@
 import asyncio
+from celery import current_task  # type: ignore
 
 from src.celery import celery_app
 from src.schemas.collections import CollectionCreate, CollectionResponse
@@ -108,6 +109,8 @@ async def update_collection(collection_name: str):
 @celery_app.task  # type: ignore
 def create_collection_task(collection_input_dict):  # type: ignore
     collection_input = CollectionCreate(**collection_input_dict)  # type: ignore
+
+    current_task.update_state(state="PROCESSING")  # type: ignore
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
