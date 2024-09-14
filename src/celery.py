@@ -1,7 +1,7 @@
 import os
 import logging
-from celery import Celery, signals  # type: ignore
-
+from typing import Any
+from celery import Celery, signals
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 
@@ -10,6 +10,6 @@ celery_app = Celery(
 )
 
 
-@signals.setup_logging.connect  # type: ignore
-def setup_celery_logging(**kwargs):  # type: ignore
+@signals.setup_logging.connect
+def setup_celery_logging(**kwargs: Any) -> None:
     logging.basicConfig(level=logging.INFO)

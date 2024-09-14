@@ -591,6 +591,20 @@ zookeeper = ["kazoo (>=1.3.1)"]
 zstd = ["zstandard (==0.22.0)"]
 
 [[package]]
+name = "celery-types"
+version = "0.22.0"
+description = "Type stubs for Celery and its related packages"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "celery_types-0.22.0-py3-none-any.whl", hash = "sha256:79a66637d1d6af5992d1dc80259d9538869941325e966006f1e795220519b9ac"},
+    {file = "celery_types-0.22.0.tar.gz", hash = "sha256:0ecad2fa5a6eded0a1f919e5e1e381cc2ff0635fe4b21db53b4661b6876d5b30"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.9.0,<5.0.0"
+
+[[package]]
 name = "certifi"
 version = "2024.8.30"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -4649,4 +4663,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1d0ba9850d3cc48c778422d979b6e7919815d628307bd4445391cb892ced4460"
+content-hash = "d5dd0703417dc5f89e269b846d69b435d61214744dbcb7076d618f2094454045"

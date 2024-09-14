@@ -16,8 +16,12 @@ router = APIRouter(
 
 @router.get("/status")
 def status(task_id: str) -> CollectionTask:
-    task = celery_app.AsyncResult(task_id)  # type: ignore
-    return CollectionTask(task_id=task.task_id, status=task.status, error=str(task.result) if task.failed() else None)  # type: ignore
+    task = celery_app.AsyncResult(task_id)
+    return CollectionTask(
+        task_id=task.task_id,
+        status=task.status,
+        error=str(task.result) if task.failed() else None,
+    )
 
 
 @router.get("/")
@@ -35,7 +39,9 @@ def create_collection(collection_input: CollectionCreate):
 
     try:
         # TODO: Try apply_async instead of delay?
-        task = collection_service.create_collection_task.delay(collection_input.model_dump())  # type: ignore
+        task = collection_service.create_collection_task.delay(
+            collection_input.model_dump()
+        )
 
         return CollectionTask(task_id=task.task_id, status=task.status)
 

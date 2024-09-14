@@ -41,7 +41,7 @@ class VectorStoreService:
 
         vector_collection = self.client.create_collection(
             name,
-            metadata=metadata,  # type: ignore
+            metadata=metadata,
         )
 
         return vector_collection.id

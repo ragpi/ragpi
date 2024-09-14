@@ -17,6 +17,9 @@ langchain-openai = "^0.1.23"
 celery = {extras = ["redis"], version = "^5.4.0"}
 
 
+[tool.poetry.group.dev.dependencies]
+celery-types = "^0.22.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
