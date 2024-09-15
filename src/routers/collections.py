@@ -103,7 +103,7 @@ def get_collection_documents(collection_name: str):
 
 
 @router.get("/{collection_name}/search")
-def query_collection(collection_name: str, query_input: SearchInput):
+def search_collection(collection_name: str, query_input: SearchInput):
     try:
         results = collection_service.search_collection(
             collection_name, query_input.query
