@@ -103,7 +103,8 @@ class VectorStoreService:
 
         doc_ids = collection.get(include=[])["ids"]
 
-        collection.delete(ids=doc_ids)
+        if len(doc_ids) > 0:
+            collection.delete(ids=doc_ids)
 
         return True
 

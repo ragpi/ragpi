@@ -27,7 +27,7 @@ class EnqueueKwargs(TypedDict):
     exclude: NotRequired[list[Pattern[str] | Glob]]
 
 
-def process_url(context: BeautifulSoupCrawlingContext) -> PageData:
+def process_page(context: BeautifulSoupCrawlingContext) -> PageData:
     id = context.request.id
     url = context.request.url
     title = (
@@ -67,7 +67,7 @@ async def scrape_website(
 
     @crawler.router.default_handler
     async def request_handler(context: BeautifulSoupCrawlingContext) -> None:  # type: ignore
-        page_data = process_url(context)
+        page_data = process_page(context)
         pages.append(page_data)
 
         enqueue_options: EnqueueKwargs = {}
@@ -82,6 +82,9 @@ async def scrape_website(
     await crawler.run([start_url])
 
     await request_queue.drop()
+
+    if len(pages) == 0:
+        raise Exception("Failed to scrape any pages")
 
     if max_pages and len(pages) > max_pages:
         pages = pages[:max_pages]
