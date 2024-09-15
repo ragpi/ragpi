@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 
 
 from src.celery import celery_app
@@ -20,7 +20,7 @@ router = APIRouter(
 
 
 @router.get("/status")
-def status(task_id: str) -> CollectionTask:
+def task_status(task_id: str) -> CollectionTask:
     task = celery_app.AsyncResult(task_id)
     return CollectionTask(
         task_id=task.task_id,
@@ -39,7 +39,7 @@ def get_all_collections():
         return HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_202_ACCEPTED)
 def create_collection(collection_input: CollectionCreate):
 
     try:
@@ -76,14 +76,16 @@ def delete_collection(collection_name: str):
         return HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{collection_name}")
+@router.put("/{collection_name}", status_code=status.HTTP_202_ACCEPTED)
 async def update_collection(
     collection_name: str, collection_input: CollectionUpdate | None = None
 ):
     try:
-        await collection_service.update_collection(collection_name, collection_input)
+        task = collection_service.update_collection_task.delay(
+            collection_name, collection_input.model_dump() if collection_input else None
+        )
 
-        return {"message": f"Collection '{collection_name}' updated"}
+        return CollectionTask(task_id=task.task_id, status=task.status)
 
     except Exception as e:
         return HTTPException(status_code=500, detail=str(e))

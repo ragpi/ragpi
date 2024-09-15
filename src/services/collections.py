@@ -127,5 +127,26 @@ def create_collection_task(collection_input_dict: dict[str, Any]):
     finally:
         loop.close()
 
-    # Return the result
+    return result.model_dump()
+
+
+@celery_app.task
+def update_collection_task(
+    collection_name: str, collection_input_dict: dict[str, Any] | None = None
+):
+    collection_input = (
+        CollectionUpdate(**collection_input_dict) if collection_input_dict else None
+    )
+
+    current_task.update_state(state="PROCESSING")
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        result = loop.run_until_complete(
+            update_collection(collection_name, collection_input)
+        )
+    finally:
+        loop.close()
+
     return result.model_dump()
