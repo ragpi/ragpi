@@ -1,6 +1,5 @@
 import uuid
 from typing import TypedDict, NotRequired, Pattern
-from langchain_core.documents import Document
 from crawlee.beautifulsoup_crawler import (
     BeautifulSoupCrawler,
     BeautifulSoupCrawlingContext,
@@ -11,6 +10,7 @@ from crawlee._utils.globs import Glob
 from crawlee.storages import RequestQueue
 import html2text
 
+from src.schemas.collections import CollectionDocument
 from src.schemas.page_data import PageData
 from src.utils.text_splitter import split_markdown_content
 
@@ -98,7 +98,7 @@ async def extract_docs_from_website(
     include_pattern: str | None,
     exclude_pattern: str | None,
     proxy_urls: list[str] | None,
-) -> tuple[list[Document], int]:
+) -> tuple[list[CollectionDocument], int]:
     pages = await scrape_website(
         start_url=start_url,
         max_pages=max_pages,
@@ -107,7 +107,7 @@ async def extract_docs_from_website(
         proxy_urls=proxy_urls,
     )
 
-    docs: list[Document] = []
+    docs: list[CollectionDocument] = []
     for page in pages:
         chunks = split_markdown_content(page)
         docs.extend(chunks)

@@ -40,7 +40,7 @@ async def create_collection(collection_input: CollectionCreate):
 
     print(f"Adding {len(docs)} documents to collection {collection_input.name}")
 
-    doc_ids = await vector_store_service.add_documents(collection_input.name, docs)
+    doc_ids = vector_store_service.add_documents(collection_input.name, docs)
 
     print(
         f"Successfully added {len(doc_ids)} documents to collection {collection_input.name}"
@@ -99,7 +99,7 @@ async def update_collection(
 
     vector_store_service.delete_collection_documents(collection_name)
 
-    doc_ids = await vector_store_service.add_documents(collection_name, docs)
+    doc_ids = vector_store_service.add_documents(collection_name, docs)
 
     return CollectionResponse(
         id=existing_collection.id,

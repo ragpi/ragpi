@@ -1,26 +1,20 @@
 import chromadb
-from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain_core.documents import Document
+from chromadb.types import Metadata
+from openai import OpenAI
 
-from src.schemas.collections import CollectionResponse, CollectionMetadata
+from src.schemas.collections import (
+    CollectionDocument,
+    CollectionResponse,
+    CollectionMetadata,
+)
 
 
-# This service will be more useful when dealing with multiple vector stores
 class VectorStoreService:
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chroma_db")
-        self.embedding_function = OpenAIEmbeddings(model="text-embedding-3-large")
+        self.embedding_function = OpenAI().embeddings
 
-    def _get_collection_store(self, collection_name: str) -> Chroma:
-        return Chroma(
-            client=self.client,
-            collection_name=collection_name,
-            embedding_function=self.embedding_function,
-            persist_directory="./chroma_db",
-            create_collection_if_not_exists=False,
-        )
-
+    # TODO: Refactor to add embedding function to create collection
     def create_collection(
         self,
         name: str,
@@ -46,18 +40,59 @@ class VectorStoreService:
 
         return vector_collection.id
 
-    async def add_documents(self, collection_name: str, documents: list[Document]):
-        BATCH_SIZE = 10000  # Change depending on vector store
+    # async def add_documents(self, collection_name: str, documents: list[Document]):
+    #     BATCH_SIZE = 10000  # Change depending on vector store
 
-        collection_store = self._get_collection_store(collection_name)
+    #     collection_store = self._get_collection_store(collection_name)
+
+    #     doc_ids: list[str] = []
+
+    #     for i in range(0, len(documents), BATCH_SIZE):
+    #         batch = documents[i : i + BATCH_SIZE]
+    #         batch_doc_ids = await collection_store.aadd_documents(batch)
+    #         doc_ids.extend(batch_doc_ids)
+    #         print(f"Added {len(batch)} documents to collection {collection_name}")
+
+    #     return doc_ids
+
+    def add_documents(self, collection_name: str, documents: list[CollectionDocument]):
+        # TODO: Add batches
+        # BATCH_SIZE = 10000
+
+        vector_collection = self.client.get_collection(collection_name)
 
         doc_ids: list[str] = []
+        doc_contents: list[str] = []
+        doc_metadatas: list[Metadata] = []
+        doc_embeddings: list[list[float]] = []
 
-        for i in range(0, len(documents), BATCH_SIZE):
-            batch = documents[i : i + BATCH_SIZE]
-            batch_doc_ids = await collection_store.aadd_documents(batch)
-            doc_ids.extend(batch_doc_ids)
-            print(f"Added {len(batch)} documents to collection {collection_name}")
+        for doc in documents:
+            metadata = {
+                "source": doc.source,
+                "title": doc.title,
+                # TODO: Add these only if exist
+                "header_1": doc.header_1 or "",
+                "header_2": doc.header_2 or "",
+                "header_3": doc.header_3 or "",
+            }
+            doc_ids.append(str(doc.id))
+            doc_metadatas.append(metadata)
+            doc_contents.append(doc.content)
+            doc_embeddings.append(
+                self.embedding_function.create(
+                    input=doc.content, model="text-embedding-3-large"
+                )
+                .data[0]
+                .embedding
+            )
+
+        # Why does it take longer here than in langchain? Was there caching? Look at underlying code. Was is only the async?
+        vector_collection.add(  # type: ignore
+            ids=doc_ids,
+            documents=doc_contents,
+            metadatas=doc_metadatas,
+            embeddings=doc_embeddings,  # type: ignore
+        )
 
         return doc_ids
 
@@ -75,8 +110,8 @@ class VectorStoreService:
         )
 
     def get_collection_documents(self, collection_name: str):
-        collection_store = self._get_collection_store(collection_name)
-        return collection_store.get(include=["metadatas", "documents"])
+        vector_collection = self.client.get_collection(collection_name)
+        return vector_collection.get(include=["metadatas", "documents"])
 
     def get_all_collections(self) -> list[CollectionResponse]:
         collections = self.client.list_collections()
@@ -109,5 +144,15 @@ class VectorStoreService:
         return True
 
     def search_collection(self, collection_name: str, query: str):
-        collection_store = self._get_collection_store(collection_name)
-        return collection_store.search(query, search_type="mmr", k=5)
+        vector_collection = self.client.get_collection(collection_name)
+        query_embedding = (
+            self.embedding_function.create(input=query, model="text-embedding-3-large")
+            .data[0]
+            .embedding
+        )
+
+        return vector_collection.query(  # type: ignore
+            query_embeddings=[query_embedding],
+            include=["metadatas", "documents"],
+            n_results=3,
+        )
