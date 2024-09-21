@@ -43,7 +43,6 @@ def get_all_collections():
 def create_collection(collection_input: CollectionCreate):
 
     try:
-        # TODO: Try apply_async instead of delay?
         task = collection_service.create_collection_task.delay(
             collection_input.model_dump()
         )
