@@ -12,9 +12,9 @@ from src.schemas.collections import (
 class VectorStoreService:
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chroma_db")
-        self.embedding_function = OpenAI().embeddings
+        self.embeddings_function = OpenAI().embeddings
+        self.embeddings_model = "text-embedding-ada-002"
 
-    # TODO: Refactor to add embedding function to create collection
     def create_collection(
         self,
         name: str,
@@ -53,17 +53,21 @@ class VectorStoreService:
             metadata = {
                 "source": doc.source,
                 "title": doc.title,
-                # TODO: Add these only if exist
-                "header_1": doc.header_1 or "",
-                "header_2": doc.header_2 or "",
-                "header_3": doc.header_3 or "",
             }
+
+            if doc.header_1:
+                metadata["header_1"] = doc.header_1
+            if doc.header_2:
+                metadata["header_2"] = doc.header_2
+            if doc.header_3:
+                metadata["header_3"] = doc.header_3
+
             doc_ids.append(str(doc.id))
             doc_metadatas.append(metadata)
             doc_contents.append(doc.content)
 
-        embeddings_data = self.embedding_function.create(
-            input=doc_contents, model="text-embedding-ada-002"
+        embeddings_data = self.embeddings_function.create(
+            input=doc_contents, model=self.embeddings_model
         ).data
 
         doc_embeddings: list[Vector] = [data.embedding for data in embeddings_data]
@@ -135,7 +139,7 @@ class VectorStoreService:
     def search_collection(self, collection_name: str, query: str):
         vector_collection = self.client.get_collection(collection_name)
         query_embedding = (
-            self.embedding_function.create(input=query, model="text-embedding-ada-002")
+            self.embeddings_function.create(input=query, model=self.embeddings_model)
             .data[0]
             .embedding
         )
