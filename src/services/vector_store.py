@@ -62,11 +62,11 @@ class VectorStoreService:
             doc_metadatas.append(metadata)
             doc_contents.append(doc.content)
 
-        embeddings = self.embedding_function.create(
+        embeddings_data = self.embedding_function.create(
             input=doc_contents, model="text-embedding-ada-002"
         ).data
 
-        doc_embeddings: list[Vector] = [embedding.embedding for embedding in embeddings]
+        doc_embeddings: list[Vector] = [data.embedding for data in embeddings_data]
 
         for i in range(0, len(doc_ids), BATCH_SIZE):
             batch_ids = doc_ids[i : i + BATCH_SIZE]
