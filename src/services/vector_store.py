@@ -1,5 +1,5 @@
 import chromadb
-from chromadb.types import Metadata
+from chromadb.types import Metadata, Vector
 from openai import OpenAI
 
 from src.schemas.collections import (
@@ -40,31 +40,14 @@ class VectorStoreService:
 
         return vector_collection.id
 
-    # async def add_documents(self, collection_name: str, documents: list[Document]):
-    #     BATCH_SIZE = 10000  # Change depending on vector store
-
-    #     collection_store = self._get_collection_store(collection_name)
-
-    #     doc_ids: list[str] = []
-
-    #     for i in range(0, len(documents), BATCH_SIZE):
-    #         batch = documents[i : i + BATCH_SIZE]
-    #         batch_doc_ids = await collection_store.aadd_documents(batch)
-    #         doc_ids.extend(batch_doc_ids)
-    #         print(f"Added {len(batch)} documents to collection {collection_name}")
-
-    #     return doc_ids
-
     def add_documents(self, collection_name: str, documents: list[CollectionDocument]):
-        # TODO: Add batches
-        # BATCH_SIZE = 10000
+        BATCH_SIZE = 10000
 
         vector_collection = self.client.get_collection(collection_name)
 
         doc_ids: list[str] = []
         doc_contents: list[str] = []
         doc_metadatas: list[Metadata] = []
-        doc_embeddings: list[list[float]] = []
 
         for doc in documents:
             metadata = {
@@ -78,21 +61,27 @@ class VectorStoreService:
             doc_ids.append(str(doc.id))
             doc_metadatas.append(metadata)
             doc_contents.append(doc.content)
-            doc_embeddings.append(
-                self.embedding_function.create(
-                    input=doc.content, model="text-embedding-3-large"
-                )
-                .data[0]
-                .embedding
-            )
 
-        # Why does it take longer here than in langchain? Was there caching? Look at underlying code. Was is only the async?
-        vector_collection.add(  # type: ignore
-            ids=doc_ids,
-            documents=doc_contents,
-            metadatas=doc_metadatas,
-            embeddings=doc_embeddings,  # type: ignore
-        )
+        embeddings = self.embedding_function.create(
+            input=doc_contents, model="text-embedding-ada-002"
+        ).data
+
+        doc_embeddings: list[Vector] = [embedding.embedding for embedding in embeddings]
+
+        for i in range(0, len(doc_ids), BATCH_SIZE):
+            batch_ids = doc_ids[i : i + BATCH_SIZE]
+            batch_contents = doc_contents[i : i + BATCH_SIZE]
+            batch_metadatas = doc_metadatas[i : i + BATCH_SIZE]
+            batch_embeddings = doc_embeddings[i : i + BATCH_SIZE]
+
+            print(f"Adding {len(batch_ids)} documents to collection {collection_name}")
+
+            vector_collection.add(  # type: ignore
+                ids=batch_ids,
+                documents=batch_contents,
+                metadatas=batch_metadatas,
+                embeddings=batch_embeddings,
+            )
 
         return doc_ids
 
@@ -146,7 +135,7 @@ class VectorStoreService:
     def search_collection(self, collection_name: str, query: str):
         vector_collection = self.client.get_collection(collection_name)
         query_embedding = (
-            self.embedding_function.create(input=query, model="text-embedding-3-large")
+            self.embedding_function.create(input=query, model="text-embedding-ada-002")
             .data[0]
             .embedding
         )
