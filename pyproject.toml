@@ -11,10 +11,11 @@ python = "^3.11"
 fastapi = { extras = ["standard"], version = "^0.114.1" }
 crawlee = { extras = ["beautifulsoup", "playwright"], version = "^0.3.5" }
 html2text = "^2024.2.26"
-langchain = "^0.2.16"
 celery = {extras = ["redis"], version = "^5.4.0"}
 openai = "^1.45.1"
 chromadb = "^0.5.7"
+langchain = "^0.3.0"
+langchain-openai = "^0.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -1,6 +1,6 @@
 import chromadb
-from chromadb.api.types import IncludeEnum, Metadata, Embedding
-from openai import OpenAI
+from chromadb.api.types import IncludeEnum, Metadata
+from langchain_openai import OpenAIEmbeddings
 
 from src.schemas.collections import (
     CollectionDocument,
@@ -12,8 +12,7 @@ from src.schemas.collections import (
 class VectorStoreService:
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chroma_db")
-        self.embeddings_function = OpenAI().embeddings
-        self.embeddings_model = "text-embedding-ada-002"
+        self.embeddings_function = OpenAIEmbeddings(model="text-embedding-3-small")
 
     def create_collection(
         self,
@@ -66,11 +65,7 @@ class VectorStoreService:
             doc_metadatas.append(metadata)
             doc_contents.append(doc.content)
 
-        embeddings_data = self.embeddings_function.create(
-            input=doc_contents, model=self.embeddings_model
-        ).data
-
-        doc_embeddings: list[Embedding] = [data.embedding for data in embeddings_data]
+        doc_embeddings = self.embeddings_function.embed_documents(doc_contents)
 
         for i in range(0, len(doc_ids), BATCH_SIZE):
             batch_ids = doc_ids[i : i + BATCH_SIZE]
@@ -84,7 +79,7 @@ class VectorStoreService:
                 ids=batch_ids,
                 documents=batch_contents,
                 metadatas=batch_metadatas,
-                embeddings=batch_embeddings,
+                embeddings=batch_embeddings,  # type: ignore
             )
 
         return doc_ids
@@ -140,11 +135,8 @@ class VectorStoreService:
 
     def search_collection(self, collection_name: str, query: str):
         vector_collection = self.client.get_collection(collection_name)
-        query_embedding = (
-            self.embeddings_function.create(input=query, model=self.embeddings_model)
-            .data[0]
-            .embedding
-        )
+
+        query_embedding = self.embeddings_function.embed_query(query)
 
         return vector_collection.query(  # type: ignore
             query_embeddings=[query_embedding],
