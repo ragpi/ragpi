@@ -1,5 +1,5 @@
 import chromadb
-from chromadb.types import Metadata, Vector
+from chromadb.api.types import IncludeEnum, Metadata, Embedding
 from openai import OpenAI
 
 from src.schemas.collections import (
@@ -70,7 +70,7 @@ class VectorStoreService:
             input=doc_contents, model=self.embeddings_model
         ).data
 
-        doc_embeddings: list[Vector] = [data.embedding for data in embeddings_data]
+        doc_embeddings: list[Embedding] = [data.embedding for data in embeddings_data]
 
         for i in range(0, len(doc_ids), BATCH_SIZE):
             batch_ids = doc_ids[i : i + BATCH_SIZE]
@@ -104,7 +104,9 @@ class VectorStoreService:
 
     def get_collection_documents(self, collection_name: str):
         vector_collection = self.client.get_collection(collection_name)
-        return vector_collection.get(include=["metadatas", "documents"])
+        return vector_collection.get(
+            include=[IncludeEnum.metadatas, IncludeEnum.documents]
+        )
 
     def get_all_collections(self) -> list[CollectionResponse]:
         collections = self.client.list_collections()
@@ -146,6 +148,6 @@ class VectorStoreService:
 
         return vector_collection.query(  # type: ignore
             query_embeddings=[query_embedding],
-            include=["metadatas", "documents"],
+            include=[IncludeEnum.metadatas, IncludeEnum.documents],
             n_results=3,
         )
