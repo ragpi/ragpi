@@ -1,17 +1,18 @@
-from langchain_core.documents import Document
+import uuid
 from langchain_text_splitters import (
     MarkdownHeaderTextSplitter,
     RecursiveCharacterTextSplitter,
 )
 
+from src.schemas.collections import CollectionDocument
 from src.schemas.page_data import PageData
 
 
-def split_markdown_content(page_data: PageData) -> list[Document]:
+def split_markdown_content(page_data: PageData) -> list[CollectionDocument]:
     headers_to_split_on = [
-        ("#", "Header 1"),
-        ("##", "Header 2"),
-        ("###", "Header 3"),
+        ("#", "header_1"),
+        ("##", "header_2"),
+        ("###", "header_3"),
     ]
 
     markdown_splitter = MarkdownHeaderTextSplitter(
@@ -26,9 +27,26 @@ def split_markdown_content(page_data: PageData) -> list[Document]:
 
     splits = text_splitter.split_documents(md_header_splits)
 
-    # TODO: Create custom Document class that can handle metadata?
-    for split in splits:
-        split.metadata["source"] = page_data.url  # type: ignore
-        split.metadata["title"] = page_data.title  # type: ignore
+    docs: list[CollectionDocument] = []
 
-    return splits
+    # TODO: Update typings for split.metadata
+    for split in splits:
+        docs.append(
+            CollectionDocument(
+                id=uuid.uuid4(),
+                content=split.page_content,
+                source=page_data.url,
+                title=page_data.title,
+                header_1=(
+                    split.metadata["header_1"] if "header_1" in split.metadata else None  # type: ignore
+                ),
+                header_2=(
+                    split.metadata["header_2"] if "header_2" in split.metadata else None  # type: ignore
+                ),
+                header_3=(
+                    split.metadata["header_3"] if "header_3" in split.metadata else None  # type: ignore
+                ),
+            )
+        )
+
+    return docs

@@ -1,25 +1,18 @@
 import chromadb
-from langchain_chroma import Chroma
+from chromadb.api.types import IncludeEnum, Metadata
 from langchain_openai import OpenAIEmbeddings
-from langchain_core.documents import Document
 
-from src.schemas.collections import CollectionResponse, CollectionMetadata
+from src.schemas.collections import (
+    CollectionDocument,
+    CollectionResponse,
+    CollectionMetadata,
+)
 
 
-# This service will be more useful when dealing with multiple vector stores
 class VectorStoreService:
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chroma_db")
-        self.embedding_function = OpenAIEmbeddings(model="text-embedding-3-large")
-
-    def _get_collection_store(self, collection_name: str) -> Chroma:
-        return Chroma(
-            client=self.client,
-            collection_name=collection_name,
-            embedding_function=self.embedding_function,
-            persist_directory="./chroma_db",
-            create_collection_if_not_exists=False,
-        )
+        self.embeddings_function = OpenAIEmbeddings(model="text-embedding-3-small")
 
     def create_collection(
         self,
@@ -46,18 +39,48 @@ class VectorStoreService:
 
         return vector_collection.id
 
-    async def add_documents(self, collection_name: str, documents: list[Document]):
-        BATCH_SIZE = 10000  # Change depending on vector store
+    def add_documents(self, collection_name: str, documents: list[CollectionDocument]):
+        BATCH_SIZE = 10000
 
-        collection_store = self._get_collection_store(collection_name)
+        vector_collection = self.client.get_collection(collection_name)
 
         doc_ids: list[str] = []
+        doc_contents: list[str] = []
+        doc_metadatas: list[Metadata] = []
 
-        for i in range(0, len(documents), BATCH_SIZE):
-            batch = documents[i : i + BATCH_SIZE]
-            batch_doc_ids = await collection_store.aadd_documents(batch)
-            doc_ids.extend(batch_doc_ids)
-            print(f"Added {len(batch)} documents to collection {collection_name}")
+        for doc in documents:
+            metadata = {
+                "source": doc.source,
+                "title": doc.title,
+            }
+
+            if doc.header_1:
+                metadata["header_1"] = doc.header_1
+            if doc.header_2:
+                metadata["header_2"] = doc.header_2
+            if doc.header_3:
+                metadata["header_3"] = doc.header_3
+
+            doc_ids.append(str(doc.id))
+            doc_metadatas.append(metadata)
+            doc_contents.append(doc.content)
+
+        doc_embeddings = self.embeddings_function.embed_documents(doc_contents)
+
+        for i in range(0, len(doc_ids), BATCH_SIZE):
+            batch_ids = doc_ids[i : i + BATCH_SIZE]
+            batch_contents = doc_contents[i : i + BATCH_SIZE]
+            batch_metadatas = doc_metadatas[i : i + BATCH_SIZE]
+            batch_embeddings = doc_embeddings[i : i + BATCH_SIZE]
+
+            print(f"Adding {len(batch_ids)} documents to collection {collection_name}")
+
+            vector_collection.add(  # type: ignore
+                ids=batch_ids,
+                documents=batch_contents,
+                metadatas=batch_metadatas,
+                embeddings=batch_embeddings,  # type: ignore
+            )
 
         return doc_ids
 
@@ -75,8 +98,10 @@ class VectorStoreService:
         )
 
     def get_collection_documents(self, collection_name: str):
-        collection_store = self._get_collection_store(collection_name)
-        return collection_store.get(include=["metadatas", "documents"])
+        vector_collection = self.client.get_collection(collection_name)
+        return vector_collection.get(
+            include=[IncludeEnum.metadatas, IncludeEnum.documents]
+        )
 
     def get_all_collections(self) -> list[CollectionResponse]:
         collections = self.client.list_collections()
@@ -109,5 +134,12 @@ class VectorStoreService:
         return True
 
     def search_collection(self, collection_name: str, query: str):
-        collection_store = self._get_collection_store(collection_name)
-        return collection_store.search(query, search_type="mmr", k=5)
+        vector_collection = self.client.get_collection(collection_name)
+
+        query_embedding = self.embeddings_function.embed_query(query)
+
+        return vector_collection.query(  # type: ignore
+            query_embeddings=[query_embedding],
+            include=[IncludeEnum.metadatas, IncludeEnum.documents],
+            n_results=3,
+        )

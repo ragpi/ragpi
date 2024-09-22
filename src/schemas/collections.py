@@ -53,3 +53,13 @@ class CollectionMetadata(BaseModel):
     num_pages: int
     include_pattern: str | None
     exclude_pattern: str | None
+
+
+class CollectionDocument(BaseModel):
+    id: UUID
+    content: str
+    source: str
+    title: str
+    header_1: str | None = None
+    header_2: str | None = None
+    header_3: str | None = None
