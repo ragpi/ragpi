@@ -1,4 +1,3 @@
-import uuid
 from langchain_text_splitters import (
     MarkdownHeaderTextSplitter,
     RecursiveCharacterTextSplitter,
@@ -6,6 +5,7 @@ from langchain_text_splitters import (
 
 from src.schemas.collections import CollectionDocument
 from src.schemas.page_data import PageData
+from src.utils.generate_id import generate_stable_id
 
 
 def split_markdown_content(page_data: PageData) -> list[CollectionDocument]:
@@ -33,7 +33,7 @@ def split_markdown_content(page_data: PageData) -> list[CollectionDocument]:
     for split in splits:
         docs.append(
             CollectionDocument(
-                id=uuid.uuid4(),
+                id=generate_stable_id(page_data.url, split.page_content),
                 content=split.page_content,
                 source=page_data.url,
                 title=page_data.title,

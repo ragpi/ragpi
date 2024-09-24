@@ -61,7 +61,7 @@ class VectorStoreService:
             if doc.header_3:
                 metadata["header_3"] = doc.header_3
 
-            doc_ids.append(str(doc.id))
+            doc_ids.append(doc.id)
             doc_metadatas.append(metadata)
             doc_contents.append(doc.content)
 

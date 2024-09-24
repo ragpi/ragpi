@@ -56,7 +56,7 @@ class CollectionMetadata(BaseModel):
 
 
 class CollectionDocument(BaseModel):
-    id: UUID
+    id: str
     content: str
     source: str
     title: str

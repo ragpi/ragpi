@@ -5,11 +5,14 @@ from celery import current_task
 from src.celery import celery_app
 from src.schemas.collections import (
     CollectionCreate,
+    CollectionDocument,
     CollectionResponse,
     CollectionUpdate,
 )
 from src.services.vector_store import VectorStoreService
-from src.utils.web_scraper import extract_docs_from_website
+from src.utils.text_splitter import split_markdown_content
+from src.utils.web_scraper import extract_docs_from_website, scrape_website
+from src.services.document_tracker import DocumentTracker
 
 
 async def create_collection(collection_input: CollectionCreate):
@@ -111,6 +114,51 @@ async def update_collection(
         include_pattern=existing_collection.include_pattern,
         exclude_pattern=existing_collection.exclude_pattern,
     )
+
+
+async def test_collection(collection_name: str):
+    vector_store_service = VectorStoreService()
+    existing_collection = vector_store_service.get_collection(collection_name)
+
+    pages = await scrape_website(
+        start_url=existing_collection.start_url,
+        max_pages=existing_collection.num_pages,
+        include_pattern=existing_collection.include_pattern,
+        exclude_pattern=existing_collection.exclude_pattern,
+        proxy_urls=None,
+    )
+
+    new_docs: list[CollectionDocument] = []
+    for page in pages:
+        chunks = split_markdown_content(page)
+        new_docs.extend(chunks)
+
+    new_doc_ids = [doc.id for doc in new_docs]
+
+    docs_to_add: list[CollectionDocument] = []
+
+    document_tracker = DocumentTracker(
+        namespace=collection_name, redis_url="redis://localhost:6379"
+    )
+
+    for doc in new_docs:
+        if not document_tracker.exists(doc.id):
+            docs_to_add.append(doc)
+            document_tracker.add(doc.id)
+
+    doc_ids_to_add = [doc.id for doc in docs_to_add]
+
+    existing_doc_ids = document_tracker.get_all_ids()
+
+    doc_ids_to_remove = list(set(existing_doc_ids) - set(new_doc_ids))
+
+    for doc_id in doc_ids_to_remove:
+        document_tracker.remove(doc_id)
+
+    return {
+        "doc_ids_to_remove": doc_ids_to_remove,
+        "doc_ids_to_add": doc_ids_to_add,
+    }
 
 
 # Tasks
