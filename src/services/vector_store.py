@@ -39,7 +39,12 @@ class VectorStoreService:
 
         return vector_collection.id
 
-    def add_documents(self, collection_name: str, documents: list[CollectionDocument]):
+    def add_documents(
+        self, collection_name: str, documents: list[CollectionDocument]
+    ) -> list[str]:
+        if len(documents) == 0:
+            return []
+
         BATCH_SIZE = 10000
 
         vector_collection = self.client.get_collection(collection_name)
@@ -132,6 +137,13 @@ class VectorStoreService:
             collection.delete(ids=doc_ids)
 
         return True
+
+    def delete_documents(self, collection_name: str, doc_ids: list[str]):
+        if len(doc_ids) == 0:
+            return
+
+        collection = self.client.get_collection(collection_name)
+        collection.delete(ids=doc_ids)
 
     def search_collection(self, collection_name: str, query: str):
         vector_collection = self.client.get_collection(collection_name)

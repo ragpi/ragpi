@@ -115,13 +115,3 @@ def search_collection(collection_name: str, query_input: SearchInput):
     #     raise HTTPException(status_code=404, detail=f"Collection '{collection_name}' not found")
     except Exception as e:
         return HTTPException(status_code=500, detail=str(e))
-
-
-@router.put("/{collection_name}/test")
-async def test_collection(collection_name: str):
-    try:
-        response = await collection_service.test_collection(collection_name)
-
-        return response
-    except Exception as e:
-        return HTTPException(status_code=500, detail=str(e))
