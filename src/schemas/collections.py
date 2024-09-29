@@ -34,6 +34,8 @@ class CollectionResponse(Collection):
     id: UUID
     num_pages: int
     num_documents: int
+    created_at: str
+    updated_at: str
 
 
 class SearchInput(BaseModel):
@@ -51,9 +53,11 @@ class CollectionTask(BaseModel):
 class CollectionMetadata(BaseModel):
     source: str
     start_url: str
-    num_pages: int
     include_pattern: str | None
     exclude_pattern: str | None
+    num_pages: int
+    created_at: str
+    updated_at: str
 
 
 class CollectionDocument(BaseModel):

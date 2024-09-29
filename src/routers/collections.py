@@ -44,7 +44,7 @@ def get_all_collections():
 
         return collections
     except Exception as e:
-        return HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/", status_code=status.HTTP_202_ACCEPTED)
@@ -58,7 +58,7 @@ def create_collection(collection_input: CollectionCreate):
         return CollectionTask(task_id=task.task_id, status=task.status)
 
     except Exception as e:
-        return HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{collection_name}")
@@ -69,7 +69,7 @@ def get_collection(collection_name: str):
         return results
 
     except Exception as e:
-        return HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{collection_name}")
@@ -80,7 +80,7 @@ def delete_collection(collection_name: str):
         return {"message": f"Collection '{collection_name}' deleted"}
 
     except Exception as e:
-        return HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{collection_name}", status_code=status.HTTP_202_ACCEPTED)
@@ -95,7 +95,7 @@ async def update_collection(
         return CollectionTask(task_id=task.task_id, status=task.status)
 
     except Exception as e:
-        return HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{collection_name}/documents")
@@ -106,7 +106,7 @@ def get_collection_documents(collection_name: str):
         return results
 
     except Exception as e:
-        return HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{collection_name}/search")
@@ -122,4 +122,4 @@ def search_collection(collection_name: str, query_input: SearchInput):
     # except CollectionNotFoundException:
     #     raise HTTPException(status_code=404, detail=f"Collection '{collection_name}' not found")
     except Exception as e:
-        return HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))

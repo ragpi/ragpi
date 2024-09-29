@@ -1,5 +1,6 @@
-from datetime import datetime, timezone
 import redis
+
+from src.utils.current_datetime import current_datetime
 
 
 class DocumentTracker:
@@ -8,7 +9,7 @@ class DocumentTracker:
         self.redis_client = redis.Redis.from_url(redis_url)
 
     def add_document(self, ids: list[str]) -> None:
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = current_datetime()
 
         for id in ids:
             self.redis_client.hset(self.namespace, id, timestamp)

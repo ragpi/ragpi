@@ -47,6 +47,7 @@ class VectorStoreService:
         num_pages: int,
         include_pattern: str | None,
         exclude_pattern: str | None,
+        timestamp: str,
     ):
 
         metadata = CollectionMetadata(
@@ -55,6 +56,8 @@ class VectorStoreService:
             num_pages=num_pages,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
+            created_at=timestamp,
+            updated_at=timestamp,
         ).model_dump(exclude_none=True)
 
         vector_collection = self.client.create_collection(
@@ -65,7 +68,7 @@ class VectorStoreService:
         return vector_collection.id
 
     def add_documents(
-        self, collection_name: str, documents: list[CollectionDocument]
+        self, collection_name: str, documents: list[CollectionDocument], timestamp: str
     ) -> list[str]:
         if len(documents) == 0:
             return []
@@ -79,6 +82,8 @@ class VectorStoreService:
         doc_metadatas: list[Metadata] = []
 
         for doc in documents:
+            doc.metadata["created_at"] = timestamp
+
             doc_ids.append(doc.id)
             doc_metadatas.append(doc.metadata)
             doc_contents.append(doc.content)
@@ -103,17 +108,29 @@ class VectorStoreService:
         return doc_ids
 
     def get_collection(self, collection_name: str):
-        vector_collection = self.client.get_collection(collection_name)
-        return CollectionResponse(
-            id=vector_collection.id,
-            name=vector_collection.name,
-            start_url=vector_collection.metadata["start_url"],
-            source=vector_collection.metadata["source"],
-            include_pattern=vector_collection.metadata.get("include_pattern"),
-            exclude_pattern=vector_collection.metadata.get("exclude_pattern"),
-            num_pages=vector_collection.metadata["num_pages"],
-            num_documents=vector_collection.count(),
-        )
+        try:
+            vector_collection = self.client.get_collection(collection_name)
+            return CollectionResponse(
+                id=vector_collection.id,
+                name=vector_collection.name,
+                start_url=vector_collection.metadata["start_url"],
+                source=vector_collection.metadata["source"],
+                include_pattern=vector_collection.metadata.get("include_pattern"),
+                exclude_pattern=vector_collection.metadata.get("exclude_pattern"),
+                num_pages=vector_collection.metadata["num_pages"],
+                num_documents=vector_collection.count(),
+                created_at=vector_collection.metadata["created_at"],
+                updated_at=vector_collection.metadata["updated_at"],
+            )
+        # TODO: How best to handle these exceptions? Log error and return generic message?
+        except KeyError as e:
+            raise ValueError(
+                f"Missing required metadata field in collection '{collection_name}': {e}"
+            ) from e
+        except Exception as e:
+            raise ValueError(
+                f"Unexpected error getting collection '{collection_name}': {e}"
+            ) from e
 
     def get_collection_documents(self, collection_name: str):
         vector_collection = self.client.get_collection(collection_name)
@@ -140,6 +157,8 @@ class VectorStoreService:
                 exclude_pattern=collection.metadata.get("exclude_pattern"),
                 num_pages=collection.metadata["num_pages"],
                 num_documents=collection.count(),
+                created_at=collection.metadata["created_at"],
+                updated_at=collection.metadata["updated_at"],
             )
             for collection in collections
         ]
@@ -180,3 +199,17 @@ class VectorStoreService:
             collection_data["metadatas"][0] if collection_data["metadatas"] else [],
             collection_data["documents"][0] if collection_data["documents"] else [],
         )
+
+    def update_collection_timestamp(self, collection_name: str, timestamp: str):
+        try:
+            vector_collection = self.client.get_collection(collection_name)
+
+            collection_metadata = vector_collection.metadata
+
+            vector_collection.modify(
+                metadata={**collection_metadata, "updated_at": timestamp}
+            )
+
+            return timestamp
+        except Exception as e:
+            raise ValueError(f"Error updating collection timestamp: {e}")
