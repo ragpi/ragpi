@@ -1,6 +1,6 @@
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
-from typing import Literal
+from typing import Any, Literal
 import re
 
 
@@ -29,6 +29,7 @@ class CollectionUpdate(BaseModel):
     proxy_urls: list[str] | None = None
 
 
+# TODO: Add CollectionCreateResponse and CollectionUpdateResponse and include num pages scraped and num documents added/removed
 class CollectionResponse(Collection):
     id: UUID
     num_pages: int
@@ -58,8 +59,4 @@ class CollectionMetadata(BaseModel):
 class CollectionDocument(BaseModel):
     id: str
     content: str
-    source: str
-    title: str
-    header_1: str | None = None
-    header_2: str | None = None
-    header_3: str | None = None
+    metadata: dict[str, Any]

@@ -14,6 +14,31 @@ class VectorStoreService:
         self.client = chromadb.PersistentClient(path="./chroma_db")
         self.embeddings_function = OpenAIEmbeddings(model="text-embedding-3-small")
 
+    def map_collection_documents(
+        self,
+        ids: list[str],
+        metadatas: list[Metadata] | None,
+        documents: list[str] | None,
+    ) -> list[CollectionDocument]:
+        if not ids or not metadatas or not documents:
+            raise ValueError(
+                "Invalid data: 'ids', 'metadatas', or 'documents' are missing."
+            )
+
+        if len(ids) != len(metadatas) or len(ids) != len(documents):
+            raise ValueError(
+                "Mismatched lengths of 'ids', 'metadatas', and 'documents'."
+            )
+
+        collection_documents: list[CollectionDocument] = []
+        for doc_id, metadata, content in zip(ids, metadatas, documents):
+            collection_doc = CollectionDocument(
+                id=doc_id, content=content, metadata=dict(metadata)
+            )
+            collection_documents.append(collection_doc)
+
+        return collection_documents
+
     def create_collection(
         self,
         name: str,
@@ -54,20 +79,8 @@ class VectorStoreService:
         doc_metadatas: list[Metadata] = []
 
         for doc in documents:
-            metadata = {
-                "source": doc.source,
-                "title": doc.title,
-            }
-
-            if doc.header_1:
-                metadata["header_1"] = doc.header_1
-            if doc.header_2:
-                metadata["header_2"] = doc.header_2
-            if doc.header_3:
-                metadata["header_3"] = doc.header_3
-
             doc_ids.append(doc.id)
-            doc_metadatas.append(metadata)
+            doc_metadatas.append(doc.metadata)
             doc_contents.append(doc.content)
 
         doc_embeddings = self.embeddings_function.embed_documents(doc_contents)
@@ -104,8 +117,14 @@ class VectorStoreService:
 
     def get_collection_documents(self, collection_name: str):
         vector_collection = self.client.get_collection(collection_name)
-        return vector_collection.get(
+        collection_data = vector_collection.get(
             include=[IncludeEnum.metadatas, IncludeEnum.documents]
+        )
+
+        return self.map_collection_documents(
+            collection_data["ids"],
+            collection_data["metadatas"],
+            collection_data["documents"],
         )
 
     def get_all_collections(self) -> list[CollectionResponse]:
@@ -150,8 +169,14 @@ class VectorStoreService:
 
         query_embedding = self.embeddings_function.embed_query(query)
 
-        return vector_collection.query(  # type: ignore
+        collection_data = vector_collection.query(  # type: ignore
             query_embeddings=[query_embedding],
             include=[IncludeEnum.metadatas, IncludeEnum.documents],
             n_results=3,
+        )
+
+        return self.map_collection_documents(
+            collection_data["ids"][0],
+            collection_data["metadatas"][0] if collection_data["metadatas"] else [],
+            collection_data["documents"][0] if collection_data["documents"] else [],
         )

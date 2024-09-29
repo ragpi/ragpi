@@ -37,6 +37,7 @@ async def create_collection(collection_input: CollectionCreate):
 
     print(f"Adding {len(docs)} documents to collection {collection_input.name}")
 
+    # TODO: If this fails, delete the collection
     doc_ids = vector_store_service.add_documents(collection_input.name, docs)
 
     print(
