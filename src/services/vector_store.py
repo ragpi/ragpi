@@ -201,15 +201,12 @@ class VectorStoreService:
         )
 
     def update_collection_timestamp(self, collection_name: str, timestamp: str):
-        try:
-            vector_collection = self.client.get_collection(collection_name)
+        vector_collection = self.client.get_collection(collection_name)
 
-            collection_metadata = vector_collection.metadata
+        collection_metadata = vector_collection.metadata
 
-            vector_collection.modify(
-                metadata={**collection_metadata, "updated_at": timestamp}
-            )
+        vector_collection.modify(
+            metadata={**collection_metadata, "updated_at": timestamp}
+        )
 
-            return timestamp
-        except Exception as e:
-            raise ValueError(f"Error updating collection timestamp: {e}")
+        return timestamp
