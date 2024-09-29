@@ -110,12 +110,3 @@ async def update_collection_task(
     )
     result = await update_collection(collection_name, collection_input)
     return result.model_dump()
-
-
-@celery_app.task
-@lock_and_execute_collection_task()
-async def test_task(collection_name: str):
-    for minute in range(120):
-        await asyncio.sleep(60)
-        print(f"Still processing... minute {minute + 1}")
-    return "Task completed"
