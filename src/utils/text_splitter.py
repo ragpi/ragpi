@@ -29,24 +29,24 @@ def split_markdown_content(page_data: PageData) -> list[CollectionDocument]:
 
     docs: list[CollectionDocument] = []
 
-    # TODO: Update typings for split.metadata
     for split in splits:
-        docs.append(
-            CollectionDocument(
-                id=generate_stable_id(page_data.url, split.page_content),
-                content=split.page_content,
-                source=page_data.url,
-                title=page_data.title,
-                header_1=(
-                    split.metadata["header_1"] if "header_1" in split.metadata else None  # type: ignore
-                ),
-                header_2=(
-                    split.metadata["header_2"] if "header_2" in split.metadata else None  # type: ignore
-                ),
-                header_3=(
-                    split.metadata["header_3"] if "header_3" in split.metadata else None  # type: ignore
-                ),
-            )
+        doc = CollectionDocument(
+            id=generate_stable_id(page_data.url, split.page_content),
+            content=split.page_content,
+            metadata={
+                "source": page_data.url,
+                "title": page_data.title,
+            },
         )
+
+        # TODO: Update typings for split.metadata
+        if "header_1" in split.metadata:  # type: ignore
+            doc.metadata["header_1"] = split.metadata["header_1"]  # type: ignore
+        if "header_2" in split.metadata:  # type: ignore
+            doc.metadata["header_2"] = split.metadata["header_2"]  # type: ignore
+        if "header_3" in split.metadata:  # type: ignore
+            doc.metadata["header_3"] = split.metadata["header_3"]  # type: ignore
+
+        docs.append(doc)
 
     return docs

@@ -5,6 +5,7 @@ from src.schemas.collections import (
     CollectionUpdate,
 )
 from src.services.vector_store import VectorStoreService
+from src.utils.current_datetime import current_datetime
 from src.utils.web_scraper import extract_docs_from_website
 from src.services.document_tracker import DocumentTracker
 
@@ -26,6 +27,8 @@ async def create_collection(collection_input: CollectionCreate):
 
     vector_store_service = VectorStoreService()
 
+    timestamp = current_datetime()
+
     collection_id = vector_store_service.create_collection(
         name=collection_input.name,
         source=collection_input.source,
@@ -33,11 +36,13 @@ async def create_collection(collection_input: CollectionCreate):
         num_pages=num_pages,
         include_pattern=collection_input.include_pattern,
         exclude_pattern=collection_input.exclude_pattern,
+        timestamp=timestamp,
     )
 
     print(f"Adding {len(docs)} documents to collection {collection_input.name}")
 
-    doc_ids = vector_store_service.add_documents(collection_input.name, docs)
+    # TODO: If this fails, delete the collection. Probably need to add a try/except block around entire function
+    doc_ids = vector_store_service.add_documents(collection_input.name, docs, timestamp)
 
     print(
         f"Successfully added {len(doc_ids)} documents to collection {collection_input.name}"
@@ -61,6 +66,8 @@ async def create_collection(collection_input: CollectionCreate):
         num_documents=len(doc_ids),
         include_pattern=collection_input.include_pattern,
         exclude_pattern=collection_input.exclude_pattern,
+        created_at=timestamp,
+        updated_at=timestamp,
     )
 
 
@@ -126,7 +133,11 @@ async def update_collection(
         if not document_tracker.document_exists(doc.id):
             docs_to_add.append(doc)
 
-    doc_ids_added = vector_store_service.add_documents(collection_name, docs_to_add)
+    timestamp = current_datetime()
+
+    doc_ids_added = vector_store_service.add_documents(
+        collection_name, docs_to_add, timestamp
+    )
 
     document_tracker.add_document(doc_ids_added)
 
@@ -145,6 +156,9 @@ async def update_collection(
         f"Successfully removed {len(doc_ids_to_remove)} documents from collection {collection_name}"
     )
 
+    if len(doc_ids_added) > 0 or len(doc_ids_to_remove) > 0:
+        vector_store_service.update_collection_timestamp(collection_name, timestamp)
+
     return CollectionResponse(
         id=existing_collection.id,
         name=collection_name,
@@ -154,4 +168,6 @@ async def update_collection(
         num_documents=len(extracted_doc_ids),
         include_pattern=existing_collection.include_pattern,
         exclude_pattern=existing_collection.exclude_pattern,
+        created_at=existing_collection.created_at,
+        updated_at=timestamp,
     )
