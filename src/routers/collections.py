@@ -9,6 +9,7 @@ from src.schemas.collections import (
     SearchInput,
 )
 from src.services import collections as collection_service
+from src.tasks import create_collection_task, update_collection_task, test_task
 
 router = APIRouter(
     prefix="/collections",
@@ -19,9 +20,29 @@ router = APIRouter(
 )
 
 
+@router.get("/test")
+def test():
+    try:
+        task = test_task.delay("test")
+
+        print(task.info)
+
+        return CollectionTask(task_id=task.task_id, status=task.status)
+
+    except Exception as e:
+        return HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/status")
 def task_status(task_id: str) -> CollectionTask:
+    # TODO: Return 404 if task_id not found
     task = celery_app.AsyncResult(task_id)
+
+    if task.status == "LOCKED":  # type: ignore
+        return CollectionTask(
+            task_id=task_id, status="FAILURE", error=task.info["message"]
+        )
+
     return CollectionTask(
         task_id=task.task_id,
         status=task.status,
@@ -43,8 +64,8 @@ def get_all_collections():
 def create_collection(collection_input: CollectionCreate):
 
     try:
-        task = collection_service.create_collection_task.delay(
-            collection_input.model_dump()
+        task = create_collection_task.delay(
+            collection_input.name, collection_input.model_dump()
         )
 
         return CollectionTask(task_id=task.task_id, status=task.status)
@@ -80,7 +101,7 @@ async def update_collection(
     collection_name: str, collection_input: CollectionUpdate | None = None
 ):
     try:
-        task = collection_service.update_collection_task.delay(
+        task = update_collection_task.delay(
             collection_name, collection_input.model_dump() if collection_input else None
         )
 

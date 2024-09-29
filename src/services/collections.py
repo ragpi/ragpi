@@ -1,8 +1,3 @@
-import asyncio
-from typing import Any
-from celery import current_task
-
-from src.celery import celery_app
 from src.schemas.collections import (
     CollectionCreate,
     CollectionDocument,
@@ -160,42 +155,3 @@ async def update_collection(
         include_pattern=existing_collection.include_pattern,
         exclude_pattern=existing_collection.exclude_pattern,
     )
-
-
-# Tasks
-@celery_app.task
-def create_collection_task(collection_input_dict: dict[str, Any]):
-    collection_input = CollectionCreate(**collection_input_dict)
-
-    current_task.update_state(state="PROCESSING")
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        result = loop.run_until_complete(create_collection(collection_input))
-    finally:
-        loop.close()
-
-    return result.model_dump()
-
-
-@celery_app.task
-def update_collection_task(
-    collection_name: str, collection_input_dict: dict[str, Any] | None = None
-):
-    collection_input = (
-        CollectionUpdate(**collection_input_dict) if collection_input_dict else None
-    )
-
-    current_task.update_state(state="PROCESSING")
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        result = loop.run_until_complete(
-            update_collection(collection_name, collection_input)
-        )
-    finally:
-        loop.close()
-
-    return result.model_dump()
