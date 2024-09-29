@@ -1,0 +1,2 @@
+class LockedCollectionError(Exception):
+    pass
