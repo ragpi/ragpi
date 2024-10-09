@@ -35,8 +35,36 @@ def process_page(context: BeautifulSoupCrawlingContext) -> PageData:
         if context.soup.title and context.soup.title.string
         else context.request.url
     )
-    html = context.soup.main if context.soup.main else context.soup.body
-    page_content = html2text.html2text(str(html))
+
+    main_content = context.soup.main or context.soup.body
+
+    if main_content:
+        for unwanted in main_content.find_all(
+            [
+                "nav",
+                "header",
+                "footer",
+                "script",
+                "style",
+                "aside",
+                "iframe",
+                "noscript",
+                "svg",
+                "img",
+                "form",
+                "button",
+                "input",
+                "textarea",
+                "select",
+                "video",
+                "audio",
+            ]
+        ):
+            unwanted.decompose()
+
+        page_content = html2text.html2text(str(main_content))
+    else:
+        page_content = html2text.html2text(str(context.soup))
 
     return PageData(id=id, url=url, title=title, content=page_content)
 

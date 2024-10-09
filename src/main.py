@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from dotenv import load_dotenv
 
 from src.routers.collections import router as collections_router
+from src.routers.chat import router as chat_router
 
 # TODO: Replace with pydantic settings?
 load_dotenv()
@@ -15,3 +16,4 @@ def read_root():
 
 
 app.include_router(collections_router)
+app.include_router(chat_router)
