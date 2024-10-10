@@ -4,7 +4,7 @@ from src.schemas.collections import (
     CollectionResponse,
     CollectionUpdate,
 )
-from src.services.vector_store import VectorStoreService
+from src.services.vector_store.service import VectorStoreService
 from src.utils.current_datetime import current_datetime
 from src.utils.web_scraper import extract_docs_from_website
 from src.services.document_tracker import DocumentTracker
