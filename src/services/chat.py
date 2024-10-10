@@ -67,11 +67,9 @@ def get_chat_response(chatInput: CreateChatInput):
         messages=messages,
     )
 
-    # TODO: Create ChatResponse with citations
-
     response = ChatResponse(
-        response=completion.choices[0].message.content or "I don't know",
-        citations=documents,
+        response=completion.choices[0].message.content,
+        sources=documents,
     )
 
     return response

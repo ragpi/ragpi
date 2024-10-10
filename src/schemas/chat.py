@@ -17,5 +17,5 @@ class CreateChatInput(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    response: str
-    citations: list[CollectionDocument] | None = None
+    response: str | None
+    sources: list[CollectionDocument]
