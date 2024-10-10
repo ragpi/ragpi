@@ -191,7 +191,7 @@ class VectorStoreService:
         collection_data = vector_collection.query(  # type: ignore
             query_embeddings=[query_embedding],
             include=[IncludeEnum.metadatas, IncludeEnum.documents],
-            n_results=3,
+            n_results=10,
         )
 
         return self.map_collection_documents(

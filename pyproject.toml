@@ -15,6 +15,7 @@ celery = {extras = ["redis"], version = "^5.4.0"}
 chromadb = "^0.5.7"
 langchain = "^0.3.0"
 langchain-openai = "^0.2.0"
+openai = "^1.51.1"
 
 
 [tool.poetry.group.dev.dependencies]

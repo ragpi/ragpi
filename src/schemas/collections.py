@@ -38,7 +38,7 @@ class CollectionResponse(Collection):
     updated_at: str
 
 
-class SearchInput(BaseModel):
+class CollectionSearchInput(BaseModel):
     query: str
     # TODO: Fields to add: search_type, search_kwargs, etc.
 
