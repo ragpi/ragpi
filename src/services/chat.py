@@ -8,7 +8,7 @@ from openai.types.chat import (
 
 from src.routers.collections import search_collection
 from src.schemas.chat import ChatResponse, CreateChatInput
-from src.schemas.collections import SearchInput
+from src.schemas.collections import CollectionSearchInput
 
 
 client = OpenAI()
@@ -24,7 +24,7 @@ def get_chat_response(chatInput: CreateChatInput):
     query = chatInput.messages[-1]
 
     documents = search_collection(
-        chatInput.collection, SearchInput(query=query.content)
+        chatInput.collection, CollectionSearchInput(query=query.content)
     )
 
     doc_content = [doc.content for doc in documents]

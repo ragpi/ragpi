@@ -6,7 +6,7 @@ from src.schemas.collections import (
     CollectionTask,
     CollectionCreate,
     CollectionUpdate,
-    SearchInput,
+    CollectionSearchInput,
 )
 from src.services import collections as collection_service
 from src.tasks import create_collection_task, update_collection_task
@@ -110,7 +110,7 @@ def get_collection_documents(collection_name: str):
 
 
 @router.get("/{collection_name}/search")
-def search_collection(collection_name: str, query_input: SearchInput):
+def search_collection(collection_name: str, query_input: CollectionSearchInput):
     try:
         results = collection_service.search_collection(
             collection_name, query_input.query
