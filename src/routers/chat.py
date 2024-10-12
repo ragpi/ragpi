@@ -14,6 +14,4 @@ router = APIRouter(
 
 @router.post("")
 def chat(chatInput: CreateChatInput):
-    response = get_chat_response(chatInput)
-
-    return {"response": response}
+    return get_chat_response(chatInput)

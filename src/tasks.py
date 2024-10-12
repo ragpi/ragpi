@@ -6,13 +6,13 @@ from typing import Any, Awaitable, Callable
 from celery import current_task
 from celery.exceptions import Ignore
 
-from src.errors import LockedCollectionError
+from src.errors import LockedRepositoryError
 from src.celery import celery_app
-from src.schemas.collections import (
-    CollectionCreate,
-    CollectionUpdate,
+from src.schemas.repository import (
+    RepositoryCreateInput,
+    RepositoryUpdateInput,
 )
-from src.services.collections import create_collection, update_collection
+from src.services.repository import RepositoryService
 
 
 async def renew_lock(lock: Lock, extend_time: int = 60, renewal_interval: int = 30):
@@ -26,30 +26,30 @@ async def renew_lock(lock: Lock, extend_time: int = 60, renewal_interval: int = 
             break
 
 
-def lock_and_execute_collection_task():
+def lock_and_execute_repository_task():
     def decorator(func: Callable[..., Awaitable[Any]]):
         @wraps(func)
-        def wrapper(collection_name: str, *args: Any, **kwargs: Any):
+        def wrapper(repository_name: str, *args: Any, **kwargs: Any):
             redis_client = Redis.from_url("redis://localhost:6379")
-            lock = redis_client.lock(f"lock:{collection_name}", timeout=60)
+            lock = redis_client.lock(f"lock:{repository_name}", timeout=60)
 
             loop: asyncio.AbstractEventLoop | None = None
-            collection_locked = True
+            repository_locked = True
 
             try:
-                collection_locked = not lock.acquire(blocking=False)
-                print(f"LOCKED: {collection_locked}")
+                repository_locked = not lock.acquire(blocking=False)
+                print(f"LOCKED: {repository_locked}")
 
-                if collection_locked:
+                if repository_locked:
                     current_task.update_state(
                         state="LOCKED",
                         meta={
-                            "exc_type": "LockedCollectionError",
-                            "message": f"Collection {collection_name} already has a task running. Please wait for the task to complete.",
+                            "exc_type": "LockedRepositoryError",
+                            "message": f"Repository {repository_name} already has a task running. Please wait for the task to complete.",
                         },
                     )
-                    raise LockedCollectionError(
-                        f"Collection {collection_name} is already locked."
+                    raise LockedRepositoryError(
+                        f"Repository {repository_name} is already locked."
                     )
 
                 current_task.update_state(state="PROCESSING")
@@ -60,14 +60,14 @@ def lock_and_execute_collection_task():
                 async def task_with_lock_renewal():
                     renewal_task = asyncio.create_task(renew_lock(lock))
                     try:
-                        result = await func(collection_name, *args, **kwargs)
+                        result = await func(repository_name, *args, **kwargs)
                         return result
                     finally:
                         renewal_task.cancel()
 
                 result = loop.run_until_complete(task_with_lock_renewal())
 
-            except LockedCollectionError:
+            except LockedRepositoryError:
                 raise Ignore()
 
             except Exception as e:
@@ -77,7 +77,7 @@ def lock_and_execute_collection_task():
             finally:
                 if loop:
                     loop.close()
-                if not collection_locked:
+                if not repository_locked:
                     try:
                         lock.release()
                     except Exception as LockError:
@@ -91,22 +91,28 @@ def lock_and_execute_collection_task():
 
 
 @celery_app.task
-@lock_and_execute_collection_task()
-async def create_collection_task(
-    collection_name: str, collection_input_dict: dict[str, Any]
+@lock_and_execute_repository_task()
+async def create_repository_task(
+    repository_name: str, repository_input_dict: dict[str, Any]
 ):
-    collection_input = CollectionCreate(**collection_input_dict)
-    result = await create_collection(collection_input)
+    repository_input = RepositoryCreateInput(**repository_input_dict)
+    repository_service = RepositoryService()
+    result = await repository_service.create_repository(repository_input)
     return result.model_dump()
 
 
 @celery_app.task
-@lock_and_execute_collection_task()
-async def update_collection_task(
-    collection_name: str, collection_input_dict: dict[str, Any] | None = None
+@lock_and_execute_repository_task()
+async def update_repository_task(
+    repository_name: str, repository_input_dict: dict[str, Any] | None = None
 ):
-    collection_input = (
-        CollectionUpdate(**collection_input_dict) if collection_input_dict else None
+    repository_input = (
+        RepositoryUpdateInput(**repository_input_dict)
+        if repository_input_dict
+        else None
     )
-    result = await update_collection(collection_name, collection_input)
+    repository_service = RepositoryService()
+    result = await repository_service.update_repository(
+        repository_name, repository_input
+    )
     return result.model_dump()

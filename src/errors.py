@@ -1,2 +1,2 @@
-class LockedCollectionError(Exception):
+class LockedRepositoryError(Exception):
     pass

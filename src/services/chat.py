@@ -6,9 +6,9 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
 )
 
-from src.routers.collections import search_collection
+
 from src.schemas.chat import ChatResponse, CreateChatInput
-from src.schemas.collections import CollectionSearchInput
+from src.services.repository import RepositoryService
 
 
 client = OpenAI()
@@ -18,13 +18,15 @@ def get_chat_response(chatInput: CreateChatInput):
     system = ChatCompletionSystemMessageParam(
         role="system",
         content=chatInput.system
-        or f"You are an expert on {chatInput.collection} and can answer any questions about it. ",
+        or f"You are an expert on {chatInput.repository} and can answer any questions about it. ",
     )
 
     query = chatInput.messages[-1]
 
-    documents = search_collection(
-        chatInput.collection, CollectionSearchInput(query=query.content)
+    repository_service = RepositoryService()
+
+    documents = repository_service.search_repository(
+        chatInput.repository, query.content
     )
 
     doc_content = [doc.content for doc in documents]
@@ -32,7 +34,7 @@ def get_chat_response(chatInput: CreateChatInput):
     context = "\n".join(doc_content)
 
     query_prompt = f"""
-      Use the following context taken from a knowledge base about {chatInput.collection} to answer the user's query. 
+      Use the following context taken from a knowledge base about {chatInput.repository} to answer the user's query. 
       If you don't know the answer, say "I don't know".
       Respond without mentioning that there is a context provided.
       Respond as if the user has not seen the context.
@@ -68,7 +70,7 @@ def get_chat_response(chatInput: CreateChatInput):
     )
 
     response = ChatResponse(
-        response=completion.choices[0].message.content,
+        message=completion.choices[0].message.content,
         sources=documents,
     )
 
