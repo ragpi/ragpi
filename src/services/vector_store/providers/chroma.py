@@ -103,6 +103,7 @@ class ChromaVectorStore(VectorStoreBase):
         ]
 
     def delete_repository(self, repository_name: str) -> None:
+        # TODO: Need custom exception handling for collection not found.
         self.client.delete_collection(repository_name)
 
     def delete_repository_documents(self, repository_name: str) -> bool:

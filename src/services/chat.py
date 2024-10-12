@@ -8,7 +8,7 @@ from openai.types.chat import (
 
 
 from src.schemas.chat import ChatResponse, CreateChatInput
-from src.services.repository import search_repository
+from src.services.repository import RepositoryService
 
 
 client = OpenAI()
@@ -23,7 +23,11 @@ def get_chat_response(chatInput: CreateChatInput):
 
     query = chatInput.messages[-1]
 
-    documents = search_repository(chatInput.repository, query.content)
+    repository_service = RepositoryService()
+
+    documents = repository_service.search_repository(
+        chatInput.repository, query.content
+    )
 
     doc_content = [doc.content for doc in documents]
 

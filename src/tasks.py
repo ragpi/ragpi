@@ -12,7 +12,7 @@ from src.schemas.repository import (
     RepositoryCreate,
     RepositoryUpdate,
 )
-from src.services.repository import create_repository, update_repository
+from src.services.repository import RepositoryService
 
 
 async def renew_lock(lock: Lock, extend_time: int = 60, renewal_interval: int = 30):
@@ -96,7 +96,8 @@ async def create_repository_task(
     repository_name: str, repository_input_dict: dict[str, Any]
 ):
     repository_input = RepositoryCreate(**repository_input_dict)
-    result = await create_repository(repository_input)
+    repository_service = RepositoryService()
+    result = await repository_service.create_repository(repository_input)
     return result.model_dump()
 
 
@@ -108,5 +109,8 @@ async def update_repository_task(
     repository_input = (
         RepositoryUpdate(**repository_input_dict) if repository_input_dict else None
     )
-    result = await update_repository(repository_name, repository_input)
+    repository_service = RepositoryService()
+    result = await repository_service.update_repository(
+        repository_name, repository_input
+    )
     return result.model_dump()
