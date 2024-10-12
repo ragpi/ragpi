@@ -20,12 +20,12 @@ class Repository(BaseModel):
         return value
 
 
-class RepositoryCreate(Repository):
+class RepositoryCreateInput(Repository):
     max_pages: int | None = 3
     proxy_urls: list[str] | None = None
 
 
-class RepositoryUpdate(BaseModel):
+class RepositoryUpdateInput(BaseModel):
     proxy_urls: list[str] | None = None
 
 

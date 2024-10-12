@@ -9,8 +9,8 @@ from celery.exceptions import Ignore
 from src.errors import LockedRepositoryError
 from src.celery import celery_app
 from src.schemas.repository import (
-    RepositoryCreate,
-    RepositoryUpdate,
+    RepositoryCreateInput,
+    RepositoryUpdateInput,
 )
 from src.services.repository import RepositoryService
 
@@ -95,7 +95,7 @@ def lock_and_execute_repository_task():
 async def create_repository_task(
     repository_name: str, repository_input_dict: dict[str, Any]
 ):
-    repository_input = RepositoryCreate(**repository_input_dict)
+    repository_input = RepositoryCreateInput(**repository_input_dict)
     repository_service = RepositoryService()
     result = await repository_service.create_repository(repository_input)
     return result.model_dump()
@@ -107,7 +107,9 @@ async def update_repository_task(
     repository_name: str, repository_input_dict: dict[str, Any] | None = None
 ):
     repository_input = (
-        RepositoryUpdate(**repository_input_dict) if repository_input_dict else None
+        RepositoryUpdateInput(**repository_input_dict)
+        if repository_input_dict
+        else None
     )
     repository_service = RepositoryService()
     result = await repository_service.update_repository(

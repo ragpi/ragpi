@@ -1,7 +1,7 @@
 from src.schemas.repository import (
-    RepositoryCreate,
+    RepositoryCreateInput,
     RepositoryResponse,
-    RepositoryUpdate,
+    RepositoryUpdateInput,
 )
 from src.services.vector_store.service import VectorStoreService
 from src.utils.current_datetime import current_datetime
@@ -14,7 +14,7 @@ class RepositoryService:
         self.vector_store_service = VectorStoreService()
         self.redis_url = "redis://localhost:6379"
 
-    async def create_repository(self, repository_input: RepositoryCreate):
+    async def create_repository(self, repository_input: RepositoryCreateInput):
         repository_start_url = repository_input.start_url.rstrip("/")
         print(f"Extracting documents from {repository_start_url}")
 
@@ -92,7 +92,9 @@ class RepositoryService:
         document_tracker.delete_repository()
 
     async def update_repository(
-        self, repository_name: str, repository_input: RepositoryUpdate | None = None
+        self,
+        repository_name: str,
+        repository_input: RepositoryUpdateInput | None = None,
     ):
         existing_repository = self.vector_store_service.get_repository(repository_name)
 

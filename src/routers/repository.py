@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from src.celery import celery_app
 from src.schemas.repository import (
     RepositoryTask,
-    RepositoryCreate,
-    RepositoryUpdate,
+    RepositoryCreateInput,
+    RepositoryUpdateInput,
     RepositorySearchInput,
 )
 from src.services.repository import RepositoryService
@@ -43,7 +43,7 @@ def get_all_repositories(repository_service: RepositoryService = Depends()):
 
 
 @router.post("/", status_code=status.HTTP_202_ACCEPTED)
-def create_repository(repository_input: RepositoryCreate):
+def create_repository(repository_input: RepositoryCreateInput):
     try:
         task = create_repository_task.delay(
             repository_input.name, repository_input.model_dump()
@@ -79,7 +79,7 @@ def delete_repository(
 @router.put("/{repository_name}", status_code=status.HTTP_202_ACCEPTED)
 async def update_repository(
     repository_name: str,
-    repository_input: RepositoryUpdate | None = None,
+    repository_input: RepositoryUpdateInput | None = None,
 ):
     try:
         task = update_repository_task.delay(
