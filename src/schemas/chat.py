@@ -1,7 +1,7 @@
 from typing import Literal
 from pydantic import BaseModel
 
-from src.schemas.collections import CollectionDocument
+from src.schemas.repository import RepositoryDocument
 
 
 class Message(BaseModel):
@@ -10,12 +10,12 @@ class Message(BaseModel):
 
 
 class CreateChatInput(BaseModel):
-    collection: str
+    repository: str
     # model: str  # Should this be set at environment level? Or maybe default model and can be overridden?
     system: str | None = None
     messages: list[Message]
 
 
 class ChatResponse(BaseModel):
-    response: str | None
-    sources: list[CollectionDocument]
+    message: str | None
+    sources: list[RepositoryDocument]

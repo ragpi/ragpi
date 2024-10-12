@@ -4,7 +4,7 @@ from typing import Any, Literal
 import re
 
 
-class Collection(BaseModel):
+class Repository(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     source: Literal["static_website", "dynamic_website"] = "static_website"
     start_url: str
@@ -20,17 +20,17 @@ class Collection(BaseModel):
         return value
 
 
-class CollectionCreate(Collection):
+class RepositoryCreate(Repository):
     max_pages: int | None = 3
     proxy_urls: list[str] | None = None
 
 
-class CollectionUpdate(BaseModel):
+class RepositoryUpdate(BaseModel):
     proxy_urls: list[str] | None = None
 
 
-# TODO: Add CollectionCreateResponse and CollectionUpdateResponse and include num pages scraped and num documents added/removed
-class CollectionResponse(Collection):
+# TODO: Add RepositoryCreateResponse and RepositoryUpdateResponse and include num pages scraped and num documents added/removed
+class RepositoryResponse(Repository):
     id: UUID
     num_pages: int
     num_documents: int
@@ -38,19 +38,19 @@ class CollectionResponse(Collection):
     updated_at: str
 
 
-class CollectionSearchInput(BaseModel):
+class RepositorySearchInput(BaseModel):
     query: str
     # TODO: Fields to add: search_type, search_kwargs, etc.
 
 
-class CollectionTask(BaseModel):
+class RepositoryTask(BaseModel):
     task_id: str
     status: str
     error: str | None = None
-    # collection: CollectionResponse | None = None
+    # repository: RepositoryResponse | None = None
 
 
-class CollectionMetadata(BaseModel):
+class RepositoryMetadata(BaseModel):
     source: str
     start_url: str
     include_pattern: str | None
@@ -60,7 +60,7 @@ class CollectionMetadata(BaseModel):
     updated_at: str
 
 
-class CollectionDocument(BaseModel):
+class RepositoryDocument(BaseModel):
     id: str
     content: str
     metadata: dict[str, Any]

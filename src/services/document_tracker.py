@@ -4,8 +4,8 @@ from src.utils.current_datetime import current_datetime
 
 
 class DocumentTracker:
-    def __init__(self, collection_name: str, redis_url: str):
-        self.namespace = f"document_tracker:{collection_name}"
+    def __init__(self, repository_name: str, redis_url: str):
+        self.namespace = f"document_tracker:{repository_name}"
         self.redis_client = redis.Redis.from_url(redis_url)
 
     def add_document(self, ids: list[str]) -> None:
@@ -24,8 +24,8 @@ class DocumentTracker:
     def get_all_document_ids(self) -> list[str]:
         return [key.decode() for key in self.redis_client.hkeys(self.namespace)]
 
-    def collection_exists(self) -> bool:
+    def repository_exists(self) -> bool:
         return self.redis_client.exists(self.namespace) > 0
 
-    def delete_collection(self) -> None:
+    def delete_repository(self) -> None:
         self.redis_client.delete(self.namespace)
