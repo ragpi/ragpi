@@ -10,8 +10,9 @@ from src.services.vector_store.factory import get_vector_store
 
 
 class VectorStoreService:
-    def __init__(self, store_type: str = "chroma"):
-        self.vector_store = get_vector_store(store_type)
+    # TODO: Get default from env
+    def __init__(self, provider: str = "chroma"):
+        self.vector_store = get_vector_store(provider)
 
     def create_collection(
         self,
