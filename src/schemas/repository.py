@@ -1,4 +1,3 @@
-from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 from typing import Any, Literal
 import re
@@ -31,7 +30,7 @@ class RepositoryUpdateInput(BaseModel):
 
 # TODO: Add RepositoryCreateResponse and RepositoryUpdateResponse and include num pages scraped and num documents added/removed
 class RepositoryResponse(Repository):
-    id: UUID
+    id: str
     num_pages: int
     num_documents: int
     created_at: str

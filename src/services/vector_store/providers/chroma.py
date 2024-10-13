@@ -1,10 +1,12 @@
-from typing import Any
 import chromadb
-from uuid import UUID
 from chromadb.api.types import IncludeEnum, Metadata
 from langchain_openai import OpenAIEmbeddings
 
-from src.schemas.repository import RepositoryDocument, RepositoryResponse
+from src.schemas.repository import (
+    RepositoryDocument,
+    RepositoryMetadata,
+    RepositoryResponse,
+)
 from src.services.vector_store.base import VectorStoreBase
 
 
@@ -13,15 +15,17 @@ class ChromaVectorStore(VectorStoreBase):
         self.client = chromadb.PersistentClient(path="./chroma_db")
         self.embeddings_function = OpenAIEmbeddings(model="text-embedding-3-small")
 
-    def create_repository(self, name: str, metadata: dict[str, Any]) -> UUID:
-        collection = self.client.create_collection(name, metadata=metadata)
-        return collection.id
+    async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
+        collection = self.client.create_collection(
+            name, metadata=metadata.model_dump(exclude_none=True)
+        )
+        return str(collection.id)
 
-    def add_documents(
-        self, repository_name: str, documents: list[RepositoryDocument], timestamp: str
+    async def add_documents(
+        self, name: str, documents: list[RepositoryDocument], timestamp: str
     ) -> list[str]:
         BATCH_SIZE = 10000
-        collection = self.client.get_collection(repository_name)
+        collection = self.client.get_collection(name)
 
         doc_ids: list[str] = []
         doc_contents: list[str] = []
@@ -41,7 +45,7 @@ class ChromaVectorStore(VectorStoreBase):
             batch_metadatas = doc_metadatas[i : i + BATCH_SIZE]
             batch_embeddings = doc_embeddings[i : i + BATCH_SIZE]
 
-            print(f"Adding {len(batch_ids)} documents to repository {repository_name}")
+            print(f"Adding {len(batch_ids)} documents to repository {name}")
 
             collection.add(  # type: ignore
                 ids=batch_ids,
@@ -52,12 +56,12 @@ class ChromaVectorStore(VectorStoreBase):
 
         return doc_ids
 
-    def get_repository(self, repository_name: str) -> RepositoryResponse:
-        collection = self.client.get_collection(repository_name)
+    async def get_repository(self, name: str) -> RepositoryResponse:
+        collection = self.client.get_collection(name)
         metadata = collection.metadata
 
         return RepositoryResponse(
-            id=collection.id,
+            id=str(collection.id),
             name=collection.name,
             start_url=metadata["start_url"],
             source=metadata["source"],
@@ -69,10 +73,8 @@ class ChromaVectorStore(VectorStoreBase):
             updated_at=metadata["updated_at"],
         )
 
-    def get_repository_documents(
-        self, repository_name: str
-    ) -> list[RepositoryDocument]:
-        collection = self.client.get_collection(repository_name)
+    async def get_repository_documents(self, name: str) -> list[RepositoryDocument]:
+        collection = self.client.get_collection(name)
         collection_data = collection.get(
             include=[IncludeEnum.metadatas, IncludeEnum.documents]
         )
@@ -83,12 +85,12 @@ class ChromaVectorStore(VectorStoreBase):
             collection_data["documents"],
         )
 
-    def get_all_repositories(self) -> list[RepositoryResponse]:
+    async def get_all_repositories(self) -> list[RepositoryResponse]:
         collections = self.client.list_collections()
 
         return [
             RepositoryResponse(
-                id=collection.id,
+                id=str(collection.id),
                 name=collection.name,
                 start_url=collection.metadata["start_url"],
                 source=collection.metadata["source"],
@@ -102,12 +104,12 @@ class ChromaVectorStore(VectorStoreBase):
             for collection in collections
         ]
 
-    def delete_repository(self, repository_name: str) -> None:
+    async def delete_repository(self, name: str) -> None:
         # TODO: Need custom exception handling for collection not found.
-        self.client.delete_collection(repository_name)
+        self.client.delete_collection(name)
 
-    def delete_repository_documents(self, repository_name: str) -> bool:
-        collection = self.client.get_collection(repository_name)
+    async def delete_repository_documents(self, name: str) -> bool:
+        collection = self.client.get_collection(name)
         doc_ids = collection.get(include=[])["ids"]
 
         if len(doc_ids) > 0:
@@ -115,17 +117,17 @@ class ChromaVectorStore(VectorStoreBase):
 
         return True
 
-    def delete_documents(self, repository_name: str, doc_ids: list[str]) -> None:
+    async def delete_documents(self, name: str, doc_ids: list[str]) -> None:
         if len(doc_ids) == 0:
             return
 
-        collection = self.client.get_collection(repository_name)
+        collection = self.client.get_collection(name)
         collection.delete(ids=doc_ids)
 
-    def search_repository(
-        self, repository_name: str, query: str
+    async def search_repository(
+        self, name: str, query: str
     ) -> list[RepositoryDocument]:
-        collection = self.client.get_collection(repository_name)
+        collection = self.client.get_collection(name)
 
         query_embedding = self.embeddings_function.embed_query(query)
 
@@ -141,8 +143,8 @@ class ChromaVectorStore(VectorStoreBase):
             collection_data["documents"][0] if collection_data["documents"] else [],
         )
 
-    def update_repository_timestamp(self, repository_name: str, timestamp: str) -> str:
-        collection = self.client.get_collection(repository_name)
+    async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
+        collection = self.client.get_collection(name)
 
         collection_metadata = collection.metadata
         collection.modify(metadata={**collection_metadata, "updated_at": timestamp})

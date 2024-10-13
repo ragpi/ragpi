@@ -1,53 +1,53 @@
 from abc import ABC, abstractmethod
-from typing import Any
-from uuid import UUID
 
-from src.schemas.repository import RepositoryDocument, RepositoryResponse
+from src.schemas.repository import (
+    RepositoryDocument,
+    RepositoryMetadata,
+    RepositoryResponse,
+)
 
 
 class VectorStoreBase(ABC):
     @abstractmethod
-    def create_repository(self, name: str, metadata: dict[str, Any]) -> UUID:
+    async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
         pass
 
     @abstractmethod
-    def add_documents(
-        self, repository_name: str, documents: list[RepositoryDocument], timestamp: str
+    async def add_documents(
+        self, name: str, documents: list[RepositoryDocument], timestamp: str
     ) -> list[str]:
         pass
 
     @abstractmethod
-    def get_repository(self, repository_name: str) -> RepositoryResponse:
+    async def get_repository(self, name: str) -> RepositoryResponse:
         pass
 
     @abstractmethod
-    def get_repository_documents(
-        self, repository_name: str
+    async def get_repository_documents(self, name: str) -> list[RepositoryDocument]:
+        pass
+
+    @abstractmethod
+    async def get_all_repositories(self) -> list[RepositoryResponse]:
+        pass
+
+    @abstractmethod
+    async def delete_repository(self, name: str) -> None:
+        pass
+
+    @abstractmethod
+    async def delete_repository_documents(self, name: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def delete_documents(self, name: str, doc_ids: list[str]) -> None:
+        pass
+
+    @abstractmethod
+    async def search_repository(
+        self, name: str, query: str
     ) -> list[RepositoryDocument]:
         pass
 
     @abstractmethod
-    def get_all_repositories(self) -> list[RepositoryResponse]:
-        pass
-
-    @abstractmethod
-    def delete_repository(self, repository_name: str) -> None:
-        pass
-
-    @abstractmethod
-    def delete_repository_documents(self, repository_name: str) -> bool:
-        pass
-
-    @abstractmethod
-    def delete_documents(self, repository_name: str, doc_ids: list[str]) -> None:
-        pass
-
-    @abstractmethod
-    def search_repository(
-        self, repository_name: str, query: str
-    ) -> list[RepositoryDocument]:
-        pass
-
-    @abstractmethod
-    def update_repository_timestamp(self, repository_name: str, timestamp: str) -> str:
+    async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
         pass
