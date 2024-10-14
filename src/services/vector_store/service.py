@@ -37,41 +37,40 @@ class VectorStoreService:
         repository_id = await self.vector_store.create_repository(name, metadata)
         return repository_id
 
-    async def add_documents(
-        self, repository_name: str, documents: List[RepositoryDocument], timestamp: str
+    async def add_repository_documents(
+        self, name: str, documents: List[RepositoryDocument], timestamp: str
     ) -> List[str]:
-        return await self.vector_store.add_documents(
-            repository_name, documents, timestamp
+        if not documents:
+            return []
+
+        return await self.vector_store.add_repository_documents(
+            name, documents, timestamp
         )
 
-    async def get_repository(self, repository_name: str) -> RepositoryResponse:
-        return await self.vector_store.get_repository(repository_name)
+    async def get_repository(self, name: str) -> RepositoryResponse:
+        return await self.vector_store.get_repository(name)
 
     async def get_repository_documents(
-        self, repository_name: str
+        self, name: str, limit: int | None, offset: int | None
     ) -> List[RepositoryDocument]:
-        return await self.vector_store.get_repository_documents(repository_name)
+        return await self.vector_store.get_repository_documents(name, limit, offset)
 
     async def get_all_repositories(self) -> List[RepositoryResponse]:
         return await self.vector_store.get_all_repositories()
 
-    async def delete_repository(self, repository_name: str) -> None:
-        await self.vector_store.delete_repository(repository_name)
+    async def delete_repository(self, name: str) -> None:
+        await self.vector_store.delete_repository(name)
 
-    async def delete_repository_documents(self, repository_name: str) -> bool:
-        return await self.vector_store.delete_repository_documents(repository_name)
+    async def delete_repository_documents(self, name: str, doc_ids: List[str]) -> None:
+        if not doc_ids:
+            return
 
-    async def delete_documents(self, repository_name: str, doc_ids: List[str]) -> None:
-        await self.vector_store.delete_documents(repository_name, doc_ids)
+        await self.vector_store.delete_repository_documents(name, doc_ids)
 
     async def search_repository(
-        self, repository_name: str, query: str
+        self, name: str, query: str
     ) -> List[RepositoryDocument]:
-        return await self.vector_store.search_repository(repository_name, query)
+        return await self.vector_store.search_repository(name, query)
 
-    async def update_repository_timestamp(
-        self, repository_name: str, timestamp: str
-    ) -> str:
-        return await self.vector_store.update_repository_timestamp(
-            repository_name, timestamp
-        )
+    async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
+        return await self.vector_store.update_repository_timestamp(name, timestamp)

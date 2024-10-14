@@ -42,7 +42,7 @@ class RepositoryService:
         print(f"Adding {len(docs)} documents to repository {repository_input.name}")
 
         # TODO: If this fails, delete the repository. Probably need to add a try/except block around entire function
-        doc_ids = await self.vector_store_service.add_documents(
+        doc_ids = await self.vector_store_service.add_repository_documents(
             repository_input.name, docs, timestamp
         )
         print(
@@ -77,8 +77,12 @@ class RepositoryService:
     async def get_repository(self, repository_name: str):
         return await self.vector_store_service.get_repository(repository_name)
 
-    async def get_repository_documents(self, repository_name: str):
-        return await self.vector_store_service.get_repository_documents(repository_name)
+    async def get_repository_documents(
+        self, repository_name: str, limit: int | None, offset: int | None
+    ):
+        return await self.vector_store_service.get_repository_documents(
+            repository_name, limit, offset
+        )
 
     async def get_all_repositories(self):
         return await self.vector_store_service.get_all_repositories()
@@ -103,6 +107,7 @@ class RepositoryService:
         document_tracker = DocumentTracker(
             repository_name=repository_name, redis_url=self.redis_url
         )
+
         existing_doc_ids = document_tracker.get_all_document_ids()
 
         extracted_docs, num_pages = await extract_docs_from_website(
@@ -112,7 +117,6 @@ class RepositoryService:
             exclude_pattern=existing_repository.exclude_pattern,
             proxy_urls=repository_input.proxy_urls if repository_input else None,
         )
-
         extracted_doc_ids = [doc.id for doc in extracted_docs]
 
         docs_to_add = [
@@ -121,8 +125,7 @@ class RepositoryService:
             if not document_tracker.document_exists(doc.id)
         ]
         timestamp = current_datetime()
-
-        doc_ids_added = await self.vector_store_service.add_documents(
+        doc_ids_added = await self.vector_store_service.add_repository_documents(
             repository_name, docs_to_add, timestamp
         )
         document_tracker.add_document(doc_ids_added)
@@ -132,7 +135,7 @@ class RepositoryService:
         )
 
         doc_ids_to_remove = list(set(existing_doc_ids) - set(extracted_doc_ids))
-        await self.vector_store_service.delete_documents(
+        await self.vector_store_service.delete_repository_documents(
             repository_name, doc_ids_to_remove
         )
         document_tracker.delete_document(doc_ids_to_remove)

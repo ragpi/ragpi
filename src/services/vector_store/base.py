@@ -13,7 +13,7 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
-    async def add_documents(
+    async def add_repository_documents(
         self, name: str, documents: list[RepositoryDocument], timestamp: str
     ) -> list[str]:
         pass
@@ -23,7 +23,9 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
-    async def get_repository_documents(self, name: str) -> list[RepositoryDocument]:
+    async def get_repository_documents(
+        self, name: str, limit: int | None, offset: int | None
+    ) -> list[RepositoryDocument]:
         pass
 
     @abstractmethod
@@ -35,11 +37,7 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
-    async def delete_repository_documents(self, name: str) -> bool:
-        pass
-
-    @abstractmethod
-    async def delete_documents(self, name: str, doc_ids: list[str]) -> None:
+    async def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
         pass
 
     @abstractmethod

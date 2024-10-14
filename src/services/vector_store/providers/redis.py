@@ -42,7 +42,7 @@ class RedisVectorStore(VectorStoreBase):
             ],
         }
 
-    async def get_index(self, name: str) -> AsyncSearchIndex:
+    async def _get_index(self, name: str) -> AsyncSearchIndex:
         index_schema = IndexSchema.from_dict(
             {
                 "index": {"name": name, "prefix": f"{name}:documents"},
@@ -52,13 +52,15 @@ class RedisVectorStore(VectorStoreBase):
         index = await AsyncSearchIndex(index_schema).set_client(self.client)  # type: ignore
         return index
 
-    def _extract_id(self, name: str, key: str) -> str:
-        return key.split(f"{name}:documents:")[1]
+    def _extract_doc_id(self, prefix: str, key: str) -> str:
+        return key.split(f"{prefix}:")[1]
 
-    async def create_repository(
-        self, name: str, metadata: RepositoryMetadata | None = None
-    ) -> str:
-        index = await self.get_index(name)
+    # TODO: replace with index.key(id)?
+    def _get_doc_key(self, prefix: str, doc_id: str) -> str:
+        return f"{prefix}:{doc_id}"
+
+    async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
+        index = await self._get_index(name)
         # TODO: Check if index exists before creating
 
         await index.create()
@@ -66,28 +68,27 @@ class RedisVectorStore(VectorStoreBase):
         metadata_key = f"{name}:metadata"
         id = str(uuid4())
 
-        if metadata:
-            self.client.hset(
-                metadata_key,
-                mapping={
-                    "id": id,
-                    "name": name,
-                    "source": metadata.source,
-                    "start_url": metadata.start_url,
-                    "include_pattern": metadata.include_pattern or "",
-                    "exclude_pattern": metadata.exclude_pattern or "",
-                    "num_pages": metadata.num_pages,
-                    "created_at": metadata.created_at,
-                    "updated_at": metadata.updated_at,
-                },
-            )
+        self.client.hset(
+            metadata_key,
+            mapping={
+                "id": id,
+                "name": name,
+                "source": metadata.source,
+                "start_url": metadata.start_url,
+                "include_pattern": metadata.include_pattern or "",
+                "exclude_pattern": metadata.exclude_pattern or "",
+                "num_pages": metadata.num_pages,
+                "created_at": metadata.created_at,
+                "updated_at": metadata.updated_at,
+            },
+        )
 
         return id
 
-    async def add_documents(
+    async def add_repository_documents(
         self, name: str, documents: list[RepositoryDocument], timestamp: str
     ) -> list[str]:
-        index = await self.get_index(name)
+        index = await self._get_index(name)
 
         doc_embeddings = self.embeddings_function.embed_documents(
             [doc.content for doc in documents]
@@ -114,19 +115,22 @@ class RedisVectorStore(VectorStoreBase):
                     doc_dict[key] = doc.metadata[key]
             return doc_dict
 
-        # Combine each document with its corresponding embedding
         data = [
             create_doc_dict(doc, embedding)
             for doc, embedding in zip(documents, doc_embeddings)
         ]
 
-        # Load the data into the index
         keys = await index.load(id_field="id", data=data)  # type: ignore
 
-        return keys
+        ids = [self._extract_doc_id(index.prefix, key) for key in keys]
+
+        return ids
 
     async def get_repository(self, name: str) -> RepositoryResponse:
-        index = await self.get_index(name)
+        # TODO: Check repo exists and throw error and return 404 if not (same with other methods)
+        index = await self._get_index(name)
+
+        print(index.prefix)
 
         index_info = await index.info()
 
@@ -147,25 +151,33 @@ class RedisVectorStore(VectorStoreBase):
             updated_at=metadata["updated_at"],
         )
 
-    async def get_repository_documents(self, name: str) -> list[RepositoryDocument]:
-        # Placeholder implementation
-        pass
+    async def get_repository_documents(
+        self, name: str, limit: int | None, offset: int | None
+    ) -> list[RepositoryDocument]:
+        # TODO: Implement this
+        return []
 
     async def get_all_repositories(self) -> list[RepositoryResponse]:
-        # Placeholder implementation
-        pass
+        index = await self._get_index("")
+
+        repo_names = await index.listall()
+
+        return [await self.get_repository(name) for name in repo_names]
 
     async def delete_repository(self, name: str) -> None:
-        # Placeholder implementation
-        pass
+        index = await self._get_index(name)
 
-    async def delete_repository_documents(self, name: str) -> bool:
-        # Placeholder implementation
-        pass
+        await index.delete()
 
-    async def delete_documents(self, name: str, doc_ids: list[str]) -> None:
-        # Placeholder implementation
-        pass
+        metadata_key = f"{name}:metadata"
+        self.client.delete(metadata_key)
+
+    async def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
+        index = await self._get_index(name)
+
+        ids = [self._get_doc_key(index.prefix, doc_id) for doc_id in doc_ids]
+
+        await index.drop_keys(ids)
 
     async def search_repository(
         self, name: str, query: str
@@ -188,13 +200,13 @@ class RedisVectorStore(VectorStoreBase):
             num_results=10,
         )
 
-        index = await self.get_index(name)
+        index = await self._get_index(name)
 
         search_results = await index.query(vector_query)  # type: ignore
 
         repository_documents = [
             RepositoryDocument(
-                id=self._extract_id(name, doc["id"]),
+                id=self._extract_doc_id(index.prefix, doc["id"]),
                 content=doc.get("content", ""),  # Provide a default if needed
                 metadata={
                     "source": doc.get("source", ""),
@@ -213,5 +225,8 @@ class RedisVectorStore(VectorStoreBase):
         return repository_documents
 
     async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
-        # Placeholder implementation
-        pass
+        metadata_key = f"{name}:metadata"
+
+        self.client.hset(metadata_key, "updated_at", timestamp)
+
+        return timestamp

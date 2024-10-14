@@ -21,7 +21,7 @@ class ChromaVectorStore(VectorStoreBase):
         )
         return str(collection.id)
 
-    async def add_documents(
+    async def add_repository_documents(
         self, name: str, documents: list[RepositoryDocument], timestamp: str
     ) -> list[str]:
         BATCH_SIZE = 10000
@@ -73,10 +73,14 @@ class ChromaVectorStore(VectorStoreBase):
             updated_at=metadata["updated_at"],
         )
 
-    async def get_repository_documents(self, name: str) -> list[RepositoryDocument]:
+    async def get_repository_documents(
+        self, name: str, limit: int | None, offset: int | None
+    ) -> list[RepositoryDocument]:
         collection = self.client.get_collection(name)
         collection_data = collection.get(
-            include=[IncludeEnum.metadatas, IncludeEnum.documents]
+            include=[IncludeEnum.metadatas, IncludeEnum.documents],
+            limit=limit,
+            offset=offset,
         )
 
         return self._map_repository_documents(
@@ -108,16 +112,7 @@ class ChromaVectorStore(VectorStoreBase):
         # TODO: Need custom exception handling for collection not found.
         self.client.delete_collection(name)
 
-    async def delete_repository_documents(self, name: str) -> bool:
-        collection = self.client.get_collection(name)
-        doc_ids = collection.get(include=[])["ids"]
-
-        if len(doc_ids) > 0:
-            collection.delete(ids=doc_ids)
-
-        return True
-
-    async def delete_documents(self, name: str, doc_ids: list[str]) -> None:
+    async def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
         if len(doc_ids) == 0:
             return
 

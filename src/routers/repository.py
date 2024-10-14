@@ -7,7 +7,6 @@ from src.schemas.repository import (
     RepositorySearchInput,
 )
 from src.services.repository import RepositoryService
-from src.services.vector_store.providers.redis import RedisVectorStore
 from src.tasks import create_repository_task, update_repository_task
 
 router = APIRouter(
@@ -94,10 +93,15 @@ async def update_repository(
 
 @router.get("/{repository_name}/documents")
 async def get_repository_documents(
-    repository_name: str, repository_service: RepositoryService = Depends()
+    repository_name: str,
+    limit: int | None = None,
+    offset: int | None = None,
+    repository_service: RepositoryService = Depends(),
 ):
     try:
-        results = await repository_service.get_repository_documents(repository_name)
+        results = await repository_service.get_repository_documents(
+            repository_name, limit, offset
+        )
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
