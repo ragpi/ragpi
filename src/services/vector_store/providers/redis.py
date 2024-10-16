@@ -14,6 +14,8 @@ from src.schemas.repository import (
 )
 from src.services.vector_store.base import VectorStoreBase
 
+EMBEDDING_DIMENSIONS = 1536
+
 REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
     "fields": [
         {"name": "id", "type": "tag"},
@@ -28,7 +30,7 @@ REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
             "name": "embedding",
             "type": "vector",
             "attrs": {
-                "dims": 1536,
+                "dims": EMBEDDING_DIMENSIONS,
                 "distance_metric": "cosine",
                 "algorithm": "flat",
                 "datatype": "float32",
@@ -41,7 +43,9 @@ REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
 class RedisVectorStore(VectorStoreBase):
     def __init__(self):
         self.client = Redis.from_url("redis://localhost:6379", decode_responses=True)
-        self.embeddings_function = OpenAIEmbeddings(model="text-embedding-3-small")
+        self.embeddings_function = OpenAIEmbeddings(
+            model="text-embedding-3-small", dimensions=EMBEDDING_DIMENSIONS
+        )
         self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
 
     async def _get_index(self, name: str) -> AsyncSearchIndex:

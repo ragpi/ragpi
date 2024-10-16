@@ -3,6 +3,7 @@ import redis
 from src.utils.current_datetime import current_datetime
 
 
+# TODO: Use redis pipeline for bulk operations
 class DocumentTracker:
     def __init__(self, repository_name: str, redis_url: str):
         self.namespace = f"document_tracker:{repository_name}"
