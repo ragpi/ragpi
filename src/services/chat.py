@@ -14,7 +14,7 @@ from src.services.repository import RepositoryService
 client = OpenAI()
 
 
-def get_chat_response(chatInput: CreateChatInput):
+async def get_chat_response(chatInput: CreateChatInput):
     system = ChatCompletionSystemMessageParam(
         role="system",
         content=chatInput.system
@@ -25,7 +25,7 @@ def get_chat_response(chatInput: CreateChatInput):
 
     repository_service = RepositoryService()
 
-    documents = repository_service.search_repository(
+    documents = await repository_service.search_repository(
         chatInput.repository, query.content
     )
 
