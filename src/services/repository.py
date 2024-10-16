@@ -56,7 +56,7 @@ class RepositoryService:
         if document_tracker.repository_exists():
             document_tracker.delete_repository()
 
-        document_tracker.add_document(doc_ids)
+        document_tracker.add_documents(doc_ids)
 
         return RepositoryResponse(
             id=repository_id,
@@ -119,16 +119,13 @@ class RepositoryService:
         )
         extracted_doc_ids = [doc.id for doc in extracted_docs]
 
-        docs_to_add = [
-            doc
-            for doc in extracted_docs
-            if not document_tracker.document_exists(doc.id)
-        ]
+        docs_to_add = [doc for doc in extracted_docs if doc.id not in existing_doc_ids]
+
         timestamp = current_datetime()
         doc_ids_added = await self.vector_store_service.add_repository_documents(
             repository_name, docs_to_add, timestamp
         )
-        document_tracker.add_document(doc_ids_added)
+        document_tracker.add_documents(doc_ids_added)
 
         print(
             f"Successfully added {len(doc_ids_added)} documents to repository {repository_name}"
@@ -138,7 +135,7 @@ class RepositoryService:
         await self.vector_store_service.delete_repository_documents(
             repository_name, doc_ids_to_remove
         )
-        document_tracker.delete_document(doc_ids_to_remove)
+        document_tracker.delete_documents(doc_ids_to_remove)
 
         print(
             f"Successfully removed {len(doc_ids_to_remove)} documents from repository {repository_name}"

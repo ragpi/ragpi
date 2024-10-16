@@ -14,33 +14,35 @@ from src.schemas.repository import (
 )
 from src.services.vector_store.base import VectorStoreBase
 
+REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
+    "fields": [
+        {"name": "id", "type": "tag"},
+        {"name": "content", "type": "text"},
+        {"name": "source", "type": "tag"},
+        {"name": "created_at", "type": "tag"},
+        {"name": "title", "type": "tag"},
+        {"name": "header_1", "type": "tag"},
+        {"name": "header_2", "type": "tag"},
+        {"name": "header_3", "type": "tag"},
+        {
+            "name": "embedding",
+            "type": "vector",
+            "attrs": {
+                "dims": 1536,
+                "distance_metric": "cosine",
+                "algorithm": "flat",
+                "datatype": "float32",
+            },
+        },
+    ],
+}
+
 
 class RedisVectorStore(VectorStoreBase):
     def __init__(self):
         self.client = Redis.from_url("redis://localhost:6379", decode_responses=True)
         self.embeddings_function = OpenAIEmbeddings(model="text-embedding-3-small")
-        self.schema: dict[str, Any] = {
-            "fields": [
-                {"name": "id", "type": "tag"},
-                {"name": "content", "type": "text"},
-                {"name": "source", "type": "tag"},
-                {"name": "created_at", "type": "tag"},
-                {"name": "title", "type": "tag"},
-                {"name": "header_1", "type": "tag"},
-                {"name": "header_2", "type": "tag"},
-                {"name": "header_3", "type": "tag"},
-                {
-                    "name": "embedding",
-                    "type": "vector",
-                    "attrs": {
-                        "dims": 1536,
-                        "distance_metric": "cosine",
-                        "algorithm": "flat",
-                        "datatype": "float32",
-                    },
-                },
-            ],
-        }
+        self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
 
     async def _get_index(self, name: str) -> AsyncSearchIndex:
         index_schema = IndexSchema.from_dict(
@@ -55,13 +57,15 @@ class RedisVectorStore(VectorStoreBase):
     def _extract_doc_id(self, prefix: str, key: str) -> str:
         return key.split(f"{prefix}:")[1]
 
-    # TODO: replace with index.key(id)?
     def _get_doc_key(self, prefix: str, doc_id: str) -> str:
         return f"{prefix}:{doc_id}"
 
     async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
         index = await self._get_index(name)
-        # TODO: Check if index exists before creating
+
+        # TODO: Handle exception properly in task
+        if await index.exists():
+            raise Exception(f"Repository {name} already exists")
 
         await index.create()
 
@@ -90,7 +94,10 @@ class RedisVectorStore(VectorStoreBase):
     ) -> list[str]:
         index = await self._get_index(name)
 
-        doc_embeddings = self.embeddings_function.embed_documents(
+        if not await index.exists():
+            raise Exception(f"Repository {name} does not exist")
+
+        doc_embeddings = await self.embeddings_function.aembed_documents(
             [doc.content for doc in documents]
         )
 
@@ -127,10 +134,10 @@ class RedisVectorStore(VectorStoreBase):
         return ids
 
     async def get_repository(self, name: str) -> RepositoryResponse:
-        # TODO: Check repo exists and throw error and return 404 if not (same with other methods)
         index = await self._get_index(name)
 
-        print(index.prefix)
+        if not await index.exists():
+            raise Exception(f"Repository {name} does not exist")
 
         index_info = await index.info()
 
@@ -154,8 +161,55 @@ class RedisVectorStore(VectorStoreBase):
     async def get_repository_documents(
         self, name: str, limit: int | None, offset: int | None
     ) -> list[RepositoryDocument]:
-        # TODO: Implement this
-        return []
+        index = await self._get_index(name)
+
+        if not await index.exists():
+            raise Exception(f"Repository {name} does not exist")
+
+        all_keys: list[str] = []
+
+        for key in self.client.scan_iter(f"{name}:documents:*"):
+            all_keys.append(key)
+
+        start = offset or 0
+        end = start + limit if limit else len(all_keys)
+
+        keys = all_keys[start:end]
+
+        pipeline = self.client.pipeline()
+
+        for key in keys:
+            pipeline.hmget(
+                key,
+                [
+                    "id",
+                    "source",
+                    "title",
+                    "header_1",
+                    "header_2",
+                    "header_3",
+                    "created_at",
+                    "content",
+                ],
+            )
+
+        docs = pipeline.execute()
+
+        return [
+            RepositoryDocument(
+                id=doc[0],
+                content=doc[7],
+                metadata={
+                    "source": doc[1],
+                    "title": doc[2],
+                    "header_1": doc[3],
+                    "header_2": doc[4],
+                    "header_3": doc[5],
+                    "created_at": doc[6],
+                },
+            )
+            for doc in docs
+        ]
 
     async def get_all_repositories(self) -> list[RepositoryResponse]:
         index = await self._get_index("")
@@ -166,6 +220,9 @@ class RedisVectorStore(VectorStoreBase):
 
     async def delete_repository(self, name: str) -> None:
         index = await self._get_index(name)
+
+        if not await index.exists():
+            raise Exception(f"Repository {name} does not exist")
 
         await index.delete()
 
@@ -182,7 +239,12 @@ class RedisVectorStore(VectorStoreBase):
     async def search_repository(
         self, name: str, query: str
     ) -> list[RepositoryDocument]:
-        query_embedding = self.embeddings_function.embed_query(query)
+        index = await self._get_index(name)
+
+        if not await index.exists():
+            raise Exception(f"Repository {name} does not exist")
+
+        query_embedding = await self.embeddings_function.aembed_query(query)
 
         vector_query = VectorQuery(
             vector=query_embedding,
@@ -200,18 +262,16 @@ class RedisVectorStore(VectorStoreBase):
             num_results=10,
         )
 
-        index = await self._get_index(name)
-
-        search_results = await index.query(vector_query)  # type: ignore
+        search_results = await index.query(vector_query)
 
         repository_documents = [
             RepositoryDocument(
                 id=self._extract_doc_id(index.prefix, doc["id"]),
-                content=doc.get("content", ""),  # Provide a default if needed
+                content=doc["content"],
                 metadata={
-                    "source": doc.get("source", ""),
-                    "title": doc.get("title", ""),
-                    "created_at": doc.get("created_at", ""),
+                    "source": doc["source"],
+                    "title": doc["title"],
+                    "created_at": doc["created_at"],
                     **{
                         header: doc[header]
                         for header in ["header_1", "header_2", "header_3"]
