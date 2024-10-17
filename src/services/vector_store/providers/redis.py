@@ -215,6 +215,19 @@ class RedisVectorStore(VectorStoreBase):
             for doc in docs
         ]
 
+    async def get_repository_document_ids(self, name: str) -> list[str]:
+        index = await self._get_index(name)
+
+        if not await index.exists():
+            raise Exception(f"Repository {name} does not exist")
+
+        all_keys: list[str] = []
+
+        for key in self.client.scan_iter(f"{name}:documents:*"):
+            all_keys.append(key)
+
+        return [self._extract_doc_id(index.prefix, key) for key in all_keys]
+
     async def get_all_repositories(self) -> list[RepositoryResponse]:
         index = await self._get_index("")
 

@@ -6,7 +6,6 @@ from src.schemas.repository import (
 from src.services.vector_store.service import VectorStoreService
 from src.utils.current_datetime import current_datetime
 from src.utils.web_scraper import extract_docs_from_website
-from src.services.document_tracker import DocumentTracker
 
 
 class RepositoryService:
@@ -49,15 +48,6 @@ class RepositoryService:
             f"Successfully added {len(doc_ids)} documents to repository {repository_input.name}"
         )
 
-        document_tracker = DocumentTracker(
-            repository_name=repository_input.name, redis_url=self.redis_url
-        )
-
-        if document_tracker.repository_exists():
-            document_tracker.delete_repository()
-
-        document_tracker.add_documents(doc_ids)
-
         return RepositoryResponse(
             id=repository_id,
             name=repository_input.name,
@@ -90,11 +80,6 @@ class RepositoryService:
     async def delete_repository(self, repository_name: str):
         await self.vector_store_service.delete_repository(repository_name)
 
-        document_tracker = DocumentTracker(
-            repository_name=repository_name, redis_url=self.redis_url
-        )
-        document_tracker.delete_repository()
-
     async def update_repository(
         self,
         repository_name: str,
@@ -104,11 +89,9 @@ class RepositoryService:
             repository_name
         )
 
-        document_tracker = DocumentTracker(
-            repository_name=repository_name, redis_url=self.redis_url
+        existing_doc_ids = await self.vector_store_service.get_repository_document_ids(
+            repository_name
         )
-
-        existing_doc_ids = document_tracker.get_all_document_ids()
 
         extracted_docs, num_pages = await extract_docs_from_website(
             start_url=existing_repository.start_url,
@@ -125,7 +108,6 @@ class RepositoryService:
         doc_ids_added = await self.vector_store_service.add_repository_documents(
             repository_name, docs_to_add, timestamp
         )
-        document_tracker.add_documents(doc_ids_added)
 
         print(
             f"Successfully added {len(doc_ids_added)} documents to repository {repository_name}"
@@ -135,7 +117,6 @@ class RepositoryService:
         await self.vector_store_service.delete_repository_documents(
             repository_name, doc_ids_to_remove
         )
-        document_tracker.delete_documents(doc_ids_to_remove)
 
         print(
             f"Successfully removed {len(doc_ids_to_remove)} documents from repository {repository_name}"

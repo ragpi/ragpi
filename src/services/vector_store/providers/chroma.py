@@ -89,6 +89,12 @@ class ChromaVectorStore(VectorStoreBase):
             collection_data["documents"],
         )
 
+    async def get_repository_document_ids(self, name: str) -> list[str]:
+        collection = self.client.get_collection(name)
+        collection_data = collection.get(include=[])
+
+        return collection_data["ids"]
+
     async def get_all_repositories(self) -> list[RepositoryResponse]:
         collections = self.client.list_collections()
 

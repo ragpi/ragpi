@@ -29,6 +29,10 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
+    async def get_repository_document_ids(self, name: str) -> list[str]:
+        pass
+
+    @abstractmethod
     async def get_all_repositories(self) -> list[RepositoryResponse]:
         pass
 
