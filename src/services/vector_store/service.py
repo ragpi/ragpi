@@ -16,7 +16,6 @@ class VectorStoreService:
     async def create_repository(
         self,
         name: str,
-        source: str,
         start_url: str,
         num_pages: int,
         include_pattern: Optional[str],
@@ -25,7 +24,6 @@ class VectorStoreService:
     ) -> str:
 
         metadata = RepositoryMetadata(
-            source=source,
             start_url=start_url,
             num_pages=num_pages,
             include_pattern=include_pattern,

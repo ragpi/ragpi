@@ -30,7 +30,6 @@ class RepositoryService:
 
         repository_id = await self.vector_store_service.create_repository(
             name=repository_input.name,
-            source=repository_input.source,
             start_url=repository_start_url,
             num_pages=num_pages,
             include_pattern=repository_input.include_pattern,
@@ -51,7 +50,6 @@ class RepositoryService:
         return RepositoryResponse(
             id=repository_id,
             name=repository_input.name,
-            source=repository_input.source,
             start_url=repository_start_url,
             num_pages=num_pages,
             num_documents=len(doc_ids),
@@ -130,7 +128,6 @@ class RepositoryService:
         return RepositoryResponse(
             id=existing_repository.id,
             name=repository_name,
-            source=existing_repository.source,
             start_url=existing_repository.start_url,
             num_pages=num_pages,
             num_documents=len(extracted_doc_ids),

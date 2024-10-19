@@ -20,7 +20,7 @@ REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
     "fields": [
         {"name": "id", "type": "tag"},
         {"name": "content", "type": "text"},
-        {"name": "source", "type": "tag"},
+        {"name": "url", "type": "tag"},
         {"name": "created_at", "type": "tag"},
         {"name": "title", "type": "tag"},
         {"name": "header_1", "type": "tag"},
@@ -81,7 +81,6 @@ class RedisVectorStore(VectorStoreBase):
             mapping={
                 "id": id,
                 "name": name,
-                "source": metadata.source,
                 "start_url": metadata.start_url,
                 "include_pattern": metadata.include_pattern or "",
                 "exclude_pattern": metadata.exclude_pattern or "",
@@ -116,7 +115,7 @@ class RedisVectorStore(VectorStoreBase):
             }
 
             for key in [
-                "source",
+                "url",
                 "title",
                 "header_1",
                 "header_2",
@@ -152,7 +151,6 @@ class RedisVectorStore(VectorStoreBase):
         return RepositoryResponse(
             id=metadata["id"],
             name=metadata["name"],
-            source=metadata["source"],  # type: ignore
             start_url=metadata["start_url"],
             num_pages=int(metadata["num_pages"]),
             num_documents=index_info["num_docs"],
@@ -187,7 +185,7 @@ class RedisVectorStore(VectorStoreBase):
                 key,
                 [
                     "id",
-                    "source",
+                    "url",
                     "title",
                     "header_1",
                     "header_2",
@@ -204,7 +202,7 @@ class RedisVectorStore(VectorStoreBase):
                 id=doc[0],
                 content=doc[7],
                 metadata={
-                    "source": doc[1],
+                    "url": doc[1],
                     "title": doc[2],
                     "header_1": doc[3],
                     "header_2": doc[4],
@@ -269,7 +267,7 @@ class RedisVectorStore(VectorStoreBase):
             return_fields=[
                 "id",
                 "content",
-                "source",
+                "url",
                 "title",
                 "header_1",
                 "header_2",
@@ -286,7 +284,7 @@ class RedisVectorStore(VectorStoreBase):
                 id=self._extract_doc_id(index.prefix, doc["id"]),
                 content=doc["content"],
                 metadata={
-                    "source": doc["source"],
+                    "url": doc["url"],
                     "title": doc["title"],
                     "created_at": doc["created_at"],
                     **{

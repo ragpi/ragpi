@@ -1,11 +1,10 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Any, Literal
+from typing import Any
 import re
 
 
 class Repository(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
-    source: Literal["static_website", "dynamic_website"] = "static_website"
     start_url: str
     include_pattern: str | None = None
     exclude_pattern: str | None = None
@@ -50,7 +49,6 @@ class RepositoryTask(BaseModel):
 
 
 class RepositoryMetadata(BaseModel):
-    source: str
     start_url: str
     include_pattern: str | None
     exclude_pattern: str | None

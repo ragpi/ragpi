@@ -34,7 +34,7 @@ def split_markdown_content(page_data: PageData) -> list[RepositoryDocument]:
             id=generate_stable_id(page_data.url, split.page_content),
             content=split.page_content,
             metadata={
-                "source": page_data.url,
+                "url": page_data.url,
                 "title": page_data.title,
             },
         )

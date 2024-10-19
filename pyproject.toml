@@ -9,7 +9,6 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 fastapi = { extras = ["standard"], version = "^0.114.1" }
-crawlee = { extras = ["beautifulsoup", "playwright"], version = "^0.3.5" }
 html2text = "^2024.2.26"
 chromadb = "^0.5.7"
 langchain = "^0.3.0"
@@ -18,6 +17,7 @@ openai = "^1.51.1"
 redis = "^5.1.1"
 celery = "^5.4.0"
 redisvl = "^0.3.5"
+crawlee = {extras = ["beautifulsoup"], version = "^0.3.8"}
 
 
 [tool.poetry.group.dev.dependencies]
