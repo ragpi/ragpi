@@ -256,7 +256,7 @@ class RedisVectorStore(VectorStoreBase):
         await index.drop_keys(ids)
 
     async def search_repository(
-        self, name: str, query: str
+        self, name: str, query: str, num_results: int
     ) -> list[RepositoryDocument]:
         index = await self._get_index(name)
 
@@ -278,7 +278,7 @@ class RedisVectorStore(VectorStoreBase):
                 "header_3",
                 "created_at",
             ],
-            num_results=10,
+            num_results=num_results,
         )
 
         search_results = await index.query(vector_query)

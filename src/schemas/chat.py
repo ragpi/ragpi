@@ -14,6 +14,7 @@ class CreateChatInput(BaseModel):
     model: str | None = None
     system: str | None = None
     messages: list[Message]
+    num_sources: int | None = None
 
 
 class ChatResponse(BaseModel):

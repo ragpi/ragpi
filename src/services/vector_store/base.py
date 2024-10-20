@@ -46,7 +46,7 @@ class VectorStoreBase(ABC):
 
     @abstractmethod
     async def search_repository(
-        self, name: str, query: str
+        self, name: str, query: str, num_results: int
     ) -> list[RepositoryDocument]:
         pass
 

@@ -115,7 +115,7 @@ async def search_repository(
 ):
     try:
         results = await repository_service.search_repository(
-            repository_name, query_input.query
+            repository_name, query_input.query, query_input.num_results or 10
         )
         return results
 

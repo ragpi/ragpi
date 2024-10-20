@@ -69,8 +69,12 @@ class RepositoryService:
             updated_at=timestamp,
         )
 
-    async def search_repository(self, repository_name: str, query: str):
-        return await self.vector_store_service.search_repository(repository_name, query)
+    async def search_repository(
+        self, repository_name: str, query: str, num_results: int
+    ):
+        return await self.vector_store_service.search_repository(
+            repository_name, query, num_results
+        )
 
     async def get_repository(self, repository_name: str):
         return await self.vector_store_service.get_repository(repository_name)

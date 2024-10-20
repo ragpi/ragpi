@@ -129,7 +129,7 @@ class ChromaVectorStore(VectorStoreBase):
         collection.delete(ids=doc_ids)
 
     async def search_repository(
-        self, name: str, query: str
+        self, name: str, query: str, num_results: int
     ) -> list[RepositoryDocument]:
         collection = self.client.get_collection(name)
 
@@ -138,7 +138,7 @@ class ChromaVectorStore(VectorStoreBase):
         collection_data = collection.query(  # type: ignore
             query_embeddings=[query_embedding],
             include=[IncludeEnum.metadatas, IncludeEnum.documents],
-            n_results=10,
+            n_results=num_results,
         )
 
         return self._map_repository_documents(

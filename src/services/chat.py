@@ -26,8 +26,10 @@ async def get_chat_response(chatInput: CreateChatInput):
 
     repository_service = RepositoryService()
 
+    num_results = chatInput.num_sources or 10
+
     documents = await repository_service.search_repository(
-        chatInput.repository, query.content
+        chatInput.repository, query.content, num_results
     )
 
     doc_content = [doc.content for doc in documents]

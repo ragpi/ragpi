@@ -73,9 +73,9 @@ class VectorStoreService:
         await self.vector_store.delete_repository_documents(name, doc_ids)
 
     async def search_repository(
-        self, name: str, query: str
+        self, name: str, query: str, num_results: int
     ) -> List[RepositoryDocument]:
-        return await self.vector_store.search_repository(name, query)
+        return await self.vector_store.search_repository(name, query, num_results)
 
     async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
         return await self.vector_store.update_repository_timestamp(name, timestamp)

@@ -47,7 +47,7 @@ class RepositoryUpdateInput(BaseModel):
 
 class RepositorySearchInput(BaseModel):
     query: str
-    # TODO: Fields to add: search_type, search_kwargs, etc.
+    num_results: int | None = None
 
 
 class RepositoryTask(BaseModel):
