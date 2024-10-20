@@ -15,7 +15,7 @@ from src.schemas.repository import (
 )
 from src.services.vector_store.base import VectorStoreBase
 
-EMBEDDING_DIMENSIONS = 1536
+print("DIMENSIONS", settings.EMBEDDING_DIMENSIONS)
 
 REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
     "fields": [
@@ -31,7 +31,7 @@ REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
             "name": "embedding",
             "type": "vector",
             "attrs": {
-                "dims": EMBEDDING_DIMENSIONS,
+                "dims": settings.EMBEDDING_DIMENSIONS,
                 "distance_metric": "cosine",
                 "algorithm": "flat",
                 "datatype": "float32",
@@ -45,7 +45,7 @@ class RedisVectorStore(VectorStoreBase):
     def __init__(self):
         self.client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
         self.embeddings_function = OpenAIEmbeddings(
-            model="text-embedding-3-small", dimensions=EMBEDDING_DIMENSIONS
+            model=settings.EMBEDDING_MODEL, dimensions=settings.EMBEDDING_DIMENSIONS
         )
         self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
 

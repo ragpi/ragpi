@@ -2,6 +2,7 @@ import chromadb
 from chromadb.api.types import IncludeEnum, Metadata
 from langchain_openai import OpenAIEmbeddings
 
+from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
@@ -13,7 +14,7 @@ from src.services.vector_store.base import VectorStoreBase
 class ChromaVectorStore(VectorStoreBase):
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chroma_db")
-        self.embeddings_function = OpenAIEmbeddings(model="text-embedding-3-small")
+        self.embeddings_function = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
 
     async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
         collection = self.client.create_collection(
