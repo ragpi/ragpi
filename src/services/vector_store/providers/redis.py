@@ -7,14 +7,14 @@ from redisvl.index import AsyncSearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
 
+from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
-    RepositoryResponse,
+    RepositoryOverview,
 )
 from src.services.vector_store.base import VectorStoreBase
 
-EMBEDDING_DIMENSIONS = 1536
 
 REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
     "fields": [
@@ -30,7 +30,7 @@ REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
             "name": "embedding",
             "type": "vector",
             "attrs": {
-                "dims": EMBEDDING_DIMENSIONS,
+                "dims": settings.EMBEDDING_DIMENSIONS,
                 "distance_metric": "cosine",
                 "algorithm": "flat",
                 "datatype": "float32",
@@ -42,9 +42,9 @@ REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
 
 class RedisVectorStore(VectorStoreBase):
     def __init__(self):
-        self.client = Redis.from_url("redis://localhost:6379", decode_responses=True)
+        self.client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
         self.embeddings_function = OpenAIEmbeddings(
-            model="text-embedding-3-small", dimensions=EMBEDDING_DIMENSIONS
+            model=settings.EMBEDDING_MODEL, dimensions=settings.EMBEDDING_DIMENSIONS
         )
         self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
 
@@ -85,6 +85,8 @@ class RedisVectorStore(VectorStoreBase):
                 "include_pattern": metadata.include_pattern or "",
                 "exclude_pattern": metadata.exclude_pattern or "",
                 "num_pages": metadata.num_pages,
+                "chunk_size": metadata.chunk_size,
+                "chunk_overlap": metadata.chunk_overlap,
                 "created_at": metadata.created_at,
                 "updated_at": metadata.updated_at,
             },
@@ -136,7 +138,7 @@ class RedisVectorStore(VectorStoreBase):
 
         return ids
 
-    async def get_repository(self, name: str) -> RepositoryResponse:
+    async def get_repository(self, name: str) -> RepositoryOverview:
         index = await self._get_index(name)
 
         if not await index.exists():
@@ -148,14 +150,16 @@ class RedisVectorStore(VectorStoreBase):
 
         metadata = self.client.hgetall(metadata_key)
 
-        return RepositoryResponse(
+        return RepositoryOverview(
             id=metadata["id"],
             name=metadata["name"],
             start_url=metadata["start_url"],
             num_pages=int(metadata["num_pages"]),
-            num_documents=index_info["num_docs"],
+            num_docs=index_info["num_docs"],
             include_pattern=metadata["include_pattern"],
             exclude_pattern=metadata["exclude_pattern"],
+            chunk_size=int(metadata["chunk_size"]),
+            chunk_overlap=int(metadata["chunk_overlap"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
         )
@@ -226,7 +230,7 @@ class RedisVectorStore(VectorStoreBase):
 
         return [self._extract_doc_id(index.prefix, key) for key in all_keys]
 
-    async def get_all_repositories(self) -> list[RepositoryResponse]:
+    async def get_all_repositories(self) -> list[RepositoryOverview]:
         index = await self._get_index("")
 
         repo_names = await index.listall()
@@ -252,7 +256,7 @@ class RedisVectorStore(VectorStoreBase):
         await index.drop_keys(ids)
 
     async def search_repository(
-        self, name: str, query: str
+        self, name: str, query: str, num_results: int
     ) -> list[RepositoryDocument]:
         index = await self._get_index(name)
 
@@ -274,7 +278,7 @@ class RedisVectorStore(VectorStoreBase):
                 "header_3",
                 "created_at",
             ],
-            num_results=10,
+            num_results=num_results,
         )
 
         search_results = await index.query(vector_query)

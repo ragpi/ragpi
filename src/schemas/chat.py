@@ -11,9 +11,10 @@ class Message(BaseModel):
 
 class CreateChatInput(BaseModel):
     repository: str
-    # model: str  # Should this be set at environment level? Or maybe default model and can be overridden?
+    model: str | None = None
     system: str | None = None
     messages: list[Message]
+    num_sources: int | None = None
 
 
 class ChatResponse(BaseModel):

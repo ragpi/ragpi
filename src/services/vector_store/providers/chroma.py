@@ -2,10 +2,11 @@ import chromadb
 from chromadb.api.types import IncludeEnum, Metadata
 from langchain_openai import OpenAIEmbeddings
 
+from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
-    RepositoryResponse,
+    RepositoryOverview,
 )
 from src.services.vector_store.base import VectorStoreBase
 
@@ -13,7 +14,7 @@ from src.services.vector_store.base import VectorStoreBase
 class ChromaVectorStore(VectorStoreBase):
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chroma_db")
-        self.embeddings_function = OpenAIEmbeddings(model="text-embedding-3-small")
+        self.embeddings_function = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
 
     async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
         collection = self.client.create_collection(
@@ -56,18 +57,20 @@ class ChromaVectorStore(VectorStoreBase):
 
         return doc_ids
 
-    async def get_repository(self, name: str) -> RepositoryResponse:
+    async def get_repository(self, name: str) -> RepositoryOverview:
         collection = self.client.get_collection(name)
         metadata = collection.metadata
 
-        return RepositoryResponse(
+        return RepositoryOverview(
             id=str(collection.id),
             name=collection.name,
             start_url=metadata["start_url"],
             include_pattern=metadata.get("include_pattern"),
             exclude_pattern=metadata.get("exclude_pattern"),
             num_pages=metadata["num_pages"],
-            num_documents=collection.count(),
+            num_docs=collection.count(),
+            chunk_size=metadata["chunk_size"],
+            chunk_overlap=metadata["chunk_overlap"],
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
         )
@@ -94,18 +97,20 @@ class ChromaVectorStore(VectorStoreBase):
 
         return collection_data["ids"]
 
-    async def get_all_repositories(self) -> list[RepositoryResponse]:
+    async def get_all_repositories(self) -> list[RepositoryOverview]:
         collections = self.client.list_collections()
 
         return [
-            RepositoryResponse(
+            RepositoryOverview(
                 id=str(collection.id),
                 name=collection.name,
                 start_url=collection.metadata["start_url"],
                 include_pattern=collection.metadata.get("include_pattern"),
                 exclude_pattern=collection.metadata.get("exclude_pattern"),
                 num_pages=collection.metadata["num_pages"],
-                num_documents=collection.count(),
+                num_docs=collection.count(),
+                chunk_size=collection.metadata["chunk_size"],
+                chunk_overlap=collection.metadata["chunk_overlap"],
                 created_at=collection.metadata["created_at"],
                 updated_at=collection.metadata["updated_at"],
             )
@@ -124,7 +129,7 @@ class ChromaVectorStore(VectorStoreBase):
         collection.delete(ids=doc_ids)
 
     async def search_repository(
-        self, name: str, query: str
+        self, name: str, query: str, num_results: int
     ) -> list[RepositoryDocument]:
         collection = self.client.get_collection(name)
 
@@ -133,7 +138,7 @@ class ChromaVectorStore(VectorStoreBase):
         collection_data = collection.query(  # type: ignore
             query_embeddings=[query_embedding],
             include=[IncludeEnum.metadatas, IncludeEnum.documents],
-            n_results=10,
+            n_results=num_results,
         )
 
         return self._map_repository_documents(

@@ -1,16 +1,16 @@
 from typing import Optional, List
 
+from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
-    RepositoryResponse,
+    RepositoryOverview,
 )
 from src.services.vector_store.factory import get_vector_store
 
 
 class VectorStoreService:
-    # TODO: Get default from env
-    def __init__(self, provider: str = "redis"):
+    def __init__(self, provider: str = settings.VECTOR_STORE_PROVIDER):
         self.vector_store = get_vector_store(provider)
 
     async def create_repository(
@@ -20,6 +20,8 @@ class VectorStoreService:
         num_pages: int,
         include_pattern: Optional[str],
         exclude_pattern: Optional[str],
+        chunk_size: int,
+        chunk_overlap: int,
         timestamp: str,
     ) -> str:
 
@@ -28,6 +30,8 @@ class VectorStoreService:
             num_pages=num_pages,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             created_at=timestamp,
             updated_at=timestamp,
         )
@@ -45,7 +49,7 @@ class VectorStoreService:
             name, documents, timestamp
         )
 
-    async def get_repository(self, name: str) -> RepositoryResponse:
+    async def get_repository(self, name: str) -> RepositoryOverview:
         return await self.vector_store.get_repository(name)
 
     async def get_repository_documents(
@@ -56,7 +60,7 @@ class VectorStoreService:
     async def get_repository_document_ids(self, name: str) -> List[str]:
         return await self.vector_store.get_repository_document_ids(name)
 
-    async def get_all_repositories(self) -> List[RepositoryResponse]:
+    async def get_all_repositories(self) -> List[RepositoryOverview]:
         return await self.vector_store.get_all_repositories()
 
     async def delete_repository(self, name: str) -> None:
@@ -69,9 +73,9 @@ class VectorStoreService:
         await self.vector_store.delete_repository_documents(name, doc_ids)
 
     async def search_repository(
-        self, name: str, query: str
+        self, name: str, query: str, num_results: int
     ) -> List[RepositoryDocument]:
-        return await self.vector_store.search_repository(name, query)
+        return await self.vector_store.search_repository(name, query, num_results)
 
     async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
         return await self.vector_store.update_repository_timestamp(name, timestamp)

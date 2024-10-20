@@ -1,6 +1,7 @@
+from src.config import settings
 from src.schemas.repository import (
     RepositoryCreateInput,
-    RepositoryResponse,
+    RepositoryOverview,
     RepositoryUpdateInput,
 )
 from src.services.vector_store.service import VectorStoreService
@@ -11,10 +12,13 @@ from src.utils.web_scraper import extract_docs_from_website
 class RepositoryService:
     def __init__(self):
         self.vector_store_service = VectorStoreService()
-        self.redis_url = "redis://localhost:6379"
 
     async def create_repository(self, repository_input: RepositoryCreateInput):
         repository_start_url = repository_input.start_url.rstrip("/")
+
+        chunk_size = repository_input.chunk_size or settings.CHUNK_SIZE
+        chunk_overlap = repository_input.chunk_overlap or settings.CHUNK_OVERLAP
+
         print(f"Extracting documents from {repository_start_url}")
 
         docs, num_pages = await extract_docs_from_website(
@@ -23,6 +27,8 @@ class RepositoryService:
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             proxy_urls=repository_input.proxy_urls,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
         )
 
         print(f"Successfully extracted {len(docs)} documents from {num_pages} pages")
@@ -34,6 +40,8 @@ class RepositoryService:
             num_pages=num_pages,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             timestamp=timestamp,
         )
 
@@ -47,20 +55,26 @@ class RepositoryService:
             f"Successfully added {len(doc_ids)} documents to repository {repository_input.name}"
         )
 
-        return RepositoryResponse(
+        return RepositoryOverview(
             id=repository_id,
             name=repository_input.name,
             start_url=repository_start_url,
             num_pages=num_pages,
-            num_documents=len(doc_ids),
+            num_docs=len(doc_ids),
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             created_at=timestamp,
             updated_at=timestamp,
         )
 
-    async def search_repository(self, repository_name: str, query: str):
-        return await self.vector_store_service.search_repository(repository_name, query)
+    async def search_repository(
+        self, repository_name: str, query: str, num_results: int
+    ):
+        return await self.vector_store_service.search_repository(
+            repository_name, query, num_results
+        )
 
     async def get_repository(self, repository_name: str):
         return await self.vector_store_service.get_repository(repository_name)
@@ -97,6 +111,8 @@ class RepositoryService:
             include_pattern=existing_repository.include_pattern,
             exclude_pattern=existing_repository.exclude_pattern,
             proxy_urls=repository_input.proxy_urls if repository_input else None,
+            chunk_size=existing_repository.chunk_size,
+            chunk_overlap=existing_repository.chunk_overlap,
         )
         extracted_doc_ids = [doc.id for doc in extracted_docs]
 
@@ -125,12 +141,14 @@ class RepositoryService:
                 repository_name, timestamp
             )
 
-        return RepositoryResponse(
+        return RepositoryOverview(
             id=existing_repository.id,
             name=repository_name,
             start_url=existing_repository.start_url,
             num_pages=num_pages,
-            num_documents=len(extracted_doc_ids),
+            num_docs=len(extracted_doc_ids),
+            chunk_size=existing_repository.chunk_size,
+            chunk_overlap=existing_repository.chunk_overlap,
             include_pattern=existing_repository.include_pattern,
             exclude_pattern=existing_repository.exclude_pattern,
             created_at=existing_repository.created_at,
