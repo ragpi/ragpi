@@ -41,7 +41,6 @@ def split_markdown_content(
             },
         )
 
-        # TODO: Update typings for split.metadata
         if "header_1" in split.metadata:  # type: ignore
             doc.metadata["header_1"] = split.metadata["header_1"]  # type: ignore
         if "header_2" in split.metadata:  # type: ignore
