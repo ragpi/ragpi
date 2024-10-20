@@ -31,7 +31,7 @@ class RepositoryMetadata(BaseModel):
 
 class RepositoryOverview(BaseRepository, RepositoryMetadata):
     id: str
-    num_documents: int
+    num_docs: int
 
 
 class RepositoryCreateInput(BaseRepository):

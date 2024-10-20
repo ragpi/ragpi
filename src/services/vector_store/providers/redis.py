@@ -155,7 +155,7 @@ class RedisVectorStore(VectorStoreBase):
             name=metadata["name"],
             start_url=metadata["start_url"],
             num_pages=int(metadata["num_pages"]),
-            num_documents=index_info["num_docs"],
+            num_docs=index_info["num_docs"],
             include_pattern=metadata["include_pattern"],
             exclude_pattern=metadata["exclude_pattern"],
             chunk_size=int(metadata["chunk_size"]),
