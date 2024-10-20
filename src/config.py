@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str
 
-    REDIS_URL: str
+    REDIS_URL: str = "redis://localhost:6379"
 
     EMBEDDING_MODEL: EmbeddingModel = EmbeddingModel.TEXT_EMBEDDING_3_SMALL
 
