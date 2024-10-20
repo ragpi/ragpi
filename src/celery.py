@@ -1,9 +1,10 @@
-import os
 import logging
 from typing import Any
 from celery import Celery, signals
 
-redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+from src.config import settings
+
+redis_url = settings.REDIS_URL
 
 celery_app = Celery(
     __name__, broker=redis_url, backend=redis_url, include=["src.tasks"]

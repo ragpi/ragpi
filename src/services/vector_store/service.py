@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
@@ -9,8 +10,7 @@ from src.services.vector_store.factory import get_vector_store
 
 
 class VectorStoreService:
-    # TODO: Get default from env
-    def __init__(self, provider: str = "redis"):
+    def __init__(self, provider: str = settings.VECTOR_STORE_PROVIDER):
         self.vector_store = get_vector_store(provider)
 
     async def create_repository(

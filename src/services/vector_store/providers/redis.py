@@ -7,6 +7,7 @@ from redisvl.index import AsyncSearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
 
+from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
@@ -42,7 +43,7 @@ REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
 
 class RedisVectorStore(VectorStoreBase):
     def __init__(self):
-        self.client = Redis.from_url("redis://localhost:6379", decode_responses=True)
+        self.client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
         self.embeddings_function = OpenAIEmbeddings(
             model="text-embedding-3-small", dimensions=EMBEDDING_DIMENSIONS
         )

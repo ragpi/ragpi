@@ -11,7 +11,6 @@ from src.utils.web_scraper import extract_docs_from_website
 class RepositoryService:
     def __init__(self):
         self.vector_store_service = VectorStoreService()
-        self.redis_url = "redis://localhost:6379"
 
     async def create_repository(self, repository_input: RepositoryCreateInput):
         repository_start_url = repository_input.start_url.rstrip("/")

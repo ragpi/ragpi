@@ -6,6 +6,7 @@ from typing import Any, Awaitable, Callable
 from celery import current_task
 from celery.exceptions import Ignore
 
+from src.config import settings
 from src.errors import LockedRepositoryError
 from src.celery import celery_app
 from src.schemas.repository import (
@@ -30,7 +31,7 @@ def lock_and_execute_repository_task():
     def decorator(func: Callable[..., Awaitable[Any]]):
         @wraps(func)
         def wrapper(repository_name: str, *args: Any, **kwargs: Any):
-            redis_client = Redis.from_url("redis://localhost:6379")
+            redis_client = Redis.from_url(settings.REDIS_URL)
             lock = redis_client.lock(f"lock:{repository_name}", timeout=60)
 
             loop: asyncio.AbstractEventLoop | None = None
