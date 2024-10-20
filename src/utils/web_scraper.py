@@ -126,6 +126,8 @@ async def extract_docs_from_website(
     include_pattern: str | None,
     exclude_pattern: str | None,
     proxy_urls: list[str] | None,
+    chunk_size: int,
+    chunk_overlap: int,
 ) -> tuple[list[RepositoryDocument], int]:
     pages = await scrape_website(
         start_url=start_url,
@@ -137,7 +139,7 @@ async def extract_docs_from_website(
 
     docs: list[RepositoryDocument] = []
     for page in pages:
-        chunks = split_markdown_content(page)
+        chunks = split_markdown_content(page, chunk_size, chunk_overlap)
         docs.extend(chunks)
 
     return docs, len(pages)

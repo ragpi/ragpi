@@ -21,6 +21,8 @@ class Repository(BaseModel):
 class RepositoryCreateInput(Repository):
     max_pages: int | None = 3
     proxy_urls: list[str] | None = None
+    chunk_size: int | None = None
+    chunk_overlap: int | None = None
 
 
 class RepositoryUpdateInput(BaseModel):
@@ -28,10 +30,13 @@ class RepositoryUpdateInput(BaseModel):
 
 
 # TODO: Add RepositoryCreateResponse and RepositoryUpdateResponse and include num pages scraped and num documents added/removed
+# TODO: Replace with RepositoryMetadata or similar?
 class RepositoryResponse(Repository):
     id: str
     num_pages: int
     num_documents: int
+    chunk_size: int
+    chunk_overlap: int
     created_at: str
     updated_at: str
 
@@ -53,6 +58,8 @@ class RepositoryMetadata(BaseModel):
     include_pattern: str | None
     exclude_pattern: str | None
     num_pages: int
+    chunk_size: int
+    chunk_overlap: int
     created_at: str
     updated_at: str
 

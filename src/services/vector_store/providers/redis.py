@@ -15,7 +15,6 @@ from src.schemas.repository import (
 )
 from src.services.vector_store.base import VectorStoreBase
 
-print("DIMENSIONS", settings.EMBEDDING_DIMENSIONS)
 
 REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
     "fields": [
@@ -86,6 +85,8 @@ class RedisVectorStore(VectorStoreBase):
                 "include_pattern": metadata.include_pattern or "",
                 "exclude_pattern": metadata.exclude_pattern or "",
                 "num_pages": metadata.num_pages,
+                "chunk_size": metadata.chunk_size,
+                "chunk_overlap": metadata.chunk_overlap,
                 "created_at": metadata.created_at,
                 "updated_at": metadata.updated_at,
             },
@@ -157,6 +158,8 @@ class RedisVectorStore(VectorStoreBase):
             num_documents=index_info["num_docs"],
             include_pattern=metadata["include_pattern"],
             exclude_pattern=metadata["exclude_pattern"],
+            chunk_size=int(metadata["chunk_size"]),
+            chunk_overlap=int(metadata["chunk_overlap"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
         )

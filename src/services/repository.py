@@ -1,3 +1,4 @@
+from src.config import settings
 from src.schemas.repository import (
     RepositoryCreateInput,
     RepositoryResponse,
@@ -14,6 +15,10 @@ class RepositoryService:
 
     async def create_repository(self, repository_input: RepositoryCreateInput):
         repository_start_url = repository_input.start_url.rstrip("/")
+
+        chunk_size = repository_input.chunk_size or settings.CHUNK_SIZE
+        chunk_overlap = repository_input.chunk_overlap or settings.CHUNK_OVERLAP
+
         print(f"Extracting documents from {repository_start_url}")
 
         docs, num_pages = await extract_docs_from_website(
@@ -22,6 +27,8 @@ class RepositoryService:
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             proxy_urls=repository_input.proxy_urls,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
         )
 
         print(f"Successfully extracted {len(docs)} documents from {num_pages} pages")
@@ -33,6 +40,8 @@ class RepositoryService:
             num_pages=num_pages,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             timestamp=timestamp,
         )
 
@@ -52,6 +61,8 @@ class RepositoryService:
             start_url=repository_start_url,
             num_pages=num_pages,
             num_documents=len(doc_ids),
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             created_at=timestamp,
@@ -96,6 +107,8 @@ class RepositoryService:
             include_pattern=existing_repository.include_pattern,
             exclude_pattern=existing_repository.exclude_pattern,
             proxy_urls=repository_input.proxy_urls if repository_input else None,
+            chunk_size=existing_repository.chunk_size,
+            chunk_overlap=existing_repository.chunk_overlap,
         )
         extracted_doc_ids = [doc.id for doc in extracted_docs]
 
@@ -130,6 +143,8 @@ class RepositoryService:
             start_url=existing_repository.start_url,
             num_pages=num_pages,
             num_documents=len(extracted_doc_ids),
+            chunk_size=existing_repository.chunk_size,
+            chunk_overlap=existing_repository.chunk_overlap,
             include_pattern=existing_repository.include_pattern,
             exclude_pattern=existing_repository.exclude_pattern,
             created_at=existing_repository.created_at,

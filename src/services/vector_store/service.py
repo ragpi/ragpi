@@ -20,6 +20,8 @@ class VectorStoreService:
         num_pages: int,
         include_pattern: Optional[str],
         exclude_pattern: Optional[str],
+        chunk_size: int,
+        chunk_overlap: int,
         timestamp: str,
     ) -> str:
 
@@ -28,6 +30,8 @@ class VectorStoreService:
             num_pages=num_pages,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             created_at=timestamp,
             updated_at=timestamp,
         )

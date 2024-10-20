@@ -69,6 +69,8 @@ class ChromaVectorStore(VectorStoreBase):
             exclude_pattern=metadata.get("exclude_pattern"),
             num_pages=metadata["num_pages"],
             num_documents=collection.count(),
+            chunk_size=metadata["chunk_size"],
+            chunk_overlap=metadata["chunk_overlap"],
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
         )
@@ -107,6 +109,8 @@ class ChromaVectorStore(VectorStoreBase):
                 exclude_pattern=collection.metadata.get("exclude_pattern"),
                 num_pages=collection.metadata["num_pages"],
                 num_documents=collection.count(),
+                chunk_size=collection.metadata["chunk_size"],
+                chunk_overlap=collection.metadata["chunk_overlap"],
                 created_at=collection.metadata["created_at"],
                 updated_at=collection.metadata["updated_at"],
             )
