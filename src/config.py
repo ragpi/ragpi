@@ -21,6 +21,8 @@ class Settings(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379"
 
+    CHAT_MODEL: str = "gpt-4o-mini"
+
     EMBEDDING_MODEL: EmbeddingModel = EmbeddingModel.TEXT_EMBEDDING_3_SMALL
 
     EMBEDDING_DIMENSIONS: int = 1536
@@ -28,6 +30,10 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 1024
 
     CHUNK_OVERLAP: int = 20
+
+    SYSTEM_PROMPT: str = (
+        "You are an expert on {repository} and can answer any questions about it."
+    )
 
     @model_validator(mode="after")
     def set_embedding_dimensions(self):

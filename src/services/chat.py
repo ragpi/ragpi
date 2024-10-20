@@ -7,6 +7,7 @@ from openai.types.chat import (
 )
 
 
+from src.config import settings
 from src.schemas.chat import ChatResponse, CreateChatInput
 from src.services.repository import RepositoryService
 
@@ -18,7 +19,7 @@ async def get_chat_response(chatInput: CreateChatInput):
     system = ChatCompletionSystemMessageParam(
         role="system",
         content=chatInput.system
-        or f"You are an expert on {chatInput.repository} and can answer any questions about it. ",
+        or settings.SYSTEM_PROMPT.format(repository=chatInput.repository),
     )
 
     query = chatInput.messages[-1]
@@ -64,8 +65,10 @@ async def get_chat_response(chatInput: CreateChatInput):
         query_message,
     ]
 
+    model = chatInput.model or settings.CHAT_MODEL
+
     completion = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model=model,
         messages=messages,
     )
 
