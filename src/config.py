@@ -14,6 +14,10 @@ class Settings(BaseSettings):
 
     REDIS_URL: str
 
+    CHUNK_SIZE: int = 1024
+
+    CHUNK_OVERLAP: int = 20
+
     # @model_validator(mode="after")
     # def check_redis_url(self):
     #     if self.VECTOR_STORE_PROVIDER == "redis" and not self.REDIS_URL:

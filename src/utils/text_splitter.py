@@ -3,6 +3,7 @@ from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
 )
 
+from src.config import settings
 from src.schemas.repository import RepositoryDocument
 from src.schemas.page_data import PageData
 from src.utils.generate_id import generate_stable_id
@@ -22,7 +23,7 @@ def split_markdown_content(page_data: PageData) -> list[RepositoryDocument]:
     md_header_splits = markdown_splitter.split_text(page_data.content)
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000, chunk_overlap=200, add_start_index=True
+        chunk_size=settings.CHUNK_SIZE, chunk_overlap=settings.CHUNK_OVERLAP
     )
 
     splits = text_splitter.split_documents(md_header_splits)
