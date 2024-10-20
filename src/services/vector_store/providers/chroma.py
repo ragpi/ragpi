@@ -6,7 +6,7 @@ from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
-    RepositoryResponse,
+    RepositoryOverview,
 )
 from src.services.vector_store.base import VectorStoreBase
 
@@ -57,11 +57,11 @@ class ChromaVectorStore(VectorStoreBase):
 
         return doc_ids
 
-    async def get_repository(self, name: str) -> RepositoryResponse:
+    async def get_repository(self, name: str) -> RepositoryOverview:
         collection = self.client.get_collection(name)
         metadata = collection.metadata
 
-        return RepositoryResponse(
+        return RepositoryOverview(
             id=str(collection.id),
             name=collection.name,
             start_url=metadata["start_url"],
@@ -97,11 +97,11 @@ class ChromaVectorStore(VectorStoreBase):
 
         return collection_data["ids"]
 
-    async def get_all_repositories(self) -> list[RepositoryResponse]:
+    async def get_all_repositories(self) -> list[RepositoryOverview]:
         collections = self.client.list_collections()
 
         return [
-            RepositoryResponse(
+            RepositoryOverview(
                 id=str(collection.id),
                 name=collection.name,
                 start_url=collection.metadata["start_url"],

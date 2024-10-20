@@ -3,7 +3,7 @@ from typing import Any
 import re
 
 
-class Repository(BaseModel):
+class BaseRepository(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     start_url: str
     include_pattern: str | None = None
@@ -18,7 +18,23 @@ class Repository(BaseModel):
         return value
 
 
-class RepositoryCreateInput(Repository):
+class RepositoryMetadata(BaseModel):
+    start_url: str
+    include_pattern: str | None = None
+    exclude_pattern: str | None = None
+    num_pages: int
+    chunk_size: int
+    chunk_overlap: int
+    created_at: str
+    updated_at: str
+
+
+class RepositoryOverview(BaseRepository, RepositoryMetadata):
+    id: str
+    num_documents: int
+
+
+class RepositoryCreateInput(BaseRepository):
     max_pages: int | None = 3
     proxy_urls: list[str] | None = None
     chunk_size: int | None = None
@@ -27,18 +43,6 @@ class RepositoryCreateInput(Repository):
 
 class RepositoryUpdateInput(BaseModel):
     proxy_urls: list[str] | None = None
-
-
-# TODO: Add RepositoryCreateResponse and RepositoryUpdateResponse and include num pages scraped and num documents added/removed
-# TODO: Replace with RepositoryMetadata or similar?
-class RepositoryResponse(Repository):
-    id: str
-    num_pages: int
-    num_documents: int
-    chunk_size: int
-    chunk_overlap: int
-    created_at: str
-    updated_at: str
 
 
 class RepositorySearchInput(BaseModel):
@@ -50,18 +54,6 @@ class RepositoryTask(BaseModel):
     task_id: str
     status: str
     error: str | None = None
-    # repository: RepositoryResponse | None = None
-
-
-class RepositoryMetadata(BaseModel):
-    start_url: str
-    include_pattern: str | None
-    exclude_pattern: str | None
-    num_pages: int
-    chunk_size: int
-    chunk_overlap: int
-    created_at: str
-    updated_at: str
 
 
 class RepositoryDocument(BaseModel):

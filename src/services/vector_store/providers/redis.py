@@ -11,7 +11,7 @@ from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
-    RepositoryResponse,
+    RepositoryOverview,
 )
 from src.services.vector_store.base import VectorStoreBase
 
@@ -138,7 +138,7 @@ class RedisVectorStore(VectorStoreBase):
 
         return ids
 
-    async def get_repository(self, name: str) -> RepositoryResponse:
+    async def get_repository(self, name: str) -> RepositoryOverview:
         index = await self._get_index(name)
 
         if not await index.exists():
@@ -150,7 +150,7 @@ class RedisVectorStore(VectorStoreBase):
 
         metadata = self.client.hgetall(metadata_key)
 
-        return RepositoryResponse(
+        return RepositoryOverview(
             id=metadata["id"],
             name=metadata["name"],
             start_url=metadata["start_url"],
@@ -230,7 +230,7 @@ class RedisVectorStore(VectorStoreBase):
 
         return [self._extract_doc_id(index.prefix, key) for key in all_keys]
 
-    async def get_all_repositories(self) -> list[RepositoryResponse]:
+    async def get_all_repositories(self) -> list[RepositoryOverview]:
         index = await self._get_index("")
 
         repo_names = await index.listall()

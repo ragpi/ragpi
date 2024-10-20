@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
-    RepositoryResponse,
+    RepositoryOverview,
 )
 
 
@@ -19,7 +19,7 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
-    async def get_repository(self, name: str) -> RepositoryResponse:
+    async def get_repository(self, name: str) -> RepositoryOverview:
         pass
 
     @abstractmethod
@@ -33,7 +33,7 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
-    async def get_all_repositories(self) -> list[RepositoryResponse]:
+    async def get_all_repositories(self) -> list[RepositoryOverview]:
         pass
 
     @abstractmethod

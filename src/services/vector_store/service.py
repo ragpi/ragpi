@@ -4,7 +4,7 @@ from src.config import settings
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
-    RepositoryResponse,
+    RepositoryOverview,
 )
 from src.services.vector_store.factory import get_vector_store
 
@@ -49,7 +49,7 @@ class VectorStoreService:
             name, documents, timestamp
         )
 
-    async def get_repository(self, name: str) -> RepositoryResponse:
+    async def get_repository(self, name: str) -> RepositoryOverview:
         return await self.vector_store.get_repository(name)
 
     async def get_repository_documents(
@@ -60,7 +60,7 @@ class VectorStoreService:
     async def get_repository_document_ids(self, name: str) -> List[str]:
         return await self.vector_store.get_repository_document_ids(name)
 
-    async def get_all_repositories(self) -> List[RepositoryResponse]:
+    async def get_all_repositories(self) -> List[RepositoryOverview]:
         return await self.vector_store.get_all_repositories()
 
     async def delete_repository(self, name: str) -> None:

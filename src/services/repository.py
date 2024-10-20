@@ -1,7 +1,7 @@
 from src.config import settings
 from src.schemas.repository import (
     RepositoryCreateInput,
-    RepositoryResponse,
+    RepositoryOverview,
     RepositoryUpdateInput,
 )
 from src.services.vector_store.service import VectorStoreService
@@ -55,7 +55,7 @@ class RepositoryService:
             f"Successfully added {len(doc_ids)} documents to repository {repository_input.name}"
         )
 
-        return RepositoryResponse(
+        return RepositoryOverview(
             id=repository_id,
             name=repository_input.name,
             start_url=repository_start_url,
@@ -137,7 +137,7 @@ class RepositoryService:
                 repository_name, timestamp
             )
 
-        return RepositoryResponse(
+        return RepositoryOverview(
             id=existing_repository.id,
             name=repository_name,
             start_url=existing_repository.start_url,
