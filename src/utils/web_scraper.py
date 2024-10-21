@@ -101,9 +101,9 @@ async def scrape_website(
 
         enqueue_options: EnqueueKwargs = {}
 
-        if include_pattern is not None:
+        if include_pattern:
             enqueue_options["include"] = [Glob(include_pattern)]
-        if exclude_pattern is not None:
+        if exclude_pattern:
             enqueue_options["exclude"] = [Glob(exclude_pattern)]
 
         await context.enqueue_links(**enqueue_options)
