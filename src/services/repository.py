@@ -1,3 +1,4 @@
+import logging
 from src.config import settings
 from src.schemas.repository import (
     RepositoryCreateInput,
@@ -19,7 +20,7 @@ class RepositoryService:
         chunk_size = repository_input.chunk_size or settings.CHUNK_SIZE
         chunk_overlap = repository_input.chunk_overlap or settings.CHUNK_OVERLAP
 
-        print(f"Extracting documents from {repository_start_url}")
+        logging.info(f"Extracting documents from {repository_start_url}")
 
         docs, num_pages = await extract_docs_from_website(
             start_url=repository_start_url,
@@ -31,7 +32,10 @@ class RepositoryService:
             chunk_overlap=chunk_overlap,
         )
 
-        print(f"Successfully extracted {len(docs)} documents from {num_pages} pages")
+        logging.info(
+            f"Successfully extracted {len(docs)} documents from {num_pages} pages"
+        )
+
         timestamp = current_datetime()
 
         repository_id = await self.vector_store_service.create_repository(
@@ -45,13 +49,16 @@ class RepositoryService:
             timestamp=timestamp,
         )
 
-        print(f"Adding {len(docs)} documents to repository {repository_input.name}")
+        logging.info(
+            f"Adding {len(docs)} documents to repository {repository_input.name}"
+        )
 
         # TODO: If this fails, delete the repository. Probably need to add a try/except block around entire function
         doc_ids = await self.vector_store_service.add_repository_documents(
             repository_input.name, docs, timestamp
         )
-        print(
+
+        logging.info(
             f"Successfully added {len(doc_ids)} documents to repository {repository_input.name}"
         )
 
@@ -105,6 +112,8 @@ class RepositoryService:
             repository_name
         )
 
+        logging.info(f"Extracting documents from {existing_repository.start_url}")
+
         extracted_docs, num_pages = await extract_docs_from_website(
             start_url=existing_repository.start_url,
             max_pages=existing_repository.num_pages,
@@ -114,25 +123,40 @@ class RepositoryService:
             chunk_size=existing_repository.chunk_size,
             chunk_overlap=existing_repository.chunk_overlap,
         )
+
+        logging.info(
+            f"Successfully extracted {len(extracted_docs)} documents from {num_pages} pages"
+        )
+
         extracted_doc_ids = [doc.id for doc in extracted_docs]
 
         docs_to_add = [doc for doc in extracted_docs if doc.id not in existing_doc_ids]
 
         timestamp = current_datetime()
+
+        logging.info(
+            f"Adding {len(docs_to_add)} documents to repository {repository_name}"
+        )
+
         doc_ids_added = await self.vector_store_service.add_repository_documents(
             repository_name, docs_to_add, timestamp
         )
 
-        print(
+        logging.info(
             f"Successfully added {len(doc_ids_added)} documents to repository {repository_name}"
         )
 
         doc_ids_to_remove = list(set(existing_doc_ids) - set(extracted_doc_ids))
+
+        logging.info(
+            f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
+        )
+
         await self.vector_store_service.delete_repository_documents(
             repository_name, doc_ids_to_remove
         )
 
-        print(
+        logging.info(
             f"Successfully removed {len(doc_ids_to_remove)} documents from repository {repository_name}"
         )
 

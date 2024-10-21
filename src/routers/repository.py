@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, status, Depends
 from src.celery import celery_app
 from src.schemas.repository import (
     RepositoryTask,
@@ -12,7 +12,6 @@ from src.tasks import create_repository_task, update_repository_task
 router = APIRouter(
     prefix="/repositories",
     tags=["repositories"],
-    responses={404: {"description": "Not found"}},
 )
 
 
@@ -26,6 +25,8 @@ async def task_status(task_id: str) -> RepositoryTask:
             task_id=task_id, status="FAILURE", error=task.info["message"]
         )
 
+    # TODO: Handle create and update exceptions here?
+
     return RepositoryTask(
         task_id=task.task_id,
         status=task.status,
@@ -35,45 +36,32 @@ async def task_status(task_id: str) -> RepositoryTask:
 
 @router.get("/")
 async def get_all_repositories(repository_service: RepositoryService = Depends()):
-    try:
-        repositories = await repository_service.get_all_repositories()
-        return repositories
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    repositories = await repository_service.get_all_repositories()
+    return repositories
 
 
 @router.post("/", status_code=status.HTTP_202_ACCEPTED)
 async def create_repository(repository_input: RepositoryCreateInput):
-    try:
-        task = create_repository_task.delay(
-            repository_input.name, repository_input.model_dump()
-        )
-        return RepositoryTask(task_id=task.task_id, status=task.status)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    task = create_repository_task.delay(
+        repository_input.name, repository_input.model_dump()
+    )
+    return RepositoryTask(task_id=task.task_id, status=task.status)
 
 
 @router.get("/{repository_name}")
 async def get_repository(
     repository_name: str, repository_service: RepositoryService = Depends()
 ):
-    try:
-        results = await repository_service.get_repository(repository_name)
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    results = await repository_service.get_repository(repository_name)
+    return results
 
 
 @router.delete("/{repository_name}")
 async def delete_repository(
     repository_name: str, repository_service: RepositoryService = Depends()
 ):
-    try:
-        await repository_service.delete_repository(repository_name)
-        return {"message": f"Repository '{repository_name}' deleted"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    await repository_service.delete_repository(repository_name)
+    return {"message": f"Repository '{repository_name}' deleted"}
 
 
 @router.put("/{repository_name}", status_code=status.HTTP_202_ACCEPTED)
@@ -81,14 +69,10 @@ async def update_repository(
     repository_name: str,
     repository_input: RepositoryUpdateInput | None = None,
 ):
-    try:
-        task = update_repository_task.delay(
-            repository_name, repository_input.model_dump() if repository_input else None
-        )
-        return RepositoryTask(task_id=task.task_id, status=task.status)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    task = update_repository_task.delay(
+        repository_name, repository_input.model_dump() if repository_input else None
+    )
+    return RepositoryTask(task_id=task.task_id, status=task.status)
 
 
 @router.get("/{repository_name}/documents")
@@ -98,13 +82,10 @@ async def get_repository_documents(
     offset: int | None = None,
     repository_service: RepositoryService = Depends(),
 ):
-    try:
-        results = await repository_service.get_repository_documents(
-            repository_name, limit, offset
-        )
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    results = await repository_service.get_repository_documents(
+        repository_name, limit, offset
+    )
+    return results
 
 
 @router.get("/{repository_name}/search")
@@ -113,14 +94,7 @@ async def search_repository(
     query_input: RepositorySearchInput,
     repository_service: RepositoryService = Depends(),
 ):
-    try:
-        results = await repository_service.search_repository(
-            repository_name, query_input.query, query_input.num_results or 10
-        )
-        return results
-
-    # TODO: Implement custom exception handling. May need to add it in a way that can be applied to all routes
-    # except RepositoryNotFoundException:
-    #     raise HTTPException(status_code=404, detail=f"Repository '{repository_name}' not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    results = await repository_service.search_repository(
+        repository_name, query_input.query, query_input.num_results or 10
+    )
+    return results

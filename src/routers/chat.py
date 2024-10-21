@@ -12,6 +12,7 @@ router = APIRouter(
 )
 
 
+# TODO: Add error handling
 @router.post("")
 async def chat(chatInput: CreateChatInput):
     return await get_chat_response(chatInput)

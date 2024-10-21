@@ -15,7 +15,7 @@ class EmbeddingModel(str, Enum):
 
 
 class Settings(BaseSettings):
-    VECTOR_STORE_PROVIDER: VectorStoreProvider = VectorStoreProvider.REDIS
+    VECTOR_STORE_PROVIDER: VectorStoreProvider = VectorStoreProvider.CHROMA
 
     OPENAI_API_KEY: str
 

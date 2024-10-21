@@ -1,5 +1,6 @@
 import asyncio
 from functools import wraps
+import logging
 from redis import Redis
 from redis.lock import Lock
 from typing import Any, Awaitable, Callable
@@ -7,7 +8,7 @@ from celery import current_task
 from celery.exceptions import Ignore
 
 from src.config import settings
-from src.errors import LockedRepositoryError
+from src.exceptions import LockedRepositoryException
 from src.celery import celery_app
 from src.schemas.repository import (
     RepositoryCreateInput,
@@ -21,9 +22,8 @@ async def renew_lock(lock: Lock, extend_time: int = 60, renewal_interval: int = 
         await asyncio.sleep(renewal_interval)
         try:
             lock.extend(extend_time)
-            print("Lock renewed")
         except Exception as e:
-            print(f"Failed to renew lock: {e}")
+            logging.error(f"Failed to renew lock: {e}")
             break
 
 
@@ -39,17 +39,16 @@ def lock_and_execute_repository_task():
 
             try:
                 repository_locked = not lock.acquire(blocking=False)
-                print(f"LOCKED: {repository_locked}")
 
                 if repository_locked:
                     current_task.update_state(
                         state="LOCKED",
                         meta={
-                            "exc_type": "LockedRepositoryError",
+                            "exc_type": "LockedRepositoryException",
                             "message": f"Repository {repository_name} already has a task running. Please wait for the task to complete.",
                         },
                     )
-                    raise LockedRepositoryError(
+                    raise LockedRepositoryException(
                         f"Repository {repository_name} is already locked."
                     )
 
@@ -68,7 +67,7 @@ def lock_and_execute_repository_task():
 
                 result = loop.run_until_complete(task_with_lock_renewal())
 
-            except LockedRepositoryError:
+            except LockedRepositoryException:
                 raise Ignore()
 
             except Exception as e:
@@ -82,7 +81,7 @@ def lock_and_execute_repository_task():
                     try:
                         lock.release()
                     except Exception as LockError:
-                        print(f"Error releasing lock: {LockError}")
+                        logging.error(f"Error releasing lock: {LockError}")
 
             return result
 

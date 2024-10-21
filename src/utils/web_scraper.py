@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import TypedDict, NotRequired, Pattern
 from crawlee.beautifulsoup_crawler import (
@@ -112,7 +113,7 @@ async def scrape_website(
     await request_queue.drop()
 
     if len(pages) == 0:
-        raise Exception("Failed to scrape any pages")
+        logging.warning(f"No pages found on '{start_url}'")
 
     if max_pages and len(pages) > max_pages:
         pages = pages[:max_pages]

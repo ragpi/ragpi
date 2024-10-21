@@ -1,8 +1,11 @@
 import chromadb
 from chromadb.api.types import IncludeEnum, Metadata
+from chromadb.errors import InvalidCollectionException
+from chromadb.db.base import UniqueConstraintError
 from langchain_openai import OpenAIEmbeddings
 
 from src.config import settings
+from src.exceptions import RepositoryAlreadyExistsException, RepositoryNotFoundException
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
@@ -11,16 +14,20 @@ from src.schemas.repository import (
 from src.services.vector_store.base import VectorStoreBase
 
 
+# TODO: Catch exceptions from chromadb and raise custom exceptions
 class ChromaVectorStore(VectorStoreBase):
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chroma_db")
         self.embeddings_function = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
 
     async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
-        collection = self.client.create_collection(
-            name, metadata=metadata.model_dump(exclude_none=True)
-        )
-        return str(collection.id)
+        try:
+            collection = self.client.create_collection(
+                name, metadata=metadata.model_dump(exclude_none=True)
+            )
+            return str(collection.id)
+        except UniqueConstraintError as e:
+            raise RepositoryAlreadyExistsException(name) from e
 
     async def add_repository_documents(
         self, name: str, documents: list[RepositoryDocument], timestamp: str
@@ -46,8 +53,6 @@ class ChromaVectorStore(VectorStoreBase):
             batch_metadatas = doc_metadatas[i : i + BATCH_SIZE]
             batch_embeddings = doc_embeddings[i : i + BATCH_SIZE]
 
-            print(f"Adding {len(batch_ids)} documents to repository {name}")
-
             collection.add(  # type: ignore
                 ids=batch_ids,
                 documents=batch_contents,
@@ -58,44 +63,53 @@ class ChromaVectorStore(VectorStoreBase):
         return doc_ids
 
     async def get_repository(self, name: str) -> RepositoryOverview:
-        collection = self.client.get_collection(name)
-        metadata = collection.metadata
+        try:
+            collection = self.client.get_collection(name)
+            metadata = collection.metadata
 
-        return RepositoryOverview(
-            id=str(collection.id),
-            name=collection.name,
-            start_url=metadata["start_url"],
-            include_pattern=metadata.get("include_pattern"),
-            exclude_pattern=metadata.get("exclude_pattern"),
-            num_pages=metadata["num_pages"],
-            num_docs=collection.count(),
-            chunk_size=metadata["chunk_size"],
-            chunk_overlap=metadata["chunk_overlap"],
-            created_at=metadata["created_at"],
-            updated_at=metadata["updated_at"],
-        )
+            return RepositoryOverview(
+                id=str(collection.id),
+                name=collection.name,
+                start_url=metadata["start_url"],
+                include_pattern=metadata.get("include_pattern"),
+                exclude_pattern=metadata.get("exclude_pattern"),
+                num_pages=metadata["num_pages"],
+                num_docs=collection.count(),
+                chunk_size=metadata["chunk_size"],
+                chunk_overlap=metadata["chunk_overlap"],
+                created_at=metadata["created_at"],
+                updated_at=metadata["updated_at"],
+            )
+        except InvalidCollectionException as e:
+            raise RepositoryNotFoundException(name) from e
 
     async def get_repository_documents(
         self, name: str, limit: int | None, offset: int | None
     ) -> list[RepositoryDocument]:
-        collection = self.client.get_collection(name)
-        collection_data = collection.get(
-            include=[IncludeEnum.metadatas, IncludeEnum.documents],
-            limit=limit,
-            offset=offset,
-        )
+        try:
+            collection = self.client.get_collection(name)
+            collection_data = collection.get(
+                include=[IncludeEnum.metadatas, IncludeEnum.documents],
+                limit=limit,
+                offset=offset,
+            )
 
-        return self._map_repository_documents(
-            collection_data["ids"],
-            collection_data["metadatas"],
-            collection_data["documents"],
-        )
+            return self._map_repository_documents(
+                collection_data["ids"],
+                collection_data["metadatas"],
+                collection_data["documents"],
+            )
+        except InvalidCollectionException as e:
+            raise RepositoryNotFoundException(name) from e
 
     async def get_repository_document_ids(self, name: str) -> list[str]:
-        collection = self.client.get_collection(name)
-        collection_data = collection.get(include=[])
+        try:
+            collection = self.client.get_collection(name)
+            collection_data = collection.get(include=[])
 
-        return collection_data["ids"]
+            return collection_data["ids"]
+        except InvalidCollectionException as e:
+            raise RepositoryNotFoundException(name) from e
 
     async def get_all_repositories(self) -> list[RepositoryOverview]:
         collections = self.client.list_collections()
@@ -118,42 +132,53 @@ class ChromaVectorStore(VectorStoreBase):
         ]
 
     async def delete_repository(self, name: str) -> None:
-        # TODO: Need custom exception handling for collection not found.
-        self.client.delete_collection(name)
+        try:
+            self.client.delete_collection(name)
+        except InvalidCollectionException as e:
+            raise RepositoryNotFoundException(name) from e
 
     async def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
         if len(doc_ids) == 0:
             return
 
-        collection = self.client.get_collection(name)
-        collection.delete(ids=doc_ids)
+        try:
+            collection = self.client.get_collection(name)
+            collection.delete(ids=doc_ids)
+        except InvalidCollectionException as e:
+            raise RepositoryNotFoundException(name) from e
 
     async def search_repository(
         self, name: str, query: str, num_results: int
     ) -> list[RepositoryDocument]:
-        collection = self.client.get_collection(name)
+        try:
+            collection = self.client.get_collection(name)
 
-        query_embedding = self.embeddings_function.embed_query(query)
+            query_embedding = self.embeddings_function.embed_query(query)
 
-        collection_data = collection.query(  # type: ignore
-            query_embeddings=[query_embedding],
-            include=[IncludeEnum.metadatas, IncludeEnum.documents],
-            n_results=num_results,
-        )
+            collection_data = collection.query(  # type: ignore
+                query_embeddings=[query_embedding],
+                include=[IncludeEnum.metadatas, IncludeEnum.documents],
+                n_results=num_results,
+            )
 
-        return self._map_repository_documents(
-            collection_data["ids"][0],
-            collection_data["metadatas"][0] if collection_data["metadatas"] else [],
-            collection_data["documents"][0] if collection_data["documents"] else [],
-        )
+            return self._map_repository_documents(
+                collection_data["ids"][0],
+                collection_data["metadatas"][0] if collection_data["metadatas"] else [],
+                collection_data["documents"][0] if collection_data["documents"] else [],
+            )
+        except InvalidCollectionException as e:
+            raise RepositoryNotFoundException(name) from e
 
     async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
-        collection = self.client.get_collection(name)
+        try:
+            collection = self.client.get_collection(name)
 
-        collection_metadata = collection.metadata
-        collection.modify(metadata={**collection_metadata, "updated_at": timestamp})
+            collection_metadata = collection.metadata
+            collection.modify(metadata={**collection_metadata, "updated_at": timestamp})
 
-        return timestamp
+            return timestamp
+        except InvalidCollectionException as e:
+            raise RepositoryNotFoundException(name) from e
 
     def _map_repository_documents(
         self,
