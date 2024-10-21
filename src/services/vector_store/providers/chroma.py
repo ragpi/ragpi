@@ -14,7 +14,6 @@ from src.schemas.repository import (
 from src.services.vector_store.base import VectorStoreBase
 
 
-# TODO: Catch exceptions from chromadb and raise custom exceptions
 class ChromaVectorStore(VectorStoreBase):
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chroma_db")
