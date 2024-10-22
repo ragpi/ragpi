@@ -67,6 +67,8 @@ def lock_and_execute_repository_task():
 
                 result = loop.run_until_complete(task_with_lock_renewal())
 
+                return result
+
             except LockedRepositoryException:
                 raise Ignore()
 
@@ -83,8 +85,6 @@ def lock_and_execute_repository_task():
                     except Exception as LockError:
                         logging.error(f"Error releasing lock: {LockError}")
 
-            return result
-
         return wrapper
 
     return decorator
@@ -98,7 +98,7 @@ async def create_repository_task(
     repository_input = RepositoryCreateInput(**repository_input_dict)
     repository_service = RepositoryService()
     result = await repository_service.create_repository(repository_input)
-    return result.model_dump()
+    return {"repository": result.model_dump()}
 
 
 @celery_app.task
@@ -115,4 +115,4 @@ async def update_repository_task(
     result = await repository_service.update_repository(
         repository_name, repository_input
     )
-    return result.model_dump()
+    return {"repository": result.model_dump()}

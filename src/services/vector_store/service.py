@@ -7,6 +7,7 @@ from src.schemas.repository import (
     RepositoryOverview,
 )
 from src.services.vector_store.factory import get_vector_store
+from src.utils.current_datetime import current_datetime
 
 
 class VectorStoreService:
@@ -22,8 +23,9 @@ class VectorStoreService:
         exclude_pattern: Optional[str],
         chunk_size: int,
         chunk_overlap: int,
-        timestamp: str,
     ) -> str:
+
+        timestamp = current_datetime()
 
         metadata = RepositoryMetadata(
             start_url=start_url,
@@ -32,18 +34,20 @@ class VectorStoreService:
             exclude_pattern=exclude_pattern,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            created_at=timestamp,
-            updated_at=timestamp,
         )
 
-        repository_id = await self.vector_store.create_repository(name, metadata)
+        repository_id = await self.vector_store.create_repository(
+            name, metadata, timestamp
+        )
         return repository_id
 
     async def add_repository_documents(
-        self, name: str, documents: List[RepositoryDocument], timestamp: str
+        self, name: str, documents: List[RepositoryDocument]
     ) -> List[str]:
         if not documents:
             return []
+
+        timestamp = current_datetime()
 
         return await self.vector_store.add_repository_documents(
             name, documents, timestamp
@@ -77,5 +81,11 @@ class VectorStoreService:
     ) -> List[RepositoryDocument]:
         return await self.vector_store.search_repository(name, query, num_results)
 
-    async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
-        return await self.vector_store.update_repository_timestamp(name, timestamp)
+    async def update_repository_metadata(
+        self, name: str, metadata: RepositoryMetadata
+    ) -> RepositoryOverview:
+        timestamp = current_datetime()
+
+        return await self.vector_store.update_repository_metadata(
+            name, metadata, timestamp
+        )

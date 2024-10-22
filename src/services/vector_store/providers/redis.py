@@ -74,7 +74,9 @@ class RedisVectorStore(VectorStoreBase):
     def _get_doc_key(self, prefix: str, doc_id: str) -> str:
         return f"{prefix}:{doc_id}"
 
-    async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
+    async def create_repository(
+        self, name: str, metadata: RepositoryMetadata, timestamp: str
+    ) -> str:
         index = await self._get_index(name, False)
 
         await index.create()
@@ -93,8 +95,8 @@ class RedisVectorStore(VectorStoreBase):
                 "num_pages": metadata.num_pages,
                 "chunk_size": metadata.chunk_size,
                 "chunk_overlap": metadata.chunk_overlap,
-                "created_at": metadata.created_at,
-                "updated_at": metadata.updated_at,
+                "created_at": timestamp,
+                "updated_at": timestamp,
             },
         )
 
@@ -294,9 +296,22 @@ class RedisVectorStore(VectorStoreBase):
 
         return repository_documents
 
-    async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
+    async def update_repository_metadata(
+        self, name: str, metadata: RepositoryMetadata, timestamp: str
+    ) -> RepositoryOverview:
         metadata_key = f"{name}:metadata"
 
-        self.client.hset(metadata_key, "updated_at", timestamp)
+        self.client.hset(
+            metadata_key,
+            mapping={
+                "start_url": metadata.start_url,
+                "include_pattern": metadata.include_pattern or "",
+                "exclude_pattern": metadata.exclude_pattern or "",
+                "num_pages": metadata.num_pages,
+                "chunk_size": metadata.chunk_size,
+                "chunk_overlap": metadata.chunk_overlap,
+                "updated_at": timestamp,
+            },
+        )
 
-        return timestamp
+        return await self.get_repository(name)

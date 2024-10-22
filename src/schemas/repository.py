@@ -25,13 +25,13 @@ class RepositoryMetadata(BaseModel):
     num_pages: int
     chunk_size: int
     chunk_overlap: int
-    created_at: str
-    updated_at: str
 
 
 class RepositoryOverview(BaseRepository, RepositoryMetadata):
     id: str
     num_docs: int
+    created_at: str
+    updated_at: str
 
 
 class RepositoryCreateInput(BaseRepository):
@@ -48,12 +48,6 @@ class RepositoryUpdateInput(BaseModel):
 class RepositorySearchInput(BaseModel):
     query: str
     num_results: int | None = None
-
-
-class RepositoryTask(BaseModel):
-    task_id: str
-    status: str
-    error: str | None = None
 
 
 class RepositoryDocument(BaseModel):

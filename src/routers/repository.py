@@ -1,11 +1,10 @@
 from fastapi import APIRouter, status, Depends
-from src.celery import celery_app
 from src.schemas.repository import (
-    RepositoryTask,
     RepositoryCreateInput,
     RepositoryUpdateInput,
     RepositorySearchInput,
 )
+from src.schemas.task import TaskOverview
 from src.services.repository import RepositoryService
 from src.tasks import create_repository_task, update_repository_task
 
@@ -13,25 +12,6 @@ router = APIRouter(
     prefix="/repositories",
     tags=["repositories"],
 )
-
-
-@router.get("/status")
-async def task_status(task_id: str) -> RepositoryTask:
-    # TODO: Return 404 if task_id not found
-    task = celery_app.AsyncResult(task_id)
-
-    if task.status == "LOCKED":  # type: ignore
-        return RepositoryTask(
-            task_id=task_id, status="FAILURE", error=task.info["message"]
-        )
-
-    # TODO: Handle create and update exceptions here?
-
-    return RepositoryTask(
-        task_id=task.task_id,
-        status=task.status,
-        error=str(task.result) if task.failed() else None,
-    )
 
 
 @router.get("/")
@@ -45,7 +25,7 @@ async def create_repository(repository_input: RepositoryCreateInput):
     task = create_repository_task.delay(
         repository_input.name, repository_input.model_dump()
     )
-    return RepositoryTask(task_id=task.task_id, status=task.status)
+    return TaskOverview(id=task.task_id, status=task.status)
 
 
 @router.get("/{repository_name}")
@@ -72,7 +52,7 @@ async def update_repository(
     task = update_repository_task.delay(
         repository_name, repository_input.model_dump() if repository_input else None
     )
-    return RepositoryTask(task_id=task.task_id, status=task.status)
+    return TaskOverview(id=task.task_id, status=task.status)
 
 
 @router.get("/{repository_name}/documents")

@@ -1,3 +1,4 @@
+from typing import Any
 import chromadb
 from chromadb.api.types import IncludeEnum, Metadata
 from chromadb.errors import InvalidCollectionException
@@ -19,11 +20,42 @@ class ChromaVectorStore(VectorStoreBase):
         self.client = chromadb.PersistentClient(path="./chroma_db")
         self.embeddings_function = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
 
-    async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
-        try:
-            collection = self.client.create_collection(
-                name, metadata=metadata.model_dump(exclude_none=True)
+    def _map_repository_documents(
+        self,
+        ids: list[str],
+        metadatas: list[Metadata] | None,
+        documents: list[str] | None,
+    ) -> list[RepositoryDocument]:
+        if not ids or not metadatas or not documents:
+            raise ValueError(
+                "Invalid data: 'ids', 'metadatas', or 'documents' are missing."
             )
+
+        if len(ids) != len(metadatas) or len(ids) != len(documents):
+            raise ValueError(
+                "Mismatched lengths of 'ids', 'metadatas', and 'documents'."
+            )
+
+        repository_documents: list[RepositoryDocument] = []
+        for doc_id, metadata, content in zip(ids, metadatas, documents):
+            repository_doc = RepositoryDocument(
+                id=doc_id, content=content, metadata=dict(metadata)
+            )
+            repository_documents.append(repository_doc)
+
+        return repository_documents
+
+    async def create_repository(
+        self, name: str, metadata: RepositoryMetadata, timestamp: str
+    ) -> str:
+        try:
+            metadata_dict: dict[str, Any] = {
+                **metadata.model_dump(exclude_none=True),
+                "created_at": timestamp,
+                "updated_at": timestamp,
+            }
+
+            collection = self.client.create_collection(name, metadata=metadata_dict)
             return str(collection.id)
         except UniqueConstraintError as e:
             raise RepositoryAlreadyExistsException(name) from e
@@ -168,38 +200,33 @@ class ChromaVectorStore(VectorStoreBase):
         except InvalidCollectionException as e:
             raise RepositoryNotFoundException(name) from e
 
-    async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
+    async def update_repository_metadata(
+        self, name: str, metadata: RepositoryMetadata, timestamp: str
+    ) -> RepositoryOverview:
         try:
+            existing_metadata = self.client.get_collection(name).metadata
+
+            metadata_dict: dict[str, Any] = {
+                **metadata.model_dump(exclude_none=True),
+                "created_at": existing_metadata["created_at"],
+                "updated_at": timestamp,
+            }
+
             collection = self.client.get_collection(name)
+            collection.modify(metadata=metadata_dict)
 
-            collection_metadata = collection.metadata
-            collection.modify(metadata={**collection_metadata, "updated_at": timestamp})
-
-            return timestamp
+            return RepositoryOverview(
+                id=str(collection.id),
+                name=collection.name,
+                start_url=metadata.start_url,
+                include_pattern=metadata.include_pattern,
+                exclude_pattern=metadata.exclude_pattern,
+                num_pages=metadata.num_pages,
+                num_docs=collection.count(),
+                chunk_size=metadata.chunk_size,
+                chunk_overlap=metadata.chunk_overlap,
+                created_at=existing_metadata["created_at"],
+                updated_at=timestamp,
+            )
         except InvalidCollectionException as e:
             raise RepositoryNotFoundException(name) from e
-
-    def _map_repository_documents(
-        self,
-        ids: list[str],
-        metadatas: list[Metadata] | None,
-        documents: list[str] | None,
-    ) -> list[RepositoryDocument]:
-        if not ids or not metadatas or not documents:
-            raise ValueError(
-                "Invalid data: 'ids', 'metadatas', or 'documents' are missing."
-            )
-
-        if len(ids) != len(metadatas) or len(ids) != len(documents):
-            raise ValueError(
-                "Mismatched lengths of 'ids', 'metadatas', and 'documents'."
-            )
-
-        repository_documents: list[RepositoryDocument] = []
-        for doc_id, metadata, content in zip(ids, metadatas, documents):
-            repository_doc = RepositoryDocument(
-                id=doc_id, content=content, metadata=dict(metadata)
-            )
-            repository_documents.append(repository_doc)
-
-        return repository_documents
