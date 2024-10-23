@@ -14,8 +14,6 @@ async def task_status(task_id: str) -> TaskOverview:
     # TODO: Return 404 if task_id not found
     task = celery_app.AsyncResult(task_id)
 
-    print(task.result)
-
     if task.status == "LOCKED":  # type: ignore
         return TaskOverview(id=task_id, status="FAILURE", error=task.info["message"])
 

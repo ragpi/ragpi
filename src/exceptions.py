@@ -15,9 +15,10 @@ class RepositoryAlreadyExistsException(Exception):
         super().__init__(f"Repository '{repository_name}' already exists")
 
 
-# TODO: add init method with repository_name
-class LockedRepositoryException(Exception):
-    pass
+class LockedResourceException(Exception):
+    def __init__(self, resource_name: str):
+        self.resource_name = resource_name
+        super().__init__(f"Resource '{resource_name}' is already locked")
 
 
 async def repository_not_found_handler(
