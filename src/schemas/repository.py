@@ -54,3 +54,9 @@ class RepositoryDocument(BaseModel):
     id: str
     content: str
     metadata: dict[str, Any]
+
+
+class RepositoryTaskResponse(BaseModel):
+    task_id: str
+    repository: RepositoryOverview
+    message: str | None = None

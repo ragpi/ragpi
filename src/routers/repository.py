@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status, Depends
 from src.schemas.repository import (
     RepositoryCreateInput,
+    RepositoryTaskResponse,
     RepositoryUpdateInput,
     RepositorySearchInput,
 )
@@ -23,7 +24,13 @@ async def create_repository(
     repository_input: RepositoryCreateInput,
     repository_service: RepositoryService = Depends(),
 ):
-    return await repository_service.create_repository(repository_input)
+    repository, task_id = await repository_service.create_repository(repository_input)
+
+    return RepositoryTaskResponse(
+        repository=repository,
+        task_id=task_id,
+        message="Repository has been created and documents are being synced. Check the task status for updates.",
+    )
 
 
 @router.get("/{repository_name}")
@@ -48,7 +55,15 @@ async def update_repository(
     repository_input: RepositoryUpdateInput | None = None,
     repository_service: RepositoryService = Depends(),
 ):
-    return await repository_service.update_repository(repository_name, repository_input)
+    repository, task_id = await repository_service.update_repository(
+        repository_name, repository_input
+    )
+
+    return RepositoryTaskResponse(
+        repository=repository,
+        task_id=task_id,
+        message="A task has been created to sync the repository documents. Check the task status for updates.",
+    )
 
 
 @router.get("/{repository_name}/documents")

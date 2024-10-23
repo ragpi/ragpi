@@ -11,7 +11,7 @@ class VectorStoreBase(ABC):
     @abstractmethod
     async def create_repository(
         self, name: str, metadata: RepositoryMetadata, timestamp: str
-    ) -> str:
+    ) -> RepositoryOverview:
         pass
 
     @abstractmethod

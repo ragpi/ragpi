@@ -32,7 +32,7 @@ class RepositoryService:
             chunk_overlap=chunk_overlap,
         )
 
-        await self.vector_store_service.create_repository(
+        repository = await self.vector_store_service.create_repository(
             name=repository_input.name,
             metadata=metadata,
             timestamp=timestamp,
@@ -50,7 +50,7 @@ class RepositoryService:
             existing_doc_ids=[],
         )
 
-        return task.id
+        return repository, task.id
 
     async def update_repository(
         self,
@@ -79,7 +79,7 @@ class RepositoryService:
             existing_doc_ids=existing_doc_ids,
         )
 
-        return task.id
+        return existing_repository, task.id
 
     async def search_repository(
         self, repository_name: str, query: str, num_results: int

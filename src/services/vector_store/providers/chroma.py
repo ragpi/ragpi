@@ -20,6 +20,25 @@ class ChromaVectorStore(VectorStoreBase):
         self.client = chromadb.PersistentClient(path="./chroma_db")
         self.embeddings_function = OpenAIEmbeddings(model=settings.EMBEDDING_MODEL)
 
+    def _map_collection_overview(
+        self, collection: chromadb.Collection
+    ) -> RepositoryOverview:
+        metadata = collection.metadata
+
+        return RepositoryOverview(
+            id=str(collection.id),
+            name=collection.name,
+            start_url=metadata["start_url"],
+            include_pattern=metadata.get("include_pattern"),
+            exclude_pattern=metadata.get("exclude_pattern"),
+            num_pages=metadata["num_pages"],
+            num_docs=collection.count(),
+            chunk_size=metadata["chunk_size"],
+            chunk_overlap=metadata["chunk_overlap"],
+            created_at=metadata["created_at"],
+            updated_at=metadata["updated_at"],
+        )
+
     def _map_repository_documents(
         self,
         ids: list[str],
@@ -47,7 +66,7 @@ class ChromaVectorStore(VectorStoreBase):
 
     async def create_repository(
         self, name: str, metadata: RepositoryMetadata, timestamp: str
-    ) -> str:
+    ) -> RepositoryOverview:
         try:
             metadata_dict: dict[str, Any] = {
                 **metadata.model_dump(exclude_none=True),
@@ -56,7 +75,7 @@ class ChromaVectorStore(VectorStoreBase):
             }
 
             collection = self.client.create_collection(name, metadata=metadata_dict)
-            return str(collection.id)
+            return self._map_collection_overview(collection)
         except UniqueConstraintError as e:
             raise RepositoryAlreadyExistsException(name) from e
 
@@ -96,21 +115,7 @@ class ChromaVectorStore(VectorStoreBase):
     async def get_repository(self, name: str) -> RepositoryOverview:
         try:
             collection = self.client.get_collection(name)
-            metadata = collection.metadata
-
-            return RepositoryOverview(
-                id=str(collection.id),
-                name=collection.name,
-                start_url=metadata["start_url"],
-                include_pattern=metadata.get("include_pattern"),
-                exclude_pattern=metadata.get("exclude_pattern"),
-                num_pages=metadata["num_pages"],
-                num_docs=collection.count(),
-                chunk_size=metadata["chunk_size"],
-                chunk_overlap=metadata["chunk_overlap"],
-                created_at=metadata["created_at"],
-                updated_at=metadata["updated_at"],
-            )
+            return self._map_collection_overview(collection)
         except InvalidCollectionException as e:
             raise RepositoryNotFoundException(name) from e
 
@@ -145,22 +150,7 @@ class ChromaVectorStore(VectorStoreBase):
     async def get_all_repositories(self) -> list[RepositoryOverview]:
         collections = self.client.list_collections()
 
-        return [
-            RepositoryOverview(
-                id=str(collection.id),
-                name=collection.name,
-                start_url=collection.metadata["start_url"],
-                include_pattern=collection.metadata.get("include_pattern"),
-                exclude_pattern=collection.metadata.get("exclude_pattern"),
-                num_pages=collection.metadata["num_pages"],
-                num_docs=collection.count(),
-                chunk_size=collection.metadata["chunk_size"],
-                chunk_overlap=collection.metadata["chunk_overlap"],
-                created_at=collection.metadata["created_at"],
-                updated_at=collection.metadata["updated_at"],
-            )
-            for collection in collections
-        ]
+        return [self._map_collection_overview(collection) for collection in collections]
 
     async def delete_repository(self, name: str) -> None:
         try:
@@ -215,18 +205,6 @@ class ChromaVectorStore(VectorStoreBase):
             collection = self.client.get_collection(name)
             collection.modify(metadata=metadata_dict)
 
-            return RepositoryOverview(
-                id=str(collection.id),
-                name=collection.name,
-                start_url=metadata.start_url,
-                include_pattern=metadata.include_pattern,
-                exclude_pattern=metadata.exclude_pattern,
-                num_pages=metadata.num_pages,
-                num_docs=collection.count(),
-                chunk_size=metadata.chunk_size,
-                chunk_overlap=metadata.chunk_overlap,
-                created_at=existing_metadata["created_at"],
-                updated_at=timestamp,
-            )
+            return self._map_collection_overview(collection)
         except InvalidCollectionException as e:
             raise RepositoryNotFoundException(name) from e

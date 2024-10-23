@@ -76,7 +76,7 @@ class RedisVectorStore(VectorStoreBase):
 
     async def create_repository(
         self, name: str, metadata: RepositoryMetadata, timestamp: str
-    ) -> str:
+    ) -> RepositoryOverview:
         index = await self._get_index(name, False)
 
         await index.create()
@@ -100,7 +100,7 @@ class RedisVectorStore(VectorStoreBase):
             },
         )
 
-        return id
+        return await self.get_repository(name)
 
     async def add_repository_documents(
         self, name: str, documents: list[RepositoryDocument], timestamp: str
