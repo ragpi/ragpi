@@ -1,13 +1,10 @@
-import logging
 from src.config import settings
 from src.schemas.repository import (
     RepositoryCreateInput,
-    RepositoryMetadata,
-    RepositoryOverview,
     RepositoryUpdateInput,
 )
+from src.services.repository.sync_documents import sync_repository_documents_task
 from src.services.vector_store.service import VectorStoreService
-from src.utils.web_scraper import extract_docs_from_website
 
 
 class RepositoryService:
@@ -30,7 +27,7 @@ class RepositoryService:
             chunk_overlap=chunk_overlap,
         )
 
-        updated_repository = await self._sync_repository_documents(
+        task = sync_repository_documents_task.delay(
             repository_name=repository_input.name,
             start_url=repository_start_url,
             max_pages=repository_input.max_pages,
@@ -39,10 +36,10 @@ class RepositoryService:
             proxy_urls=repository_input.proxy_urls,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            existing_doc_ids=set(),
+            existing_doc_ids=[],
         )
 
-        return updated_repository
+        return task.id
 
     async def update_repository(
         self,
@@ -59,7 +56,7 @@ class RepositoryService:
 
         proxy_urls = repository_input.proxy_urls if repository_input else None
 
-        updated_repository = await self._sync_repository_documents(
+        task = sync_repository_documents_task.delay(
             repository_name=repository_name,
             start_url=existing_repository.start_url,
             max_pages=existing_repository.num_pages,
@@ -68,82 +65,10 @@ class RepositoryService:
             proxy_urls=proxy_urls,
             chunk_size=existing_repository.chunk_size,
             chunk_overlap=existing_repository.chunk_overlap,
-            existing_doc_ids=set(existing_doc_ids),
+            existing_doc_ids=existing_doc_ids,
         )
 
-        return updated_repository
-
-    async def _sync_repository_documents(
-        self,
-        repository_name: str,
-        start_url: str,
-        max_pages: int | None,
-        include_pattern: str | None,
-        exclude_pattern: str | None,
-        proxy_urls: list[str] | None,
-        chunk_size: int,
-        chunk_overlap: int,
-        existing_doc_ids: set[str],
-    ) -> RepositoryOverview:
-        logging.info(f"Extracting documents from {start_url}")
-
-        docs, num_pages = await extract_docs_from_website(
-            start_url=start_url,
-            max_pages=max_pages,
-            include_pattern=include_pattern,
-            exclude_pattern=exclude_pattern,
-            proxy_urls=proxy_urls,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-
-        logging.info(
-            f"Successfully extracted {len(docs)} documents from {num_pages} pages"
-        )
-
-        extracted_doc_ids = {doc.id for doc in docs}
-
-        docs_to_add = [doc for doc in docs if doc.id not in existing_doc_ids]
-        doc_ids_to_remove = existing_doc_ids - extracted_doc_ids
-
-        if docs_to_add:
-            logging.info(
-                f"Adding {len(docs_to_add)} documents to repository {repository_name}"
-            )
-            await self.vector_store_service.add_repository_documents(
-                repository_name, docs_to_add
-            )
-            logging.info(
-                f"Successfully added {len(docs_to_add)} documents to repository {repository_name}"
-            )
-
-        if doc_ids_to_remove:
-            logging.info(
-                f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
-            )
-            await self.vector_store_service.delete_repository_documents(
-                repository_name, list(doc_ids_to_remove)
-            )
-            logging.info(
-                f"Successfully removed {len(doc_ids_to_remove)} documents from repository {repository_name}"
-            )
-
-        if not docs_to_add and not doc_ids_to_remove:
-            logging.info("No changes detected in repository")
-
-            return await self.vector_store_service.get_repository(repository_name)
-
-        return await self.vector_store_service.update_repository_metadata(
-            repository_name,
-            RepositoryMetadata(
-                start_url=start_url,
-                num_pages=num_pages,
-                include_pattern=include_pattern,
-                exclude_pattern=exclude_pattern,
-                chunk_size=chunk_size,
-                chunk_overlap=chunk_overlap,
-            ),
-        )
+        return task.id
 
     async def search_repository(
         self, repository_name: str, query: str, num_results: int

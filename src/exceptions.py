@@ -30,6 +30,16 @@ async def repository_not_found_handler(
     )
 
 
+async def repository_already_exists_handler(
+    request: Request, exc: RepositoryAlreadyExistsException
+):
+    logging.error(exc)
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
 async def unexpected_exception_handler(request: Request, exc: Exception):
     logging.error(exc)
     return JSONResponse(

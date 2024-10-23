@@ -11,10 +11,10 @@ from src.config import settings
 from src.exceptions import LockedRepositoryException
 from src.celery import celery_app
 from src.schemas.repository import (
-    RepositoryCreateInput,
-    RepositoryUpdateInput,
+    RepositoryMetadata,
 )
-from src.services.repository import RepositoryService
+from src.services.vector_store.service import VectorStoreService
+from src.utils.web_scraper import extract_docs_from_website
 
 
 async def renew_lock(lock: Lock, extend_time: int = 60, renewal_interval: int = 30):
@@ -92,27 +92,76 @@ def lock_and_execute_repository_task():
 
 @celery_app.task
 @lock_and_execute_repository_task()
-async def create_repository_task(
-    repository_name: str, repository_input_dict: dict[str, Any]
+async def sync_repository_documents_task(
+    repository_name: str,
+    start_url: str,
+    max_pages: int | None,
+    include_pattern: str | None,
+    exclude_pattern: str | None,
+    proxy_urls: list[str] | None,
+    chunk_size: int,
+    chunk_overlap: int,
+    existing_doc_ids: list[str],
 ):
-    repository_input = RepositoryCreateInput(**repository_input_dict)
-    repository_service = RepositoryService()
-    result = await repository_service.create_repository(repository_input)
-    return {"repository": result.model_dump()}
+    logging.info(f"Extracting documents from {start_url}")
 
+    vector_store_service = VectorStoreService()
 
-@celery_app.task
-@lock_and_execute_repository_task()
-async def update_repository_task(
-    repository_name: str, repository_input_dict: dict[str, Any] | None = None
-):
-    repository_input = (
-        RepositoryUpdateInput(**repository_input_dict)
-        if repository_input_dict
-        else None
+    docs, num_pages = await extract_docs_from_website(
+        start_url=start_url,
+        max_pages=max_pages,
+        include_pattern=include_pattern,
+        exclude_pattern=exclude_pattern,
+        proxy_urls=proxy_urls,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
     )
-    repository_service = RepositoryService()
-    result = await repository_service.update_repository(
-        repository_name, repository_input
+
+    logging.info(f"Successfully extracted {len(docs)} documents from {num_pages} pages")
+
+    extracted_doc_ids = {doc.id for doc in docs}
+    existing_doc_ids_set = set(existing_doc_ids)
+
+    docs_to_add = [doc for doc in docs if doc.id not in existing_doc_ids_set]
+    doc_ids_to_remove = existing_doc_ids_set - extracted_doc_ids
+
+    if docs_to_add:
+        logging.info(
+            f"Adding {len(docs_to_add)} documents to repository {repository_name}"
+        )
+        await vector_store_service.add_repository_documents(
+            repository_name, docs_to_add
+        )
+        logging.info(
+            f"Successfully added {len(docs_to_add)} documents to repository {repository_name}"
+        )
+
+    if doc_ids_to_remove:
+        logging.info(
+            f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
+        )
+        await vector_store_service.delete_repository_documents(
+            repository_name, list(doc_ids_to_remove)
+        )
+        logging.info(
+            f"Successfully removed {len(doc_ids_to_remove)} documents from repository {repository_name}"
+        )
+
+    if not docs_to_add and not doc_ids_to_remove:
+        logging.info("No changes detected in repository")
+        existing_repository = await vector_store_service.get_repository(repository_name)
+        return existing_repository.model_dump()
+
+    updated_repository = await vector_store_service.update_repository_metadata(
+        repository_name,
+        RepositoryMetadata(
+            start_url=start_url,
+            num_pages=num_pages,
+            include_pattern=include_pattern,
+            exclude_pattern=exclude_pattern,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        ),
     )
-    return {"repository": result.model_dump()}
+
+    return updated_repository.model_dump()

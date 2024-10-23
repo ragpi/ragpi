@@ -7,7 +7,10 @@ from src.config import settings
 redis_url = settings.REDIS_URL
 
 celery_app = Celery(
-    __name__, broker=redis_url, backend=redis_url, include=["src.tasks"]
+    __name__,
+    broker=redis_url,
+    backend=redis_url,
+    include=["src.services.repository.sync_documents"],
 )
 
 

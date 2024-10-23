@@ -4,9 +4,7 @@ from src.schemas.repository import (
     RepositoryUpdateInput,
     RepositorySearchInput,
 )
-from src.schemas.task import TaskOverview
-from src.services.repository import RepositoryService
-from src.tasks import create_repository_task, update_repository_task
+from src.services.repository.service import RepositoryService
 
 router = APIRouter(
     prefix="/repositories",
@@ -21,11 +19,11 @@ async def get_all_repositories(repository_service: RepositoryService = Depends()
 
 
 @router.post("/", status_code=status.HTTP_202_ACCEPTED)
-async def create_repository(repository_input: RepositoryCreateInput):
-    task = create_repository_task.delay(
-        repository_input.name, repository_input.model_dump()
-    )
-    return TaskOverview(id=task.task_id, status=task.status)
+async def create_repository(
+    repository_input: RepositoryCreateInput,
+    repository_service: RepositoryService = Depends(),
+):
+    return await repository_service.create_repository(repository_input)
 
 
 @router.get("/{repository_name}")
@@ -48,11 +46,9 @@ async def delete_repository(
 async def update_repository(
     repository_name: str,
     repository_input: RepositoryUpdateInput | None = None,
+    repository_service: RepositoryService = Depends(),
 ):
-    task = update_repository_task.delay(
-        repository_name, repository_input.model_dump() if repository_input else None
-    )
-    return TaskOverview(id=task.task_id, status=task.status)
+    return await repository_service.update_repository(repository_name, repository_input)
 
 
 @router.get("/{repository_name}/documents")
