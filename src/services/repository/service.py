@@ -1,15 +1,19 @@
 from src.config import settings
 from src.schemas.repository import (
     RepositoryCreateInput,
+    RepositoryMetadata,
     RepositoryUpdateInput,
 )
 from src.services.repository.sync_documents import sync_repository_documents_task
-from src.services.vector_store.service import VectorStoreService
+from src.services.vector_store.service import get_vector_store_service
+from src.utils.current_datetime import current_datetime
 
 
 class RepositoryService:
     def __init__(self):
-        self.vector_store_service = VectorStoreService()
+        self.vector_store_service = get_vector_store_service(
+            settings.VECTOR_STORE_PROVIDER
+        )
 
     async def create_repository(self, repository_input: RepositoryCreateInput):
         repository_start_url = repository_input.start_url.rstrip("/")
@@ -17,14 +21,21 @@ class RepositoryService:
         chunk_size = repository_input.chunk_size or settings.CHUNK_SIZE
         chunk_overlap = repository_input.chunk_overlap or settings.CHUNK_OVERLAP
 
-        await self.vector_store_service.create_repository(
-            name=repository_input.name,
+        timestamp = current_datetime()
+
+        metadata = RepositoryMetadata(
             start_url=repository_start_url,
             num_pages=0,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
+        )
+
+        await self.vector_store_service.create_repository(
+            name=repository_input.name,
+            metadata=metadata,
+            timestamp=timestamp,
         )
 
         task = sync_repository_documents_task.delay(

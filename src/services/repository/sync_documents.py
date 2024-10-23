@@ -1,11 +1,13 @@
 import logging
 
 from src.celery import celery_app
+from src.config import settings
 from src.decorators import lock_and_execute_repository_task
 from src.schemas.repository import (
     RepositoryMetadata,
 )
-from src.services.vector_store.service import VectorStoreService
+from src.services.vector_store.service import get_vector_store_service
+from src.utils.current_datetime import current_datetime
 from src.utils.web_scraper import extract_docs_from_website
 
 
@@ -24,7 +26,7 @@ async def sync_repository_documents_task(
 ):
     logging.info(f"Extracting documents from {start_url}")
 
-    vector_store_service = VectorStoreService()
+    vector_store_service = get_vector_store_service(settings.VECTOR_STORE_PROVIDER)
 
     docs, num_pages = await extract_docs_from_website(
         start_url=start_url,
@@ -49,7 +51,7 @@ async def sync_repository_documents_task(
             f"Adding {len(docs_to_add)} documents to repository {repository_name}"
         )
         await vector_store_service.add_repository_documents(
-            repository_name, docs_to_add
+            repository_name, docs_to_add, timestamp=current_datetime()
         )
         logging.info(
             f"Successfully added {len(docs_to_add)} documents to repository {repository_name}"
@@ -81,6 +83,7 @@ async def sync_repository_documents_task(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
         ),
+        current_datetime(),
     )
 
     return updated_repository.model_dump()
