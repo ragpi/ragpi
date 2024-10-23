@@ -20,6 +20,10 @@ async def task_status(task_id: str) -> TaskOverview:
     return TaskOverview(
         id=task.task_id,
         status=task.status,
-        error=str(task.result) if task.failed() else None,
+        error=(
+            "An error occurred, please check the task logs for more information"
+            if task.failed()
+            else None
+        ),
         result=task.result if task.successful() else None,  # type: ignore
     )
