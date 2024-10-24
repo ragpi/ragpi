@@ -6,13 +6,13 @@ from chromadb.db.base import UniqueConstraintError
 from langchain_openai import OpenAIEmbeddings
 
 from src.config import settings
+from src.document.schemas import Document
 from src.exceptions import (
     ResourceAlreadyExistsException,
     ResourceNotFoundException,
     ResourceType,
 )
 from src.repository.schemas import (
-    RepositoryDocument,
     RepositoryMetadata,
     RepositoryOverview,
 )
@@ -48,7 +48,7 @@ class ChromaVectorStore(VectorStoreBase):
         ids: list[str],
         metadatas: list[Metadata] | None,
         documents: list[str] | None,
-    ) -> list[RepositoryDocument]:
+    ) -> list[Document]:
         if not ids or not metadatas or not documents:
             raise ValueError(
                 "Invalid data: 'ids', 'metadatas', or 'documents' are missing."
@@ -59,9 +59,9 @@ class ChromaVectorStore(VectorStoreBase):
                 "Mismatched lengths of 'ids', 'metadatas', and 'documents'."
             )
 
-        repository_documents: list[RepositoryDocument] = []
+        repository_documents: list[Document] = []
         for doc_id, metadata, content in zip(ids, metadatas, documents):
-            repository_doc = RepositoryDocument(
+            repository_doc = Document(
                 id=doc_id, content=content, metadata=dict(metadata)
             )
             repository_documents.append(repository_doc)
@@ -84,7 +84,7 @@ class ChromaVectorStore(VectorStoreBase):
             raise ResourceAlreadyExistsException(ResourceType.REPOSITORY, name) from e
 
     async def add_repository_documents(
-        self, name: str, documents: list[RepositoryDocument], timestamp: str
+        self, name: str, documents: list[Document], timestamp: str
     ) -> list[str]:
         BATCH_SIZE = 10000
         collection = self.client.get_collection(name)
@@ -125,7 +125,7 @@ class ChromaVectorStore(VectorStoreBase):
 
     async def get_repository_documents(
         self, name: str, limit: int | None, offset: int | None
-    ) -> list[RepositoryDocument]:
+    ) -> list[Document]:
         try:
             collection = self.client.get_collection(name)
             collection_data = collection.get(
@@ -174,7 +174,7 @@ class ChromaVectorStore(VectorStoreBase):
 
     async def search_repository(
         self, name: str, query: str, num_results: int
-    ) -> list[RepositoryDocument]:
+    ) -> list[Document]:
         try:
             collection = self.client.get_collection(name)
 

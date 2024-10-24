@@ -1,4 +1,11 @@
+from typing import Any
 from pydantic import BaseModel
+
+
+class Document(BaseModel):
+    id: str
+    content: str
+    metadata: dict[str, Any]
 
 
 class PageData(BaseModel):

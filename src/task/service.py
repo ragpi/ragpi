@@ -3,7 +3,7 @@ from redis import Redis
 
 from src.config import settings
 from src.celery import celery_app
-from src.document.web_scraper import extract_docs_from_website
+from src.document.service import extract_documents_from_website
 from src.exceptions import ResourceNotFoundException, ResourceType
 from src.repository.schemas import RepositoryMetadata
 from src.task.lock.decorators import lock_and_execute_repository_task
@@ -58,7 +58,7 @@ async def sync_repository_documents_task(
 
     vector_store_service = get_vector_store_service(settings.VECTOR_STORE_PROVIDER)
 
-    docs, num_pages = await extract_docs_from_website(
+    docs, num_pages = await extract_documents_from_website(
         start_url=start_url,
         max_pages=max_pages,
         include_pattern=include_pattern,

@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Any
 import re
 
 
@@ -48,13 +47,6 @@ class RepositoryUpdateInput(BaseModel):
 class RepositorySearchInput(BaseModel):
     query: str
     num_results: int | None = None
-
-
-# TODO: Move to document/schemas.py and rename to Document
-class RepositoryDocument(BaseModel):
-    id: str
-    content: str
-    metadata: dict[str, Any]
 
 
 class RepositoryTaskResponse(BaseModel):

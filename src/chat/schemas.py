@@ -1,7 +1,7 @@
 from typing import Literal
 from pydantic import BaseModel
 
-from src.repository.schemas import RepositoryDocument
+from src.document.schemas import Document
 
 
 class Message(BaseModel):
@@ -19,4 +19,4 @@ class CreateChatInput(BaseModel):
 
 class ChatResponse(BaseModel):
     message: str | None
-    sources: list[RepositoryDocument]
+    sources: list[Document]

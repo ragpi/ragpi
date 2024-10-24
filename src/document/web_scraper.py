@@ -12,8 +12,6 @@ from crawlee.storages import RequestQueue
 import html2text
 
 from src.document.schemas import PageData
-from src.document.text_splitter import split_markdown_content
-from src.repository.schemas import RepositoryDocument
 
 
 class CrawlerKwargs(TypedDict):
@@ -119,28 +117,3 @@ async def scrape_website(
         pages = pages[:max_pages]
 
     return pages
-
-
-async def extract_docs_from_website(
-    start_url: str,
-    max_pages: int | None,
-    include_pattern: str | None,
-    exclude_pattern: str | None,
-    proxy_urls: list[str] | None,
-    chunk_size: int,
-    chunk_overlap: int,
-) -> tuple[list[RepositoryDocument], int]:
-    pages = await scrape_website(
-        start_url=start_url,
-        max_pages=max_pages,
-        include_pattern=include_pattern,
-        exclude_pattern=exclude_pattern,
-        proxy_urls=proxy_urls,
-    )
-
-    docs: list[RepositoryDocument] = []
-    for page in pages:
-        chunks = split_markdown_content(page, chunk_size, chunk_overlap)
-        docs.extend(chunks)
-
-    return docs, len(pages)

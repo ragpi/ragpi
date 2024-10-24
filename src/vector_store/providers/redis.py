@@ -8,13 +8,13 @@ from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
 
 from src.config import settings
+from src.document.schemas import Document
 from src.exceptions import (
     ResourceAlreadyExistsException,
     ResourceNotFoundException,
     ResourceType,
 )
 from src.repository.schemas import (
-    RepositoryDocument,
     RepositoryMetadata,
     RepositoryOverview,
 )
@@ -107,7 +107,7 @@ class RedisVectorStore(VectorStoreBase):
         return await self.get_repository(name)
 
     async def add_repository_documents(
-        self, name: str, documents: list[RepositoryDocument], timestamp: str
+        self, name: str, documents: list[Document], timestamp: str
     ) -> list[str]:
         index = await self._get_index(name)
 
@@ -115,9 +115,7 @@ class RedisVectorStore(VectorStoreBase):
             [doc.content for doc in documents]
         )
 
-        def create_doc_dict(
-            doc: RepositoryDocument, embedding: list[float]
-        ) -> dict[str, Any]:
+        def create_doc_dict(doc: Document, embedding: list[float]) -> dict[str, Any]:
             doc_dict: dict[str, Any] = {
                 "id": doc.id,
                 "content": doc.content,
@@ -172,7 +170,7 @@ class RedisVectorStore(VectorStoreBase):
 
     async def get_repository_documents(
         self, name: str, limit: int | None, offset: int | None
-    ) -> list[RepositoryDocument]:
+    ) -> list[Document]:
         await self._get_index(name)
 
         all_keys: list[str] = []
@@ -205,7 +203,7 @@ class RedisVectorStore(VectorStoreBase):
         docs = pipeline.execute()
 
         return [
-            RepositoryDocument(
+            Document(
                 id=doc[0],
                 content=doc[7],
                 metadata={
@@ -257,7 +255,7 @@ class RedisVectorStore(VectorStoreBase):
 
     async def search_repository(
         self, name: str, query: str, num_results: int
-    ) -> list[RepositoryDocument]:
+    ) -> list[Document]:
         index = await self._get_index(name)
 
         query_embedding = await self.embeddings_function.aembed_query(query)
@@ -281,7 +279,7 @@ class RedisVectorStore(VectorStoreBase):
         search_results = await index.query(vector_query)
 
         repository_documents = [
-            RepositoryDocument(
+            Document(
                 id=self._extract_doc_id(index.prefix, doc["id"]),
                 content=doc["content"],
                 metadata={
