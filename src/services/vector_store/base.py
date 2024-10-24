@@ -9,7 +9,9 @@ from src.schemas.repository import (
 
 class VectorStoreBase(ABC):
     @abstractmethod
-    async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
+    async def create_repository(
+        self, name: str, metadata: RepositoryMetadata, timestamp: str
+    ) -> RepositoryOverview:
         pass
 
     @abstractmethod
@@ -51,5 +53,7 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
-    async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
+    async def update_repository_metadata(
+        self, name: str, metadata: RepositoryMetadata, timestamp: str
+    ) -> RepositoryOverview:
         pass

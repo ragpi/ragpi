@@ -8,6 +8,11 @@ from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
 
 from src.config import settings
+from src.exceptions import (
+    ResourceAlreadyExistsException,
+    ResourceNotFoundException,
+    ResourceType,
+)
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
@@ -48,7 +53,9 @@ class RedisVectorStore(VectorStoreBase):
         )
         self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
 
-    async def _get_index(self, name: str) -> AsyncSearchIndex:
+    async def _get_index(
+        self, name: str, should_exist: bool = True
+    ) -> AsyncSearchIndex:
         index_schema = IndexSchema.from_dict(
             {
                 "index": {"name": name, "prefix": f"{name}:documents"},
@@ -56,6 +63,13 @@ class RedisVectorStore(VectorStoreBase):
             }
         )
         index = await AsyncSearchIndex(index_schema).set_client(self.client)  # type: ignore
+
+        if should_exist and not await index.exists():
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name)
+
+        if not should_exist and await index.exists():
+            raise ResourceAlreadyExistsException(ResourceType.REPOSITORY, name)
+
         return index
 
     def _extract_doc_id(self, prefix: str, key: str) -> str:
@@ -64,12 +78,10 @@ class RedisVectorStore(VectorStoreBase):
     def _get_doc_key(self, prefix: str, doc_id: str) -> str:
         return f"{prefix}:{doc_id}"
 
-    async def create_repository(self, name: str, metadata: RepositoryMetadata) -> str:
-        index = await self._get_index(name)
-
-        # TODO: Handle exception properly in task
-        if await index.exists():
-            raise Exception(f"Repository {name} already exists")
+    async def create_repository(
+        self, name: str, metadata: RepositoryMetadata, timestamp: str
+    ) -> RepositoryOverview:
+        index = await self._get_index(name, False)
 
         await index.create()
 
@@ -87,20 +99,17 @@ class RedisVectorStore(VectorStoreBase):
                 "num_pages": metadata.num_pages,
                 "chunk_size": metadata.chunk_size,
                 "chunk_overlap": metadata.chunk_overlap,
-                "created_at": metadata.created_at,
-                "updated_at": metadata.updated_at,
+                "created_at": timestamp,
+                "updated_at": timestamp,
             },
         )
 
-        return id
+        return await self.get_repository(name)
 
     async def add_repository_documents(
         self, name: str, documents: list[RepositoryDocument], timestamp: str
     ) -> list[str]:
         index = await self._get_index(name)
-
-        if not await index.exists():
-            raise Exception(f"Repository {name} does not exist")
 
         doc_embeddings = await self.embeddings_function.aembed_documents(
             [doc.content for doc in documents]
@@ -141,9 +150,6 @@ class RedisVectorStore(VectorStoreBase):
     async def get_repository(self, name: str) -> RepositoryOverview:
         index = await self._get_index(name)
 
-        if not await index.exists():
-            raise Exception(f"Repository {name} does not exist")
-
         index_info = await index.info()
 
         metadata_key = f"{name}:metadata"
@@ -156,8 +162,8 @@ class RedisVectorStore(VectorStoreBase):
             start_url=metadata["start_url"],
             num_pages=int(metadata["num_pages"]),
             num_docs=index_info["num_docs"],
-            include_pattern=metadata["include_pattern"],
-            exclude_pattern=metadata["exclude_pattern"],
+            include_pattern=metadata["include_pattern"] or None,
+            exclude_pattern=metadata["exclude_pattern"] or None,
             chunk_size=int(metadata["chunk_size"]),
             chunk_overlap=int(metadata["chunk_overlap"]),
             created_at=metadata["created_at"],
@@ -167,10 +173,7 @@ class RedisVectorStore(VectorStoreBase):
     async def get_repository_documents(
         self, name: str, limit: int | None, offset: int | None
     ) -> list[RepositoryDocument]:
-        index = await self._get_index(name)
-
-        if not await index.exists():
-            raise Exception(f"Repository {name} does not exist")
+        await self._get_index(name)
 
         all_keys: list[str] = []
 
@@ -220,9 +223,6 @@ class RedisVectorStore(VectorStoreBase):
     async def get_repository_document_ids(self, name: str) -> list[str]:
         index = await self._get_index(name)
 
-        if not await index.exists():
-            raise Exception(f"Repository {name} does not exist")
-
         all_keys: list[str] = []
 
         for key in self.client.scan_iter(f"{name}:documents:*"):
@@ -241,7 +241,7 @@ class RedisVectorStore(VectorStoreBase):
         index = await self._get_index(name)
 
         if not await index.exists():
-            raise Exception(f"Repository {name} does not exist")
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name)
 
         await index.delete()
 
@@ -259,9 +259,6 @@ class RedisVectorStore(VectorStoreBase):
         self, name: str, query: str, num_results: int
     ) -> list[RepositoryDocument]:
         index = await self._get_index(name)
-
-        if not await index.exists():
-            raise Exception(f"Repository {name} does not exist")
 
         query_embedding = await self.embeddings_function.aembed_query(query)
 
@@ -303,9 +300,22 @@ class RedisVectorStore(VectorStoreBase):
 
         return repository_documents
 
-    async def update_repository_timestamp(self, name: str, timestamp: str) -> str:
+    async def update_repository_metadata(
+        self, name: str, metadata: RepositoryMetadata, timestamp: str
+    ) -> RepositoryOverview:
         metadata_key = f"{name}:metadata"
 
-        self.client.hset(metadata_key, "updated_at", timestamp)
+        self.client.hset(
+            metadata_key,
+            mapping={
+                "start_url": metadata.start_url,
+                "include_pattern": metadata.include_pattern or "",
+                "exclude_pattern": metadata.exclude_pattern or "",
+                "num_pages": metadata.num_pages,
+                "chunk_size": metadata.chunk_size,
+                "chunk_overlap": metadata.chunk_overlap,
+                "updated_at": timestamp,
+            },
+        )
 
-        return timestamp
+        return await self.get_repository(name)
