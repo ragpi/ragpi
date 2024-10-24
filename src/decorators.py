@@ -8,7 +8,7 @@ from celery.exceptions import Ignore
 
 
 from src.services.lock import LockService
-from src.exceptions import LockedResourceException
+from src.exceptions import ResourceLockedException
 
 
 def lock_and_execute_repository_task():
@@ -38,13 +38,13 @@ def lock_and_execute_repository_task():
                 result = loop.run_until_complete(task_with_lock_renewal())
                 return result
 
-            except LockedResourceException as e:
+            except ResourceLockedException as e:
                 logging.error(e)
 
                 current_task.update_state(
                     state="LOCKED",
                     meta={
-                        "exc_type": "LockedResourceException",
+                        "exc_type": "ResourceLockedException",
                         "message": f"Repository '{repository_name}' already has a task in progress",
                     },
                 )

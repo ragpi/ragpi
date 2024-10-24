@@ -4,9 +4,9 @@ from src.schemas.repository import (
     RepositoryMetadata,
     RepositoryUpdateInput,
 )
-from src.services.repository.sync_documents import sync_repository_documents_task
+from src.services.task import sync_repository_documents_task
 from src.services.vector_store.service import get_vector_store_service
-from src.utils.current_datetime import current_datetime
+from src.utils.datetime import get_current_datetime
 
 
 class RepositoryService:
@@ -21,7 +21,7 @@ class RepositoryService:
         chunk_size = repository_input.chunk_size or settings.CHUNK_SIZE
         chunk_overlap = repository_input.chunk_overlap or settings.CHUNK_OVERLAP
 
-        timestamp = current_datetime()
+        timestamp = get_current_datetime()
 
         metadata = RepositoryMetadata(
             start_url=repository_start_url,

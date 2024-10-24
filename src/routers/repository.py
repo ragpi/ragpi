@@ -5,7 +5,7 @@ from src.schemas.repository import (
     RepositoryUpdateInput,
     RepositorySearchInput,
 )
-from src.services.repository.service import RepositoryService
+from src.services.repository import RepositoryService
 
 router = APIRouter(
     prefix="/repositories",

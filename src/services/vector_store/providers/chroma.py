@@ -6,7 +6,11 @@ from chromadb.db.base import UniqueConstraintError
 from langchain_openai import OpenAIEmbeddings
 
 from src.config import settings
-from src.exceptions import RepositoryAlreadyExistsException, RepositoryNotFoundException
+from src.exceptions import (
+    ResourceAlreadyExistsException,
+    ResourceNotFoundException,
+    ResourceType,
+)
 from src.schemas.repository import (
     RepositoryDocument,
     RepositoryMetadata,
@@ -77,7 +81,7 @@ class ChromaVectorStore(VectorStoreBase):
             collection = self.client.create_collection(name, metadata=metadata_dict)
             return self._map_collection_overview(collection)
         except UniqueConstraintError as e:
-            raise RepositoryAlreadyExistsException(name) from e
+            raise ResourceAlreadyExistsException(ResourceType.REPOSITORY, name) from e
 
     async def add_repository_documents(
         self, name: str, documents: list[RepositoryDocument], timestamp: str
@@ -117,7 +121,7 @@ class ChromaVectorStore(VectorStoreBase):
             collection = self.client.get_collection(name)
             return self._map_collection_overview(collection)
         except InvalidCollectionException as e:
-            raise RepositoryNotFoundException(name) from e
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def get_repository_documents(
         self, name: str, limit: int | None, offset: int | None
@@ -136,7 +140,7 @@ class ChromaVectorStore(VectorStoreBase):
                 collection_data["documents"],
             )
         except InvalidCollectionException as e:
-            raise RepositoryNotFoundException(name) from e
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def get_repository_document_ids(self, name: str) -> list[str]:
         try:
@@ -145,7 +149,7 @@ class ChromaVectorStore(VectorStoreBase):
 
             return collection_data["ids"]
         except InvalidCollectionException as e:
-            raise RepositoryNotFoundException(name) from e
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def get_all_repositories(self) -> list[RepositoryOverview]:
         collections = self.client.list_collections()
@@ -156,7 +160,7 @@ class ChromaVectorStore(VectorStoreBase):
         try:
             self.client.delete_collection(name)
         except InvalidCollectionException as e:
-            raise RepositoryNotFoundException(name) from e
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
         if len(doc_ids) == 0:
@@ -166,7 +170,7 @@ class ChromaVectorStore(VectorStoreBase):
             collection = self.client.get_collection(name)
             collection.delete(ids=doc_ids)
         except InvalidCollectionException as e:
-            raise RepositoryNotFoundException(name) from e
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def search_repository(
         self, name: str, query: str, num_results: int
@@ -188,7 +192,7 @@ class ChromaVectorStore(VectorStoreBase):
                 collection_data["documents"][0] if collection_data["documents"] else [],
             )
         except InvalidCollectionException as e:
-            raise RepositoryNotFoundException(name) from e
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def update_repository_metadata(
         self, name: str, metadata: RepositoryMetadata, timestamp: str
@@ -207,4 +211,4 @@ class ChromaVectorStore(VectorStoreBase):
 
             return self._map_collection_overview(collection)
         except InvalidCollectionException as e:
-            raise RepositoryNotFoundException(name) from e
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e

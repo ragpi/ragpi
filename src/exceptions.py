@@ -1,29 +1,35 @@
+from enum import Enum
 import logging
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
 
-class RepositoryNotFoundException(Exception):
-    def __init__(self, repository_name: str):
-        self.repository_name = repository_name
-        super().__init__(f"Repository '{repository_name}' not found")
+class ResourceType(str, Enum):
+    REPOSITORY = "repository"
+    TASK = "task"
 
 
-class RepositoryAlreadyExistsException(Exception):
-    def __init__(self, repository_name: str):
-        self.repository_name = repository_name
-        super().__init__(f"Repository '{repository_name}' already exists")
+class ResourceNotFoundException(Exception):
+    def __init__(self, resource_type: ResourceType, identifier: str):
+        self.resource_type = resource_type
+        self.identifier = identifier
+        super().__init__(f"{resource_type.capitalize()} '{identifier}' not found")
 
 
-class LockedResourceException(Exception):
+class ResourceAlreadyExistsException(Exception):
+    def __init__(self, resource_type: ResourceType, identifier: str):
+        self.resource_type = resource_type
+        self.identifier = identifier
+        super().__init__(f"{resource_type.capitalize()} '{identifier}' already exists")
+
+
+class ResourceLockedException(Exception):
     def __init__(self, resource_name: str):
         self.resource_name = resource_name
-        super().__init__(f"Resource '{resource_name}' is already locked")
+        super().__init__(f"Resource '{resource_name}' is locked")
 
 
-async def repository_not_found_handler(
-    request: Request, exc: RepositoryNotFoundException
-):
+async def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
     logging.error(exc)
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -31,8 +37,8 @@ async def repository_not_found_handler(
     )
 
 
-async def repository_already_exists_handler(
-    request: Request, exc: RepositoryAlreadyExistsException
+async def resource_already_exists_handler(
+    request: Request, exc: ResourceAlreadyExistsException
 ):
     logging.error(exc)
     return JSONResponse(

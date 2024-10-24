@@ -1,14 +1,47 @@
 import logging
 
+from redis import Redis
+
 from src.celery import celery_app
 from src.config import settings
 from src.decorators import lock_and_execute_repository_task
+from src.exceptions import ResourceNotFoundException, ResourceType
 from src.schemas.repository import (
     RepositoryMetadata,
 )
+from src.schemas.task import TaskStatus
 from src.services.vector_store.service import get_vector_store_service
-from src.utils.current_datetime import current_datetime
+from src.utils.datetime import get_current_datetime
 from src.utils.web_scraper import extract_docs_from_website
+
+
+def task_exists(task_id: str) -> bool:
+    redis_client = Redis.from_url(settings.REDIS_URL)
+
+    key = f"celery-task-meta-{task_id}"
+
+    return redis_client.exists(key) == 1
+
+
+def get_task_status(task_id: str) -> TaskStatus:
+    if not task_exists(task_id):
+        raise ResourceNotFoundException(ResourceType.TASK, task_id)
+
+    task = celery_app.AsyncResult(task_id)
+
+    if task.status == "LOCKED":  # type: ignore
+        return TaskStatus(id=task_id, status="FAILURE", error=task.info["message"])
+
+    return TaskStatus(
+        id=task.task_id,
+        status=task.status,
+        error=(
+            "An error occurred, please check the task logs for more information"
+            if task.failed()
+            else None
+        ),
+        result=task.result if task.successful() else None,  # type: ignore
+    )
 
 
 @celery_app.task
@@ -51,7 +84,7 @@ async def sync_repository_documents_task(
             f"Adding {len(docs_to_add)} documents to repository {repository_name}"
         )
         await vector_store_service.add_repository_documents(
-            repository_name, docs_to_add, timestamp=current_datetime()
+            repository_name, docs_to_add, timestamp=get_current_datetime()
         )
         logging.info(
             f"Successfully added {len(docs_to_add)} documents to repository {repository_name}"
@@ -83,7 +116,7 @@ async def sync_repository_documents_task(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
         ),
-        current_datetime(),
+        get_current_datetime(),
     )
 
     return updated_repository.model_dump()

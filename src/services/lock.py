@@ -4,7 +4,7 @@ from redis import Redis
 from redis.lock import Lock
 from redis.exceptions import LockError
 from src.config import settings
-from src.exceptions import LockedResourceException
+from src.exceptions import ResourceLockedException
 
 
 class LockService:
@@ -17,7 +17,7 @@ class LockService:
         if acquired:
             return lock
         else:
-            raise LockedResourceException(lock_name)
+            raise ResourceLockedException(lock_name)
 
     async def renew_lock(
         self, lock: Lock, extend_time: int = 60, renewal_interval: int = 30

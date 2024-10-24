@@ -9,7 +9,7 @@ from openai.types.chat import (
 
 from src.config import settings
 from src.schemas.chat import ChatResponse, CreateChatInput
-from src.services.repository.service import RepositoryService
+from src.services.repository import RepositoryService
 
 
 client = OpenAI()
