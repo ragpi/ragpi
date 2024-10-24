@@ -1,7 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from src.chat.schemas import CreateChatInput
-from src.chat.service import get_chat_response
+from src.chat.service import ChatService
 
 
 router = APIRouter(
@@ -13,5 +13,5 @@ router = APIRouter(
 
 
 @router.post("")
-async def chat(chatInput: CreateChatInput):
-    return await get_chat_response(chatInput)
+async def chat(chat_input: CreateChatInput, chat_service: ChatService = Depends()):
+    return await chat_service.generate_response(chat_input)

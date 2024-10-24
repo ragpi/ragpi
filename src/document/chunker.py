@@ -7,7 +7,7 @@ from src.document.id_generator import generate_stable_id
 from src.document.schemas import Document, PageData
 
 
-def split_markdown_text(
+def split_markdown_page(
     page_data: PageData, chunk_size: int, chunk_overlap: int
 ) -> list[Document]:
     headers_to_split_on = [

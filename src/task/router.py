@@ -1,6 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from src.task.service import get_task_status
+from src.task.service import TaskService
 
 
 router = APIRouter(
@@ -10,5 +10,5 @@ router = APIRouter(
 
 
 @router.get("/{task_id}")
-def get_task(task_id: str):
-    return get_task_status(task_id)
+def get_task(task_id: str, task_service: TaskService = Depends()):
+    return task_service.get_task_status(task_id)
