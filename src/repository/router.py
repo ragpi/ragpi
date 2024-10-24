@@ -1,11 +1,13 @@
 from fastapi import APIRouter, status, Depends
-from src.schemas.repository import (
+
+from src.repository.schemas import (
     RepositoryCreateInput,
+    RepositorySearchInput,
     RepositoryTaskResponse,
     RepositoryUpdateInput,
-    RepositorySearchInput,
 )
-from src.services.repository import RepositoryService
+from src.repository.service import RepositoryService
+
 
 router = APIRouter(
     prefix="/repositories",

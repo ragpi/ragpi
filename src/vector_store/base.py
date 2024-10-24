@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from src.schemas.repository import (
-    RepositoryDocument,
+from src.document.schemas import Document
+from src.repository.schemas import (
     RepositoryMetadata,
     RepositoryOverview,
 )
@@ -16,7 +16,7 @@ class VectorStoreBase(ABC):
 
     @abstractmethod
     async def add_repository_documents(
-        self, name: str, documents: list[RepositoryDocument], timestamp: str
+        self, name: str, documents: list[Document], timestamp: str
     ) -> list[str]:
         pass
 
@@ -27,7 +27,7 @@ class VectorStoreBase(ABC):
     @abstractmethod
     async def get_repository_documents(
         self, name: str, limit: int | None, offset: int | None
-    ) -> list[RepositoryDocument]:
+    ) -> list[Document]:
         pass
 
     @abstractmethod
@@ -49,7 +49,7 @@ class VectorStoreBase(ABC):
     @abstractmethod
     async def search_repository(
         self, name: str, query: str, num_results: int
-    ) -> list[RepositoryDocument]:
+    ) -> list[Document]:
         pass
 
     @abstractmethod

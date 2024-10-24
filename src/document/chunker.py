@@ -3,14 +3,13 @@ from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
 )
 
-from src.schemas.repository import RepositoryDocument
-from src.schemas.page_data import PageData
-from src.utils.generate_id import generate_stable_id
+from src.document.id_generator import generate_stable_id
+from src.document.schemas import Document, PageData
 
 
-def split_markdown_content(
+def split_markdown_page(
     page_data: PageData, chunk_size: int, chunk_overlap: int
-) -> list[RepositoryDocument]:
+) -> list[Document]:
     headers_to_split_on = [
         ("#", "header_1"),
         ("##", "header_2"),
@@ -29,10 +28,10 @@ def split_markdown_content(
 
     splits = text_splitter.split_documents(md_header_splits)
 
-    docs: list[RepositoryDocument] = []
+    docs: list[Document] = []
 
     for split in splits:
-        doc = RepositoryDocument(
+        doc = Document(
             id=generate_stable_id(page_data.url, split.page_content),
             content=split.page_content,
             metadata={
