@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.schemas.repository import (
+from src.repository.schemas import (
     RepositoryDocument,
     RepositoryMetadata,
     RepositoryOverview,

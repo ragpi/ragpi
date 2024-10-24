@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from src.services.task import get_task_status
+
+from src.task.service import get_task_status
 
 
 router = APIRouter(

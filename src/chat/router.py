@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from src.schemas.chat import CreateChatInput
-from src.services.chat import get_chat_response
+from src.chat.schemas import CreateChatInput
+from src.chat.service import get_chat_response
 
 
 router = APIRouter(

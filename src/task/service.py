@@ -1,18 +1,15 @@
 import logging
-
 from redis import Redis
 
-from src.celery import celery_app
 from src.config import settings
-from src.decorators import lock_and_execute_repository_task
+from src.celery import celery_app
+from src.document.web_scraper import extract_docs_from_website
 from src.exceptions import ResourceNotFoundException, ResourceType
-from src.schemas.repository import (
-    RepositoryMetadata,
-)
-from src.schemas.task import TaskStatus
-from src.services.vector_store.service import get_vector_store_service
+from src.repository.schemas import RepositoryMetadata
+from src.task.lock.decorators import lock_and_execute_repository_task
+from src.task.schemas import TaskStatus
 from src.utils.datetime import get_current_datetime
-from src.utils.web_scraper import extract_docs_from_website
+from src.vector_store.service import get_vector_store_service
 
 
 def task_exists(task_id: str) -> bool:

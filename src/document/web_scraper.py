@@ -11,9 +11,9 @@ from crawlee._utils.globs import Glob
 from crawlee.storages import RequestQueue
 import html2text
 
-from src.schemas.repository import RepositoryDocument
-from src.schemas.page_data import PageData
-from src.utils.text_splitter import split_markdown_content
+from src.document.schemas import PageData
+from src.document.text_splitter import split_markdown_content
+from src.repository.schemas import RepositoryDocument
 
 
 class CrawlerKwargs(TypedDict):

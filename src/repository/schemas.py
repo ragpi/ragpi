@@ -50,6 +50,7 @@ class RepositorySearchInput(BaseModel):
     num_results: int | None = None
 
 
+# TODO: Move to document/schemas.py and rename to Document
 class RepositoryDocument(BaseModel):
     id: str
     content: str

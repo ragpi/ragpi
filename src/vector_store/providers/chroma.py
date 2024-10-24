@@ -11,12 +11,12 @@ from src.exceptions import (
     ResourceNotFoundException,
     ResourceType,
 )
-from src.schemas.repository import (
+from src.repository.schemas import (
     RepositoryDocument,
     RepositoryMetadata,
     RepositoryOverview,
 )
-from src.services.vector_store.base import VectorStoreBase
+from src.vector_store.base import VectorStoreBase
 
 
 class ChromaVectorStore(VectorStoreBase):

@@ -3,9 +3,9 @@ from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
 )
 
-from src.schemas.repository import RepositoryDocument
-from src.schemas.page_data import PageData
-from src.utils.generate_id import generate_stable_id
+from src.document.generate_id import generate_stable_id
+from src.document.schemas import PageData
+from src.repository.schemas import RepositoryDocument
 
 
 def split_markdown_content(

@@ -1,12 +1,12 @@
 from src.config import settings
-from src.schemas.repository import (
+from src.repository.schemas import (
     RepositoryCreateInput,
     RepositoryMetadata,
     RepositoryUpdateInput,
 )
-from src.services.task import sync_repository_documents_task
-from src.services.vector_store.service import get_vector_store_service
+from src.task.service import sync_repository_documents_task
 from src.utils.datetime import get_current_datetime
+from src.vector_store.service import get_vector_store_service
 
 
 class RepositoryService:

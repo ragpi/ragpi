@@ -1,7 +1,7 @@
 from typing import Literal
 from pydantic import BaseModel
 
-from src.schemas.repository import RepositoryDocument
+from src.repository.schemas import RepositoryDocument
 
 
 class Message(BaseModel):

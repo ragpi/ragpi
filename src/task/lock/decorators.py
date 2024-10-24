@@ -7,8 +7,8 @@ from celery import current_task
 from celery.exceptions import Ignore
 
 
-from src.services.lock import LockService
 from src.exceptions import ResourceLockedException
+from src.task.lock.service import LockService
 
 
 def lock_and_execute_repository_task():

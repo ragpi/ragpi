@@ -6,10 +6,9 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
 )
 
-
+from src.chat.schemas import ChatResponse, CreateChatInput
 from src.config import settings
-from src.schemas.chat import ChatResponse, CreateChatInput
-from src.services.repository import RepositoryService
+from src.repository.service import RepositoryService
 
 
 client = OpenAI()
