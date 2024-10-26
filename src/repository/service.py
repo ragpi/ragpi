@@ -21,7 +21,9 @@ class RepositoryService:
         self.document_service = DocumentService()
         self.config = settings
 
-    async def create_repository(self, repository_input: RepositoryCreateInput):
+    async def create_repository(
+        self, repository_input: RepositoryCreateInput
+    ) -> tuple[RepositoryOverview, str]:
         repository_start_url = repository_input.start_url.rstrip("/")
 
         chunk_size = repository_input.chunk_size or self.config.CHUNK_SIZE
@@ -62,67 +64,51 @@ class RepositoryService:
         self,
         repository_name: str,
         repository_input: RepositoryUpdateInput | None = None,
-    ):
+    ) -> tuple[RepositoryOverview, str]:
         existing_repository = await self.vector_store_service.get_repository(
             repository_name
         )
-
         existing_doc_ids = await self.vector_store_service.get_repository_document_ids(
             repository_name
         )
 
-        start_url = existing_repository.config.start_url
-        include_pattern = existing_repository.config.include_pattern
-        exclude_pattern = existing_repository.config.exclude_pattern
-        chunk_size = existing_repository.config.chunk_size
-        chunk_overlap = existing_repository.config.chunk_overlap
-        existing_doc_ids = existing_doc_ids
-        proxy_urls = None
-        page_limit = None
+        config = existing_repository.config
 
         if repository_input:
-            if repository_input.start_url:
-                start_url = repository_input.start_url.rstrip("/")
 
-            if repository_input.include_pattern:
-                include_pattern = repository_input.include_pattern
+            page_limit = config.page_limit
+            if repository_input.page_limit:
+                page_limit = (
+                    repository_input.page_limit
+                    if repository_input.page_limit > 0
+                    else None
+                )
 
-            if repository_input.exclude_pattern:
-                exclude_pattern = repository_input.exclude_pattern
-
-            if repository_input.chunk_size:
-                chunk_size = repository_input.chunk_size
-
-            if repository_input.chunk_overlap:
-                chunk_overlap = repository_input.chunk_overlap
-
-            proxy_urls = repository_input.proxy_urls
-
-            page_limit = (
-                repository_input.page_limit
-                if repository_input.page_limit and repository_input.page_limit > 0
-                else None
+            config = RepositoryConfig(
+                start_url=(
+                    repository_input.start_url.rstrip("/")
+                    if repository_input.start_url
+                    else config.start_url
+                ),
+                include_pattern=repository_input.include_pattern
+                or config.include_pattern,
+                exclude_pattern=repository_input.exclude_pattern
+                or config.exclude_pattern,
+                chunk_size=repository_input.chunk_size or config.chunk_size,
+                chunk_overlap=repository_input.chunk_overlap or config.chunk_overlap,
+                page_limit=page_limit,
             )
 
         task = sync_repository_documents_task.delay(
             repository_name=repository_name,
-            start_url=start_url,
-            page_limit=page_limit,
-            include_pattern=include_pattern,
-            exclude_pattern=exclude_pattern,
-            proxy_urls=proxy_urls,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
+            start_url=config.start_url,
+            page_limit=config.page_limit,
+            include_pattern=config.include_pattern,
+            exclude_pattern=config.exclude_pattern,
+            proxy_urls=repository_input.proxy_urls if repository_input else None,
+            chunk_size=config.chunk_size,
+            chunk_overlap=config.chunk_overlap,
             existing_doc_ids=existing_doc_ids,
-        )
-
-        config = RepositoryConfig(
-            start_url=start_url,
-            page_limit=page_limit,
-            include_pattern=include_pattern,
-            exclude_pattern=exclude_pattern,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
         )
 
         repository = RepositoryOverview(
@@ -194,10 +180,6 @@ class RepositoryService:
 
         if not docs_to_add and not doc_ids_to_remove:
             logging.info("No changes detected in repository")
-            existing_repository = await self.vector_store_service.get_repository(
-                repository_name
-            )
-            return existing_repository
 
         updated_repository = await self.vector_store_service.update_repository_metadata(
             repository_name,
