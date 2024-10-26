@@ -15,7 +15,7 @@ from src.exceptions import (
     ResourceType,
 )
 from src.repository.schemas import (
-    RepositoryMetadata,
+    RepositoryConfig,
     RepositoryOverview,
 )
 from src.vector_store.base import VectorStoreBase
@@ -64,10 +64,10 @@ class RedisVectorStore(VectorStoreBase):
         )
         index = await AsyncSearchIndex(index_schema).set_client(self.client)  # type: ignore
 
-        if should_exist and not await index.exists():
+        if name and should_exist and not await index.exists():
             raise ResourceNotFoundException(ResourceType.REPOSITORY, name)
 
-        if not should_exist and await index.exists():
+        if name and not should_exist and await index.exists():
             raise ResourceAlreadyExistsException(ResourceType.REPOSITORY, name)
 
         return index
@@ -79,7 +79,7 @@ class RedisVectorStore(VectorStoreBase):
         return f"{prefix}:{doc_id}"
 
     async def create_repository(
-        self, name: str, metadata: RepositoryMetadata, timestamp: str
+        self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
         index = await self._get_index(name, False)
 
@@ -93,12 +93,12 @@ class RedisVectorStore(VectorStoreBase):
             mapping={
                 "id": id,
                 "name": name,
-                "start_url": metadata.start_url,
-                "include_pattern": metadata.include_pattern or "",
-                "exclude_pattern": metadata.exclude_pattern or "",
-                "num_pages": metadata.num_pages,
-                "chunk_size": metadata.chunk_size,
-                "chunk_overlap": metadata.chunk_overlap,
+                "start_url": config.start_url,
+                "include_pattern": config.include_pattern or "",
+                "exclude_pattern": config.exclude_pattern or "",
+                "page_limit": config.page_limit or "",
+                "chunk_size": config.chunk_size,
+                "chunk_overlap": config.chunk_overlap,
                 "created_at": timestamp,
                 "updated_at": timestamp,
             },
@@ -158,7 +158,7 @@ class RedisVectorStore(VectorStoreBase):
             id=metadata["id"],
             name=metadata["name"],
             start_url=metadata["start_url"],
-            num_pages=int(metadata["num_pages"]),
+            page_limit=int(metadata["page_limit"]) if metadata["page_limit"] else None,
             num_docs=index_info["num_docs"],
             include_pattern=metadata["include_pattern"] or None,
             exclude_pattern=metadata["exclude_pattern"] or None,
@@ -299,19 +299,19 @@ class RedisVectorStore(VectorStoreBase):
         return repository_documents
 
     async def update_repository_metadata(
-        self, name: str, metadata: RepositoryMetadata, timestamp: str
+        self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
         metadata_key = f"{name}:metadata"
 
         self.client.hset(
             metadata_key,
             mapping={
-                "start_url": metadata.start_url,
-                "include_pattern": metadata.include_pattern or "",
-                "exclude_pattern": metadata.exclude_pattern or "",
-                "num_pages": metadata.num_pages,
-                "chunk_size": metadata.chunk_size,
-                "chunk_overlap": metadata.chunk_overlap,
+                "start_url": config.start_url,
+                "include_pattern": config.include_pattern or "",
+                "exclude_pattern": config.exclude_pattern or "",
+                "page_limit": config.page_limit or "",
+                "chunk_size": config.chunk_size,
+                "chunk_overlap": config.chunk_overlap,
                 "updated_at": timestamp,
             },
         )

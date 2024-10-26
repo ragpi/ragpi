@@ -75,7 +75,7 @@ class WebsiteCrawler:
     async def crawl(
         self,
         start_url: str,
-        max_pages: Optional[int] = None,
+        page_limit: Optional[int] = None,
         include_pattern: Optional[str] = None,
         exclude_pattern: Optional[str] = None,
         proxy_urls: Optional[list[str]] = None,
@@ -83,7 +83,7 @@ class WebsiteCrawler:
         request_queue = await RequestQueue.open(name=str(uuid.uuid4()))
 
         crawler_kwargs: CrawlerKwargs = {
-            "max_requests_per_crawl": max_pages,
+            "max_requests_per_crawl": page_limit,
             "configuration": Configuration(persist_storage=False, purge_on_start=True),
             "request_provider": request_queue,
         }
@@ -114,7 +114,7 @@ class WebsiteCrawler:
         if not self.collected_pages:
             raise ValueError("No pages were collected during crawl")
 
-        if max_pages and len(self.collected_pages) > max_pages:
-            self.collected_pages = self.collected_pages[:max_pages]
+        if page_limit and len(self.collected_pages) > page_limit:
+            self.collected_pages = self.collected_pages[:page_limit]
 
         return self.collected_pages

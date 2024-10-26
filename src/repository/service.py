@@ -4,7 +4,7 @@ from src.celery import celery_app
 from src.document.service import DocumentService
 from src.repository.schemas import (
     RepositoryCreateInput,
-    RepositoryMetadata,
+    RepositoryConfig,
     RepositoryOverview,
     RepositoryUpdateInput,
 )
@@ -29,25 +29,25 @@ class RepositoryService:
 
         timestamp = get_current_datetime()
 
-        metadata = RepositoryMetadata(
+        config = RepositoryConfig(
             start_url=repository_start_url,
-            num_pages=0,
+            page_limit=repository_input.page_limit,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
         )
 
-        repository = await self.vector_store_service.create_repository(
+        created_repository = await self.vector_store_service.create_repository(
             name=repository_input.name,
-            metadata=metadata,
+            config=config,
             timestamp=timestamp,
         )
 
         task = sync_repository_documents_task.delay(
             repository_name=repository_input.name,
             start_url=repository_start_url,
-            max_pages=repository_input.max_pages,
+            page_limit=repository_input.page_limit,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             proxy_urls=repository_input.proxy_urls,
@@ -56,7 +56,21 @@ class RepositoryService:
             existing_doc_ids=[],
         )
 
-        return repository, task.id
+        repository_overview = RepositoryOverview(
+            id=created_repository.id,
+            name=created_repository.name,
+            start_url=created_repository.start_url,
+            include_pattern=created_repository.include_pattern,
+            exclude_pattern=created_repository.exclude_pattern,
+            chunk_size=created_repository.chunk_size,
+            chunk_overlap=created_repository.chunk_overlap,
+            num_docs=created_repository.num_docs,
+            page_limit=created_repository.page_limit,
+            created_at=created_repository.created_at,
+            updated_at=created_repository.updated_at,
+        )
+
+        return repository_overview, task.id
 
     async def update_repository(
         self,
@@ -71,39 +85,84 @@ class RepositoryService:
             repository_name
         )
 
-        proxy_urls = repository_input.proxy_urls if repository_input else None
+        start_url = existing_repository.start_url
+        include_pattern = existing_repository.include_pattern
+        exclude_pattern = existing_repository.exclude_pattern
+        chunk_size = existing_repository.chunk_size
+        chunk_overlap = existing_repository.chunk_overlap
+        existing_doc_ids = existing_doc_ids
+        proxy_urls = None
+        page_limit = None
+
+        if repository_input:
+            if repository_input.start_url:
+                start_url = repository_input.start_url.rstrip("/")
+
+            if repository_input.include_pattern:
+                include_pattern = repository_input.include_pattern
+
+            if repository_input.exclude_pattern:
+                exclude_pattern = repository_input.exclude_pattern
+
+            if repository_input.chunk_size:
+                chunk_size = repository_input.chunk_size
+
+            if repository_input.chunk_overlap:
+                chunk_overlap = repository_input.chunk_overlap
+
+            proxy_urls = repository_input.proxy_urls
+
+            page_limit = (
+                repository_input.page_limit
+                if repository_input.page_limit and repository_input.page_limit > 0
+                else None
+            )
 
         task = sync_repository_documents_task.delay(
             repository_name=repository_name,
-            start_url=existing_repository.start_url,
-            max_pages=existing_repository.num_pages,
-            include_pattern=existing_repository.include_pattern,
-            exclude_pattern=existing_repository.exclude_pattern,
+            start_url=start_url,
+            page_limit=page_limit,
+            include_pattern=include_pattern,
+            exclude_pattern=exclude_pattern,
             proxy_urls=proxy_urls,
-            chunk_size=existing_repository.chunk_size,
-            chunk_overlap=existing_repository.chunk_overlap,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
             existing_doc_ids=existing_doc_ids,
         )
 
-        return existing_repository, task.id
+        repository = RepositoryOverview(
+            id=existing_repository.id,
+            name=repository_name,
+            start_url=start_url,
+            include_pattern=include_pattern,
+            exclude_pattern=exclude_pattern,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            page_limit=page_limit,
+            num_docs=0,
+            created_at=existing_repository.created_at,
+            updated_at=existing_repository.updated_at,
+        )
+
+        return repository, task.id
 
     async def sync_repository_documents(
         self,
         repository_name: str,
         start_url: str,
-        max_pages: int | None,
+        page_limit: int | None,
         include_pattern: str | None,
         exclude_pattern: str | None,
-        proxy_urls: list[str] | None,
         chunk_size: int,
         chunk_overlap: int,
+        proxy_urls: list[str] | None,
         existing_doc_ids: list[str],
     ) -> RepositoryOverview:
         logging.info(f"Extracting documents from {start_url}")
 
         docs, num_pages = await self.document_service.create_documents_from_website(
             start_url=start_url,
-            max_pages=max_pages,
+            page_limit=page_limit,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
             proxy_urls=proxy_urls,
@@ -152,9 +211,9 @@ class RepositoryService:
 
         updated_repository = await self.vector_store_service.update_repository_metadata(
             repository_name,
-            RepositoryMetadata(
+            RepositoryConfig(
                 start_url=start_url,
-                num_pages=num_pages,
+                page_limit=page_limit,
                 include_pattern=include_pattern,
                 exclude_pattern=exclude_pattern,
                 chunk_size=chunk_size,
@@ -194,7 +253,7 @@ class RepositoryService:
 async def sync_repository_documents_task(
     repository_name: str,
     start_url: str,
-    max_pages: int | None,
+    page_limit: int | None,
     include_pattern: str | None,
     exclude_pattern: str | None,
     proxy_urls: list[str] | None,
@@ -207,7 +266,7 @@ async def sync_repository_documents_task(
     repository = await repository_service.sync_repository_documents(
         repository_name=repository_name,
         start_url=start_url,
-        max_pages=max_pages,
+        page_limit=page_limit,
         include_pattern=include_pattern,
         exclude_pattern=exclude_pattern,
         proxy_urls=proxy_urls,
