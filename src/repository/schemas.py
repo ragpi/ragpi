@@ -2,11 +2,33 @@ from pydantic import BaseModel, Field, field_validator
 import re
 
 
-class BaseRepository(BaseModel):
+class RepositoryConfig(BaseModel):
+    start_url: str
+    include_pattern: str | None = None
+    exclude_pattern: str | None = None
+    page_limit: int | None = None
+    chunk_size: int
+    chunk_overlap: int
+
+
+class RepositoryOverview(BaseModel):
+    id: str
+    name: str
+    num_docs: int
+    created_at: str
+    updated_at: str
+    config: RepositoryConfig
+
+
+class RepositoryCreateInput(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     start_url: str
     include_pattern: str | None = None
     exclude_pattern: str | None = None
+    page_limit: int | None = None
+    chunk_size: int | None = None
+    chunk_overlap: int | None = None
+    proxy_urls: list[str] | None = None
 
     @field_validator("name")
     def validate_name(cls, value: str):
@@ -17,30 +39,13 @@ class BaseRepository(BaseModel):
         return value
 
 
-class RepositoryMetadata(BaseModel):
-    start_url: str
+class RepositoryUpdateInput(BaseModel):
+    start_url: str | None = None
     include_pattern: str | None = None
     exclude_pattern: str | None = None
-    num_pages: int
-    chunk_size: int
-    chunk_overlap: int
-
-
-class RepositoryOverview(BaseRepository, RepositoryMetadata):
-    id: str
-    num_docs: int
-    created_at: str
-    updated_at: str
-
-
-class RepositoryCreateInput(BaseRepository):
-    max_pages: int | None = 3
-    proxy_urls: list[str] | None = None
+    page_limit: int | None = None
     chunk_size: int | None = None
     chunk_overlap: int | None = None
-
-
-class RepositoryUpdateInput(BaseModel):
     proxy_urls: list[str] | None = None
 
 

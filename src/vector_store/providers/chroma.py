@@ -13,7 +13,7 @@ from src.exceptions import (
     ResourceType,
 )
 from src.repository.schemas import (
-    RepositoryMetadata,
+    RepositoryConfig,
     RepositoryOverview,
 )
 from src.vector_store.base import VectorStoreBase
@@ -29,18 +29,22 @@ class ChromaVectorStore(VectorStoreBase):
     ) -> RepositoryOverview:
         metadata = collection.metadata
 
-        return RepositoryOverview(
-            id=str(collection.id),
-            name=collection.name,
+        config = RepositoryConfig(
             start_url=metadata["start_url"],
             include_pattern=metadata.get("include_pattern"),
             exclude_pattern=metadata.get("exclude_pattern"),
-            num_pages=metadata["num_pages"],
-            num_docs=collection.count(),
+            page_limit=metadata.get("page_limit"),
             chunk_size=metadata["chunk_size"],
             chunk_overlap=metadata["chunk_overlap"],
+        )
+
+        return RepositoryOverview(
+            id=str(collection.id),
+            name=collection.name,
+            num_docs=collection.count(),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
+            config=config,
         )
 
     def _map_repository_documents(
@@ -69,16 +73,16 @@ class ChromaVectorStore(VectorStoreBase):
         return repository_documents
 
     async def create_repository(
-        self, name: str, metadata: RepositoryMetadata, timestamp: str
+        self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
         try:
-            metadata_dict: dict[str, Any] = {
-                **metadata.model_dump(exclude_none=True),
+            metadata: dict[str, Any] = {
+                **config.model_dump(exclude_none=True),
                 "created_at": timestamp,
                 "updated_at": timestamp,
             }
 
-            collection = self.client.create_collection(name, metadata=metadata_dict)
+            collection = self.client.create_collection(name, metadata=metadata)
             return self._map_collection_overview(collection)
         except UniqueConstraintError as e:
             raise ResourceAlreadyExistsException(ResourceType.REPOSITORY, name) from e
@@ -159,7 +163,7 @@ class ChromaVectorStore(VectorStoreBase):
     async def delete_repository(self, name: str) -> None:
         try:
             self.client.delete_collection(name)
-        except InvalidCollectionException as e:
+        except ValueError as e:
             raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
@@ -195,19 +199,19 @@ class ChromaVectorStore(VectorStoreBase):
             raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def update_repository_metadata(
-        self, name: str, metadata: RepositoryMetadata, timestamp: str
+        self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
         try:
             existing_metadata = self.client.get_collection(name).metadata
 
-            metadata_dict: dict[str, Any] = {
-                **metadata.model_dump(exclude_none=True),
+            new_metadata: dict[str, Any] = {
+                **config.model_dump(exclude_none=True),
                 "created_at": existing_metadata["created_at"],
                 "updated_at": timestamp,
             }
 
             collection = self.client.get_collection(name)
-            collection.modify(metadata=metadata_dict)
+            collection.modify(metadata=new_metadata)
 
             return self._map_collection_overview(collection)
         except InvalidCollectionException as e:

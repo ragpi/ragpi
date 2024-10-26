@@ -1,5 +1,5 @@
 import uuid
-from typing import NotRequired, Optional, Pattern, TypedDict
+from typing import NotRequired, Pattern, TypedDict
 from crawlee.beautifulsoup_crawler import (
     BeautifulSoupCrawler,
     BeautifulSoupCrawlingContext,
@@ -14,7 +14,7 @@ from src.document.schemas import PageData
 
 
 class CrawlerKwargs(TypedDict):
-    max_requests_per_crawl: Optional[int]
+    max_requests_per_crawl: int | None
     configuration: Configuration
     request_provider: RequestQueue
     proxy_configuration: NotRequired[ProxyConfiguration]
@@ -75,15 +75,15 @@ class WebsiteCrawler:
     async def crawl(
         self,
         start_url: str,
-        max_pages: Optional[int] = None,
-        include_pattern: Optional[str] = None,
-        exclude_pattern: Optional[str] = None,
-        proxy_urls: Optional[list[str]] = None,
+        page_limit: int | None = None,
+        include_pattern: str | None = None,
+        exclude_pattern: str | None = None,
+        proxy_urls: list[str] | None = None,
     ) -> list[PageData]:
         request_queue = await RequestQueue.open(name=str(uuid.uuid4()))
 
         crawler_kwargs: CrawlerKwargs = {
-            "max_requests_per_crawl": max_pages,
+            "max_requests_per_crawl": page_limit,
             "configuration": Configuration(persist_storage=False, purge_on_start=True),
             "request_provider": request_queue,
         }
@@ -114,7 +114,7 @@ class WebsiteCrawler:
         if not self.collected_pages:
             raise ValueError("No pages were collected during crawl")
 
-        if max_pages and len(self.collected_pages) > max_pages:
-            self.collected_pages = self.collected_pages[:max_pages]
+        if page_limit and len(self.collected_pages) > page_limit:
+            self.collected_pages = self.collected_pages[:page_limit]
 
         return self.collected_pages

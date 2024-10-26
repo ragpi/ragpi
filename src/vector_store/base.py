@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from src.document.schemas import Document
 from src.repository.schemas import (
-    RepositoryMetadata,
+    RepositoryConfig,
     RepositoryOverview,
 )
 
@@ -10,7 +10,7 @@ from src.repository.schemas import (
 class VectorStoreBase(ABC):
     @abstractmethod
     async def create_repository(
-        self, name: str, metadata: RepositoryMetadata, timestamp: str
+        self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
         pass
 
@@ -54,6 +54,6 @@ class VectorStoreBase(ABC):
 
     @abstractmethod
     async def update_repository_metadata(
-        self, name: str, metadata: RepositoryMetadata, timestamp: str
+        self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
         pass

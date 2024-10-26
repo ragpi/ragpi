@@ -10,7 +10,7 @@ class DocumentService:
     async def create_documents_from_website(
         self,
         start_url: str,
-        max_pages: int | None,
+        page_limit: int | None,
         include_pattern: str | None,
         exclude_pattern: str | None,
         proxy_urls: list[str] | None,
@@ -19,7 +19,7 @@ class DocumentService:
     ) -> tuple[list[Document], int]:
         pages = await self.crawler.crawl(
             start_url=start_url,
-            max_pages=max_pages,
+            page_limit=page_limit,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
             proxy_urls=proxy_urls,
