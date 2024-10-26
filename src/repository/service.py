@@ -26,6 +26,12 @@ class RepositoryService:
     ) -> tuple[RepositoryOverview, str]:
         repository_start_url = repository_input.start_url.rstrip("/")
 
+        page_limit = (
+            repository_input.page_limit
+            if repository_input.page_limit and repository_input.page_limit > 0
+            else None
+        )
+
         chunk_size = repository_input.chunk_size or self.config.CHUNK_SIZE
         chunk_overlap = repository_input.chunk_overlap or self.config.CHUNK_OVERLAP
 
@@ -33,7 +39,7 @@ class RepositoryService:
 
         config = RepositoryConfig(
             start_url=repository_start_url,
-            page_limit=repository_input.page_limit,
+            page_limit=page_limit,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             chunk_size=chunk_size,
