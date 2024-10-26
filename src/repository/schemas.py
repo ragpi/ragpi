@@ -20,10 +20,14 @@ class RepositoryOverview(BaseModel):
     config: RepositoryConfig
 
 
-class RepositoryCreateInput(RepositoryConfig):
+class RepositoryCreateInput(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
-    chunk_size: int | None = None  # type: ignore
-    chunk_overlap: int | None = None  # type: ignore
+    start_url: str
+    include_pattern: str | None = None
+    exclude_pattern: str | None = None
+    page_limit: int | None = None
+    chunk_size: int | None = None
+    chunk_overlap: int | None = None
     proxy_urls: list[str] | None = None
 
     @field_validator("name")
@@ -35,10 +39,13 @@ class RepositoryCreateInput(RepositoryConfig):
         return value
 
 
-class RepositoryUpdateInput(RepositoryConfig):
-    start_url: str | None = None  # type: ignore
-    chunk_size: int | None = None  # type: ignore
-    chunk_overlap: int | None = None  # type: ignore
+class RepositoryUpdateInput(BaseModel):
+    start_url: str | None = None
+    include_pattern: str | None = None
+    exclude_pattern: str | None = None
+    page_limit: int | None = None
+    chunk_size: int | None = None
+    chunk_overlap: int | None = None
     proxy_urls: list[str] | None = None
 
 
