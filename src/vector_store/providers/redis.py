@@ -64,10 +64,13 @@ class RedisVectorStore(VectorStoreBase):
         )
         index = await AsyncSearchIndex(index_schema).set_client(self.client)  # type: ignore
 
-        if name and should_exist and not await index.exists():
+        if name == "*":
+            return index
+
+        if should_exist and not await index.exists():
             raise ResourceNotFoundException(ResourceType.REPOSITORY, name)
 
-        if name and not should_exist and await index.exists():
+        if not should_exist and await index.exists():
             raise ResourceAlreadyExistsException(ResourceType.REPOSITORY, name)
 
         return index
@@ -233,7 +236,7 @@ class RedisVectorStore(VectorStoreBase):
         return [self._extract_doc_id(index.prefix, key) for key in all_keys]
 
     async def get_all_repositories(self) -> list[RepositoryOverview]:
-        index = await self._get_index("")
+        index = await self._get_index("*")
 
         repo_names = await index.listall()
 
