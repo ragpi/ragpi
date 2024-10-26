@@ -29,18 +29,22 @@ class ChromaVectorStore(VectorStoreBase):
     ) -> RepositoryOverview:
         metadata = collection.metadata
 
-        return RepositoryOverview(
-            id=str(collection.id),
-            name=collection.name,
+        config = RepositoryConfig(
             start_url=metadata["start_url"],
             include_pattern=metadata.get("include_pattern"),
             exclude_pattern=metadata.get("exclude_pattern"),
             page_limit=metadata.get("page_limit"),
-            num_docs=collection.count(),
             chunk_size=metadata["chunk_size"],
             chunk_overlap=metadata["chunk_overlap"],
+        )
+
+        return RepositoryOverview(
+            id=str(collection.id),
+            name=collection.name,
+            num_docs=collection.count(),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
+            config=config,
         )
 
     def _map_repository_documents(
@@ -159,7 +163,7 @@ class ChromaVectorStore(VectorStoreBase):
     async def delete_repository(self, name: str) -> None:
         try:
             self.client.delete_collection(name)
-        except InvalidCollectionException as e:
+        except ValueError as e:
             raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
     async def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:

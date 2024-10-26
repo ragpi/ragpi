@@ -11,12 +11,13 @@ class RepositoryConfig(BaseModel):
     chunk_overlap: int
 
 
-class RepositoryOverview(RepositoryConfig):
+class RepositoryOverview(BaseModel):
     id: str
     name: str
     num_docs: int
     created_at: str
     updated_at: str
+    config: RepositoryConfig
 
 
 class RepositoryCreateInput(RepositoryConfig):

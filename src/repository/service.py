@@ -56,21 +56,7 @@ class RepositoryService:
             existing_doc_ids=[],
         )
 
-        repository_overview = RepositoryOverview(
-            id=created_repository.id,
-            name=created_repository.name,
-            start_url=created_repository.start_url,
-            include_pattern=created_repository.include_pattern,
-            exclude_pattern=created_repository.exclude_pattern,
-            chunk_size=created_repository.chunk_size,
-            chunk_overlap=created_repository.chunk_overlap,
-            num_docs=created_repository.num_docs,
-            page_limit=created_repository.page_limit,
-            created_at=created_repository.created_at,
-            updated_at=created_repository.updated_at,
-        )
-
-        return repository_overview, task.id
+        return created_repository, task.id
 
     async def update_repository(
         self,
@@ -85,11 +71,11 @@ class RepositoryService:
             repository_name
         )
 
-        start_url = existing_repository.start_url
-        include_pattern = existing_repository.include_pattern
-        exclude_pattern = existing_repository.exclude_pattern
-        chunk_size = existing_repository.chunk_size
-        chunk_overlap = existing_repository.chunk_overlap
+        start_url = existing_repository.config.start_url
+        include_pattern = existing_repository.config.include_pattern
+        exclude_pattern = existing_repository.config.exclude_pattern
+        chunk_size = existing_repository.config.chunk_size
+        chunk_overlap = existing_repository.config.chunk_overlap
         existing_doc_ids = existing_doc_ids
         proxy_urls = None
         page_limit = None
@@ -130,18 +116,22 @@ class RepositoryService:
             existing_doc_ids=existing_doc_ids,
         )
 
-        repository = RepositoryOverview(
-            id=existing_repository.id,
-            name=repository_name,
+        config = RepositoryConfig(
             start_url=start_url,
+            page_limit=page_limit,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            page_limit=page_limit,
+        )
+
+        repository = RepositoryOverview(
+            id=existing_repository.id,
+            name=repository_name,
             num_docs=0,
             created_at=existing_repository.created_at,
             updated_at=existing_repository.updated_at,
+            config=config,
         )
 
         return repository, task.id

@@ -154,18 +154,22 @@ class RedisVectorStore(VectorStoreBase):
 
         metadata = self.client.hgetall(metadata_key)
 
+        config = RepositoryConfig(
+            start_url=metadata["start_url"],
+            include_pattern=metadata["include_pattern"] or None,
+            exclude_pattern=metadata["exclude_pattern"] or None,
+            page_limit=int(metadata["page_limit"]) if metadata["page_limit"] else None,
+            chunk_size=int(metadata["chunk_size"]),
+            chunk_overlap=int(metadata["chunk_overlap"]),
+        )
+
         return RepositoryOverview(
             id=metadata["id"],
             name=metadata["name"],
-            start_url=metadata["start_url"],
-            page_limit=int(metadata["page_limit"]) if metadata["page_limit"] else None,
             num_docs=index_info["num_docs"],
-            include_pattern=metadata["include_pattern"] or None,
-            exclude_pattern=metadata["exclude_pattern"] or None,
-            chunk_size=int(metadata["chunk_size"]),
-            chunk_overlap=int(metadata["chunk_overlap"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
+            config=config,
         )
 
     async def get_repository_documents(
