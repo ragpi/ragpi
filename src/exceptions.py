@@ -2,6 +2,7 @@ from enum import Enum
 import logging
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 
 
 class ResourceType(str, Enum):
@@ -29,7 +30,7 @@ class ResourceLockedException(Exception):
         super().__init__(f"Resource '{resource_name}' is locked")
 
 
-async def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
+def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
     logging.error(exc)
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -37,7 +38,7 @@ async def resource_not_found_handler(request: Request, exc: ResourceNotFoundExce
     )
 
 
-async def resource_already_exists_handler(
+def resource_already_exists_handler(
     request: Request, exc: ResourceAlreadyExistsException
 ):
     logging.error(exc)
@@ -47,9 +48,16 @@ async def resource_already_exists_handler(
     )
 
 
-async def unexpected_exception_handler(request: Request, exc: Exception):
+def unexpected_exception_handler(request: Request, exc: Exception):
     logging.error(exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "An unexpected error occurred"},
+    )
+
+
+def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={"detail": "Too many requests. Please try again later."},
     )
