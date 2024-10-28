@@ -17,14 +17,14 @@ class ChatService:
         self.repository_service = RepositoryService()
         self.config = settings
 
-    async def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
+    def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
         system_content = chat_input.system or self.config.SYSTEM_PROMPT.format(
             repository=chat_input.repository
         )
         system = ChatCompletionSystemMessageParam(role="system", content=system_content)
         query = chat_input.messages[-1]
         num_results = chat_input.num_sources or 10
-        documents = await self.repository_service.search_repository(
+        documents = self.repository_service.search_repository(
             chat_input.repository, query.content, num_results
         )
         doc_content = [doc.content for doc in documents]

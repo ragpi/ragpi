@@ -21,7 +21,7 @@ class RepositoryService:
         self.document_service = DocumentService()
         self.config = settings
 
-    async def create_repository(
+    def create_repository(
         self, repository_input: RepositoryCreateInput
     ) -> tuple[RepositoryOverview, str]:
         repository_start_url = repository_input.start_url.rstrip("/")
@@ -46,7 +46,7 @@ class RepositoryService:
             chunk_overlap=chunk_overlap,
         )
 
-        created_repository = await self.vector_store_service.create_repository(
+        created_repository = self.vector_store_service.create_repository(
             name=repository_input.name,
             config=config,
             timestamp=timestamp,
@@ -66,15 +66,13 @@ class RepositoryService:
 
         return created_repository, task.id
 
-    async def update_repository(
+    def update_repository(
         self,
         repository_name: str,
         repository_input: RepositoryUpdateInput | None = None,
     ) -> tuple[RepositoryOverview, str]:
-        existing_repository = await self.vector_store_service.get_repository(
-            repository_name
-        )
-        existing_doc_ids = await self.vector_store_service.get_repository_document_ids(
+        existing_repository = self.vector_store_service.get_repository(repository_name)
+        existing_doc_ids = self.vector_store_service.get_repository_document_ids(
             repository_name
         )
 
@@ -166,7 +164,7 @@ class RepositoryService:
             logging.info(
                 f"Adding {len(docs_to_add)} documents to repository {repository_name}"
             )
-            await self.vector_store_service.add_repository_documents(
+            self.vector_store_service.add_repository_documents(
                 repository_name, docs_to_add, timestamp=get_current_datetime()
             )
             logging.info(
@@ -177,7 +175,7 @@ class RepositoryService:
             logging.info(
                 f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
             )
-            await self.vector_store_service.delete_repository_documents(
+            self.vector_store_service.delete_repository_documents(
                 repository_name, list(doc_ids_to_remove)
             )
             logging.info(
@@ -187,7 +185,7 @@ class RepositoryService:
         if not docs_to_add and not doc_ids_to_remove:
             logging.info("No changes detected in repository")
 
-        updated_repository = await self.vector_store_service.update_repository_metadata(
+        updated_repository = self.vector_store_service.update_repository_metadata(
             repository_name,
             RepositoryConfig(
                 start_url=start_url,
@@ -202,28 +200,26 @@ class RepositoryService:
 
         return updated_repository
 
-    async def search_repository(
-        self, repository_name: str, query: str, num_results: int
-    ):
-        return await self.vector_store_service.search_repository(
+    def search_repository(self, repository_name: str, query: str, num_results: int):
+        return self.vector_store_service.search_repository(
             repository_name, query, num_results
         )
 
-    async def get_repository(self, repository_name: str):
-        return await self.vector_store_service.get_repository(repository_name)
+    def get_repository(self, repository_name: str):
+        return self.vector_store_service.get_repository(repository_name)
 
-    async def get_repository_documents(
+    def get_repository_documents(
         self, repository_name: str, limit: int | None, offset: int | None
     ):
-        return await self.vector_store_service.get_repository_documents(
+        return self.vector_store_service.get_repository_documents(
             repository_name, limit, offset
         )
 
-    async def get_all_repositories(self):
-        return await self.vector_store_service.get_all_repositories()
+    def get_all_repositories(self):
+        return self.vector_store_service.get_all_repositories()
 
-    async def delete_repository(self, repository_name: str):
-        await self.vector_store_service.delete_repository(repository_name)
+    def delete_repository(self, repository_name: str):
+        self.vector_store_service.delete_repository(repository_name)
 
 
 @celery_app.task

@@ -17,12 +17,13 @@ openai = "^1.51.1"
 redis = "^5.1.1"
 celery = "^5.4.0"
 redisvl = "^0.3.5"
-crawlee = {extras = ["beautifulsoup"], version = "^0.3.8"}
+crawlee = { extras = ["beautifulsoup"], version = "^0.3.8" }
 slowapi = "^0.1.9"
 
 
 [tool.poetry.group.dev.dependencies]
 celery-types = "^0.22.0"
+types-redis = "^4.6.0.20241004"
 
 [build-system]
 requires = ["poetry-core"]

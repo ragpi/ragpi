@@ -1,9 +1,8 @@
 from typing import Any
 from langchain_openai import OpenAIEmbeddings
 import numpy as np
-from redis import Redis
 from uuid import uuid4
-from redisvl.index import AsyncSearchIndex  # type: ignore
+from redisvl.index import SearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
 
@@ -14,6 +13,7 @@ from src.exceptions import (
     ResourceNotFoundException,
     ResourceType,
 )
+from src.redis import get_redis_client
 from src.repository.schemas import (
     RepositoryConfig,
     RepositoryOverview,
@@ -47,30 +47,28 @@ REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
 
 class RedisVectorStore(VectorStoreBase):
     def __init__(self):
-        self.client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
+        self.client = get_redis_client()
         self.embeddings_function = OpenAIEmbeddings(
             model=settings.EMBEDDING_MODEL, dimensions=settings.EMBEDDING_DIMENSIONS
         )
         self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
 
-    async def _get_index(
-        self, name: str, should_exist: bool = True
-    ) -> AsyncSearchIndex:
+    def _get_index(self, name: str, should_exist: bool = True) -> SearchIndex:
         index_schema = IndexSchema.from_dict(
             {
                 "index": {"name": name, "prefix": f"{name}:documents"},
                 **self.schema,
             }
         )
-        index = await AsyncSearchIndex(index_schema).set_client(self.client)  # type: ignore
+        index = SearchIndex(index_schema).set_client(self.client)  # type: ignore
 
         if name == "*":
             return index
 
-        if should_exist and not await index.exists():
+        if should_exist and not index.exists():
             raise ResourceNotFoundException(ResourceType.REPOSITORY, name)
 
-        if not should_exist and await index.exists():
+        if not should_exist and index.exists():
             raise ResourceAlreadyExistsException(ResourceType.REPOSITORY, name)
 
         return index
@@ -81,12 +79,12 @@ class RedisVectorStore(VectorStoreBase):
     def _get_doc_key(self, prefix: str, doc_id: str) -> str:
         return f"{prefix}:{doc_id}"
 
-    async def create_repository(
+    def create_repository(
         self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
-        index = await self._get_index(name, False)
+        index = self._get_index(name, False)
 
-        await index.create()
+        index.create()
 
         metadata_key = f"{name}:metadata"
         id = str(uuid4())
@@ -107,14 +105,14 @@ class RedisVectorStore(VectorStoreBase):
             },
         )
 
-        return await self.get_repository(name)
+        return self.get_repository(name)
 
-    async def add_repository_documents(
+    def add_repository_documents(
         self, name: str, documents: list[Document], timestamp: str
     ) -> list[str]:
-        index = await self._get_index(name)
+        index = self._get_index(name)
 
-        doc_embeddings = await self.embeddings_function.aembed_documents(
+        doc_embeddings = self.embeddings_function.embed_documents(
             [doc.content for doc in documents]
         )
 
@@ -142,16 +140,16 @@ class RedisVectorStore(VectorStoreBase):
             for doc, embedding in zip(documents, doc_embeddings)
         ]
 
-        keys = await index.load(id_field="id", data=data)  # type: ignore
+        keys = index.load(id_field="id", data=data)  # type: ignore
 
         ids = [self._extract_doc_id(index.prefix, key) for key in keys]
 
         return ids
 
-    async def get_repository(self, name: str) -> RepositoryOverview:
-        index = await self._get_index(name)
+    def get_repository(self, name: str) -> RepositoryOverview:
+        index = self._get_index(name)
 
-        index_info = await index.info()
+        index_info = index.info()
 
         metadata_key = f"{name}:metadata"
 
@@ -175,10 +173,10 @@ class RedisVectorStore(VectorStoreBase):
             config=config,
         )
 
-    async def get_repository_documents(
+    def get_repository_documents(
         self, name: str, limit: int | None, offset: int | None
     ) -> list[Document]:
-        await self._get_index(name)
+        self._get_index(name)
 
         all_keys: list[str] = []
 
@@ -225,8 +223,8 @@ class RedisVectorStore(VectorStoreBase):
             for doc in docs
         ]
 
-    async def get_repository_document_ids(self, name: str) -> list[str]:
-        index = await self._get_index(name)
+    def get_repository_document_ids(self, name: str) -> list[str]:
+        index = self._get_index(name)
 
         all_keys: list[str] = []
 
@@ -235,37 +233,37 @@ class RedisVectorStore(VectorStoreBase):
 
         return [self._extract_doc_id(index.prefix, key) for key in all_keys]
 
-    async def get_all_repositories(self) -> list[RepositoryOverview]:
-        index = await self._get_index("*")
+    def get_all_repositories(self) -> list[RepositoryOverview]:
+        index = self._get_index("*")
 
-        repo_names = await index.listall()
+        repo_names = index.listall()
 
-        return [await self.get_repository(name) for name in repo_names]
+        return [self.get_repository(name) for name in repo_names]
 
-    async def delete_repository(self, name: str) -> None:
-        index = await self._get_index(name)
+    def delete_repository(self, name: str) -> None:
+        index = self._get_index(name)
 
-        if not await index.exists():
+        if not index.exists():
             raise ResourceNotFoundException(ResourceType.REPOSITORY, name)
 
-        await index.delete()
+        index.delete()
 
         metadata_key = f"{name}:metadata"
         self.client.delete(metadata_key)
 
-    async def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
-        index = await self._get_index(name)
+    def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
+        index = self._get_index(name)
 
         ids = [self._get_doc_key(index.prefix, doc_id) for doc_id in doc_ids]
 
-        await index.drop_keys(ids)
+        index.drop_keys(ids)
 
-    async def search_repository(
+    def search_repository(
         self, name: str, query: str, num_results: int
     ) -> list[Document]:
-        index = await self._get_index(name)
+        index = self._get_index(name)
 
-        query_embedding = await self.embeddings_function.aembed_query(query)
+        query_embedding = self.embeddings_function.embed_query(query)
 
         vector_query = VectorQuery(
             vector=query_embedding,
@@ -283,7 +281,7 @@ class RedisVectorStore(VectorStoreBase):
             num_results=num_results,
         )
 
-        search_results = await index.query(vector_query)
+        search_results = index.query(vector_query)
 
         repository_documents = [
             Document(
@@ -305,7 +303,7 @@ class RedisVectorStore(VectorStoreBase):
 
         return repository_documents
 
-    async def update_repository_metadata(
+    def update_repository_metadata(
         self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
         metadata_key = f"{name}:metadata"
@@ -323,4 +321,4 @@ class RedisVectorStore(VectorStoreBase):
             },
         )
 
-        return await self.get_repository(name)
+        return self.get_repository(name)
