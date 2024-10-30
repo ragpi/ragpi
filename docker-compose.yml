@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    environment:
+      - REDIS_ARGS=--appendonly yes
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      - API_KEY=${API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis:6379/0
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery --app=src.celery.celery_app worker --concurrency=1 --max-tasks-per-child=1 --loglevel=INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      - API_KEY=${API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis:6379/0
+
+volumes:
+  redis-data:
