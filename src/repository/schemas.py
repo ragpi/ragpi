@@ -3,10 +3,9 @@ import re
 
 
 class RepositoryConfig(BaseModel):
-    start_url: str
+    sitemap_url: str
     include_pattern: str | None = None
     exclude_pattern: str | None = None
-    page_limit: int | None = None
     chunk_size: int
     chunk_overlap: int
 
@@ -22,13 +21,11 @@ class RepositoryOverview(BaseModel):
 
 class RepositoryCreateInput(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
-    start_url: str
+    sitemap_url: str
     include_pattern: str | None = None
     exclude_pattern: str | None = None
-    page_limit: int | None = None
     chunk_size: int | None = None
     chunk_overlap: int | None = None
-    proxy_urls: list[str] | None = None
 
     @field_validator("name")
     def validate_name(cls, value: str):
@@ -40,13 +37,11 @@ class RepositoryCreateInput(BaseModel):
 
 
 class RepositoryUpdateInput(BaseModel):
-    start_url: str | None = None
+    sitemap_url: str | None = None
     include_pattern: str | None = None
     exclude_pattern: str | None = None
-    page_limit: int | None = None
     chunk_size: int | None = None
     chunk_overlap: int | None = None
-    proxy_urls: list[str] | None = None
 
 
 class RepositorySearchInput(BaseModel):

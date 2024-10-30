@@ -30,10 +30,9 @@ class ChromaVectorStore(VectorStoreBase):
         metadata = collection.metadata
 
         config = RepositoryConfig(
-            start_url=metadata["start_url"],
+            sitemap_url=metadata["sitemap_url"],
             include_pattern=metadata.get("include_pattern"),
             exclude_pattern=metadata.get("exclude_pattern"),
-            page_limit=metadata.get("page_limit"),
             chunk_size=metadata["chunk_size"],
             chunk_overlap=metadata["chunk_overlap"],
         )
