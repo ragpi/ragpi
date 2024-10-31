@@ -1,6 +1,7 @@
 import logging
 from src.config import settings
 from src.celery import celery_app
+from src.document.schemas import Document
 from src.document.service import DocumentService
 from src.repository.schemas import (
     RepositoryCreateInput,
@@ -112,35 +113,40 @@ class RepositoryService:
     ) -> RepositoryOverview:
         logging.info(f"Extracting documents from {sitemap_url}")
 
-        docs, num_pages = await self.document_service.create_documents_from_website(
+        existing_doc_ids_set = set(existing_doc_ids)
+        extracted_doc_ids: set[str] = set()
+        docs_to_add: list[Document] = []
+        batch_size = 500
+
+        async for doc in self.document_service.create_documents_from_website(
             sitemap_url=sitemap_url,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-        )
+        ):
+            extracted_doc_ids.add(doc.id)
+            if doc.id not in existing_doc_ids_set:
+                docs_to_add.append(doc)
 
-        logging.info(
-            f"Successfully extracted {len(docs)} documents from {num_pages} pages"
-        )
-
-        extracted_doc_ids = {doc.id for doc in docs}
-        existing_doc_ids_set = set(existing_doc_ids)
-
-        docs_to_add = [doc for doc in docs if doc.id not in existing_doc_ids_set]
-        doc_ids_to_remove = existing_doc_ids_set - extracted_doc_ids
+            if len(docs_to_add) >= batch_size:
+                logging.info(
+                    f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
+                )
+                self.vector_store_service.add_repository_documents(
+                    repository_name, docs_to_add, timestamp=get_current_datetime()
+                )
+                docs_to_add = []
 
         if docs_to_add:
             logging.info(
-                f"Adding {len(docs_to_add)} documents to repository {repository_name}"
+                f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
             )
             self.vector_store_service.add_repository_documents(
                 repository_name, docs_to_add, timestamp=get_current_datetime()
             )
-            logging.info(
-                f"Successfully added {len(docs_to_add)} documents to repository {repository_name}"
-            )
 
+        doc_ids_to_remove = existing_doc_ids_set - extracted_doc_ids
         if doc_ids_to_remove:
             logging.info(
                 f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
@@ -148,12 +154,6 @@ class RepositoryService:
             self.vector_store_service.delete_repository_documents(
                 repository_name, list(doc_ids_to_remove)
             )
-            logging.info(
-                f"Successfully removed {len(doc_ids_to_remove)} documents from repository {repository_name}"
-            )
-
-        if not docs_to_add and not doc_ids_to_remove:
-            logging.info("No changes detected in repository")
 
         updated_repository = self.vector_store_service.update_repository_metadata(
             repository_name,

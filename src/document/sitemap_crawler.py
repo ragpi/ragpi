@@ -1,4 +1,7 @@
-import requests
+from types import TracebackType
+from typing import AsyncGenerator, List, Type
+import aiohttp
+import asyncio
 from bs4 import BeautifulSoup
 import uuid
 import re
@@ -46,28 +49,43 @@ def extract_page_data(url: str, content: bytes) -> PageData:
 
 class SitemapCrawler:
     def __init__(self):
-        self.collected_pages: list[PageData] = []
+        self.session = None
 
-    def parse_sitemap(self, sitemap_url: str) -> list[str]:
-        response = requests.get(sitemap_url)
-        response.raise_for_status()
-        sitemap_xml = response.text
-        soup = BeautifulSoup(sitemap_xml, "xml")
-        urls = [loc.text for loc in soup.find_all("loc")]
-        return urls
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
 
-    def fetch_page(self, url: str) -> PageData:
-        response = requests.get(url)
-        response.raise_for_status()
-        return extract_page_data(url, response.content)
+    async def __aexit__(
+        self, exc_type: Type[Exception], exc: Exception, tb: TracebackType
+    ):
+        if self.session:
+            await self.session.close()
 
-    def crawl(
+    async def parse_sitemap(self, sitemap_url: str) -> List[str]:
+        if not self.session:
+            raise ValueError("Session is not initialized")
+        async with self.session.get(sitemap_url) as response:
+            response.raise_for_status()
+            sitemap_xml = await response.text()
+            soup = BeautifulSoup(sitemap_xml, "xml")
+            urls = [loc.text for loc in soup.find_all("loc")]
+            return urls
+
+    async def fetch_page(self, url: str) -> PageData:
+        if not self.session:
+            raise ValueError("Session is not initialized")
+        async with self.session.get(url) as response:
+            response.raise_for_status()
+            content = await response.read()
+            return extract_page_data(url, content)
+
+    async def crawl(
         self,
         sitemap_url: str,
         include_pattern: str | None = None,
         exclude_pattern: str | None = None,
-    ) -> list[PageData]:
-        urls = self.parse_sitemap(sitemap_url)
+    ) -> AsyncGenerator[PageData, None]:
+        urls = await self.parse_sitemap(sitemap_url)
 
         if not urls:
             raise ValueError("No URLs were found in the sitemap")
@@ -86,14 +104,20 @@ class SitemapCrawler:
             if not urls:
                 raise ValueError("All URLs matched the exclude pattern")
 
-        for url in urls:
-            try:
-                page_data = self.fetch_page(url)
-                self.collected_pages.append(page_data)
-            except Exception as e:
-                print(f"Error fetching {url}: {e}")
+        MAX_CONCURRENT_REQUESTS = 10
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
-        if not self.collected_pages:
-            raise ValueError("No pages were collected during crawl")
+        async def fetch_with_semaphore(url: str):
+            async with semaphore:
+                try:
+                    return await self.fetch_page(url)
+                except Exception as e:
+                    print(f"Error fetching {url}: {e}")
+                    return None
 
-        return self.collected_pages
+        tasks = [asyncio.create_task(fetch_with_semaphore(url)) for url in urls]
+
+        for task in asyncio.as_completed(tasks):
+            page_data = await task
+            if page_data:
+                yield page_data
