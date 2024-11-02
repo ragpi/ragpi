@@ -30,10 +30,9 @@ class ChromaVectorStore(VectorStoreBase):
         metadata = collection.metadata
 
         config = RepositoryConfig(
-            start_url=metadata["start_url"],
+            sitemap_url=metadata["sitemap_url"],
             include_pattern=metadata.get("include_pattern"),
             exclude_pattern=metadata.get("exclude_pattern"),
-            page_limit=metadata.get("page_limit"),
             chunk_size=metadata["chunk_size"],
             chunk_overlap=metadata["chunk_overlap"],
         )
@@ -90,7 +89,7 @@ class ChromaVectorStore(VectorStoreBase):
     def add_repository_documents(
         self, name: str, documents: list[Document], timestamp: str
     ) -> list[str]:
-        BATCH_SIZE = 10000
+        BATCH_SIZE = self.client.get_max_batch_size()
         collection = self.client.get_collection(name)
 
         doc_ids: list[str] = []

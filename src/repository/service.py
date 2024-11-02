@@ -1,6 +1,7 @@
 import logging
 from src.config import settings
 from src.celery import celery_app
+from src.document.schemas import Document
 from src.document.service import DocumentService
 from src.repository.schemas import (
     RepositoryCreateInput,
@@ -24,13 +25,6 @@ class RepositoryService:
     def create_repository(
         self, repository_input: RepositoryCreateInput
     ) -> tuple[RepositoryOverview, str]:
-        repository_start_url = repository_input.start_url.rstrip("/")
-
-        page_limit = (
-            repository_input.page_limit
-            if repository_input.page_limit and repository_input.page_limit > 0
-            else None
-        )
 
         chunk_size = repository_input.chunk_size or self.config.CHUNK_SIZE
         chunk_overlap = repository_input.chunk_overlap or self.config.CHUNK_OVERLAP
@@ -38,8 +32,7 @@ class RepositoryService:
         timestamp = get_current_datetime()
 
         config = RepositoryConfig(
-            start_url=repository_start_url,
-            page_limit=page_limit,
+            sitemap_url=repository_input.sitemap_url,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
             chunk_size=chunk_size,
@@ -54,11 +47,9 @@ class RepositoryService:
 
         task = sync_repository_documents_task.delay(
             repository_name=repository_input.name,
-            start_url=repository_start_url,
-            page_limit=repository_input.page_limit,
+            sitemap_url=repository_input.sitemap_url,
             include_pattern=repository_input.include_pattern,
             exclude_pattern=repository_input.exclude_pattern,
-            proxy_urls=repository_input.proxy_urls,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             existing_doc_ids=[],
@@ -79,37 +70,21 @@ class RepositoryService:
         config = existing_repository.config
 
         if repository_input:
-
-            page_limit = config.page_limit
-            if repository_input.page_limit:
-                page_limit = (
-                    repository_input.page_limit
-                    if repository_input.page_limit > 0
-                    else None
-                )
-
             config = RepositoryConfig(
-                start_url=(
-                    repository_input.start_url.rstrip("/")
-                    if repository_input.start_url
-                    else config.start_url
-                ),
+                sitemap_url=repository_input.sitemap_url or config.sitemap_url,
                 include_pattern=repository_input.include_pattern
                 or config.include_pattern,
                 exclude_pattern=repository_input.exclude_pattern
                 or config.exclude_pattern,
                 chunk_size=repository_input.chunk_size or config.chunk_size,
                 chunk_overlap=repository_input.chunk_overlap or config.chunk_overlap,
-                page_limit=page_limit,
             )
 
         task = sync_repository_documents_task.delay(
             repository_name=repository_name,
-            start_url=config.start_url,
-            page_limit=config.page_limit,
+            sitemap_url=config.sitemap_url,
             include_pattern=config.include_pattern,
             exclude_pattern=config.exclude_pattern,
-            proxy_urls=repository_input.proxy_urls if repository_input else None,
             chunk_size=config.chunk_size,
             chunk_overlap=config.chunk_overlap,
             existing_doc_ids=existing_doc_ids,
@@ -129,67 +104,64 @@ class RepositoryService:
     async def sync_repository_documents(
         self,
         repository_name: str,
-        start_url: str,
-        page_limit: int | None,
+        sitemap_url: str,
         include_pattern: str | None,
         exclude_pattern: str | None,
         chunk_size: int,
         chunk_overlap: int,
-        proxy_urls: list[str] | None,
         existing_doc_ids: list[str],
     ) -> RepositoryOverview:
-        logging.info(f"Extracting documents from {start_url}")
+        logging.info(f"Extracting documents from {sitemap_url}")
 
-        docs, num_pages = await self.document_service.create_documents_from_website(
-            start_url=start_url,
-            page_limit=page_limit,
+        existing_doc_ids_set = set(existing_doc_ids)
+        extracted_doc_ids: set[str] = set()
+        docs_to_add: list[Document] = []
+        batch_size = self.config.DOCUMENT_SYNC_BATCH_SIZE
+
+        async for doc in self.document_service.create_documents_from_website(
+            sitemap_url=sitemap_url,
             include_pattern=include_pattern,
             exclude_pattern=exclude_pattern,
-            proxy_urls=proxy_urls,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-        )
+        ):
+            extracted_doc_ids.add(doc.id)
+            if doc.id not in existing_doc_ids_set:
+                docs_to_add.append(doc)
 
-        logging.info(
-            f"Successfully extracted {len(docs)} documents from {num_pages} pages"
-        )
-
-        extracted_doc_ids = {doc.id for doc in docs}
-        existing_doc_ids_set = set(existing_doc_ids)
-
-        docs_to_add = [doc for doc in docs if doc.id not in existing_doc_ids_set]
-        doc_ids_to_remove = existing_doc_ids_set - extracted_doc_ids
+            if len(docs_to_add) >= batch_size:
+                logging.info(
+                    f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
+                )
+                # TODO: Put this in a try-except block to handle errors. Log: Can call update endpoint to retry missing docs
+                self.vector_store_service.add_repository_documents(
+                    repository_name, docs_to_add, timestamp=get_current_datetime()
+                )
+                docs_to_add = []
 
         if docs_to_add:
             logging.info(
-                f"Adding {len(docs_to_add)} documents to repository {repository_name}"
+                f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
             )
+            # TODO: Put this in a try-except block to handle errors
             self.vector_store_service.add_repository_documents(
                 repository_name, docs_to_add, timestamp=get_current_datetime()
             )
-            logging.info(
-                f"Successfully added {len(docs_to_add)} documents to repository {repository_name}"
-            )
 
+        doc_ids_to_remove = existing_doc_ids_set - extracted_doc_ids
         if doc_ids_to_remove:
             logging.info(
                 f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
             )
+            # TODO: Put this in a try-except block to handle errors
             self.vector_store_service.delete_repository_documents(
                 repository_name, list(doc_ids_to_remove)
             )
-            logging.info(
-                f"Successfully removed {len(doc_ids_to_remove)} documents from repository {repository_name}"
-            )
-
-        if not docs_to_add and not doc_ids_to_remove:
-            logging.info("No changes detected in repository")
 
         updated_repository = self.vector_store_service.update_repository_metadata(
             repository_name,
             RepositoryConfig(
-                start_url=start_url,
-                page_limit=page_limit,
+                sitemap_url=sitemap_url,
                 include_pattern=include_pattern,
                 exclude_pattern=exclude_pattern,
                 chunk_size=chunk_size,
@@ -226,27 +198,28 @@ class RepositoryService:
 @lock_and_execute_repository_task()
 async def sync_repository_documents_task(
     repository_name: str,
-    start_url: str,
-    page_limit: int | None,
+    sitemap_url: str,
     include_pattern: str | None,
     exclude_pattern: str | None,
-    proxy_urls: list[str] | None,
     chunk_size: int,
     chunk_overlap: int,
     existing_doc_ids: list[str],
 ):
-    repository_service = RepositoryService()
+    try:
+        repository_service = RepositoryService()
 
-    repository = await repository_service.sync_repository_documents(
-        repository_name=repository_name,
-        start_url=start_url,
-        page_limit=page_limit,
-        include_pattern=include_pattern,
-        exclude_pattern=exclude_pattern,
-        proxy_urls=proxy_urls,
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-        existing_doc_ids=existing_doc_ids,
-    )
+        repository = await repository_service.sync_repository_documents(
+            repository_name=repository_name,
+            sitemap_url=sitemap_url,
+            include_pattern=include_pattern,
+            exclude_pattern=exclude_pattern,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            existing_doc_ids=existing_doc_ids,
+        )
 
-    return repository.model_dump()
+        return repository.model_dump()
+    except Exception as e:
+        # TODO: Handle errors and trigger task failure
+        logging.error(f"Error syncing repository documents: {e}")
+        return None

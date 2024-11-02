@@ -94,10 +94,9 @@ class RedisVectorStore(VectorStoreBase):
             mapping={
                 "id": id,
                 "name": name,
-                "start_url": config.start_url,
+                "sitemap_url": config.sitemap_url,
                 "include_pattern": config.include_pattern or "",
                 "exclude_pattern": config.exclude_pattern or "",
-                "page_limit": config.page_limit or "",
                 "chunk_size": config.chunk_size,
                 "chunk_overlap": config.chunk_overlap,
                 "created_at": timestamp,
@@ -156,10 +155,9 @@ class RedisVectorStore(VectorStoreBase):
         metadata = self.client.hgetall(metadata_key)
 
         config = RepositoryConfig(
-            start_url=metadata["start_url"],
+            sitemap_url=metadata["sitemap_url"],
             include_pattern=metadata["include_pattern"] or None,
             exclude_pattern=metadata["exclude_pattern"] or None,
-            page_limit=int(metadata["page_limit"]) if metadata["page_limit"] else None,
             chunk_size=int(metadata["chunk_size"]),
             chunk_overlap=int(metadata["chunk_overlap"]),
         )
@@ -311,10 +309,9 @@ class RedisVectorStore(VectorStoreBase):
         self.client.hset(
             metadata_key,
             mapping={
-                "start_url": config.start_url,
+                "sitemap_url": config.sitemap_url,
                 "include_pattern": config.include_pattern or "",
                 "exclude_pattern": config.exclude_pattern or "",
-                "page_limit": config.page_limit or "",
                 "chunk_size": config.chunk_size,
                 "chunk_overlap": config.chunk_overlap,
                 "updated_at": timestamp,

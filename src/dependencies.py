@@ -26,6 +26,6 @@ def get_api_key(api_key: str = Security(api_key_header)):
 def create_rate_limiter() -> Limiter:
     return Limiter(
         key_func=get_remote_address,
-        application_limits=["60/minute"],
+        application_limits=["60/minute"],  # TODO: Make this configurable
         storage_uri=settings.REDIS_URL,
     )
