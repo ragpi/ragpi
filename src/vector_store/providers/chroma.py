@@ -89,7 +89,7 @@ class ChromaVectorStore(VectorStoreBase):
     def add_repository_documents(
         self, name: str, documents: list[Document], timestamp: str
     ) -> list[str]:
-        BATCH_SIZE = 10000
+        BATCH_SIZE = self.client.get_max_batch_size()
         collection = self.client.get_collection(name)
 
         doc_ids: list[str] = []

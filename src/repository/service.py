@@ -133,6 +133,7 @@ class RepositoryService:
                 logging.info(
                     f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
                 )
+                # TODO: Put this in a try-except block to handle errors. Log: Can call update endpoint to retry missing docs
                 self.vector_store_service.add_repository_documents(
                     repository_name, docs_to_add, timestamp=get_current_datetime()
                 )
@@ -142,6 +143,7 @@ class RepositoryService:
             logging.info(
                 f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
             )
+            # TODO: Put this in a try-except block to handle errors
             self.vector_store_service.add_repository_documents(
                 repository_name, docs_to_add, timestamp=get_current_datetime()
             )
@@ -151,6 +153,7 @@ class RepositoryService:
             logging.info(
                 f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
             )
+            # TODO: Put this in a try-except block to handle errors
             self.vector_store_service.delete_repository_documents(
                 repository_name, list(doc_ids_to_remove)
             )
@@ -217,5 +220,6 @@ async def sync_repository_documents_task(
 
         return repository.model_dump()
     except Exception as e:
+        # TODO: Handle errors and trigger task failure
         logging.error(f"Error syncing repository documents: {e}")
         return None
