@@ -41,6 +41,8 @@ class Settings(BaseSettings):
 
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
 
+    USER_AGENT: str = "RagApi"
+
     @model_validator(mode="after")
     def set_embedding_dimensions(self):
         if self.EMBEDDING_MODEL == EmbeddingModel.TEXT_EMBEDDING_3_LARGE:

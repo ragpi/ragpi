@@ -1,12 +1,14 @@
 import logging
 from types import TracebackType
-from typing import AsyncGenerator, List, Type
-import aiohttp
+from typing import AsyncGenerator, Type
 import asyncio
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 import uuid
 import re
 import html2text
+from urllib.parse import urlparse, urljoin
+from urllib.robotparser import RobotFileParser
 
 from src.config import settings
 from src.document.schemas import PageData
@@ -51,11 +53,13 @@ def extract_page_data(url: str, content: bytes) -> PageData:
 
 class SitemapCrawler:
     def __init__(self):
-        self.config = settings
         self.session = None
+        self.robots_parser: RobotFileParser | None = None
+        self.user_agent = settings.USER_AGENT
+        self.max_concurrent_requests = settings.MAX_CONCURRENT_REQUESTS
 
     async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
+        self.session = ClientSession()
         return self
 
     async def __aexit__(
@@ -64,7 +68,42 @@ class SitemapCrawler:
         if self.session:
             await self.session.close()
 
-    async def parse_sitemap(self, sitemap_url: str) -> List[str]:
+    async def fetch_robots_txt(self, base_url: str) -> str:
+        if not self.session:
+            raise ValueError("Session is not initialized")
+
+        robots_url = urljoin(base_url, "/robots.txt")
+
+        try:
+            async with self.session.get(robots_url) as response:
+                if response.status == 200:
+                    return await response.text()
+                elif response.status == 404:
+                    logging.info(
+                        f"No robots.txt found at {robots_url}. Allowing all URLs."
+                    )
+                    return ""
+                else:
+                    logging.warning(
+                        f"Failed to fetch robots.txt from {robots_url}: {response.status}. Allowing all URLs."
+                    )
+                    return ""
+        except Exception as e:
+            logging.error(
+                f"Error fetching robots.txt from {robots_url}: {e}. Allowing all URLs."
+            )
+            return ""
+
+    async def setup_robots_parser(self, sitemap_url: str):
+        parsed_url = urlparse(sitemap_url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+
+        self.robots_parser = RobotFileParser()
+        robots_content = await self.fetch_robots_txt(base_url)
+
+        return self.robots_parser.parse(robots_content.splitlines())
+
+    async def parse_sitemap(self, sitemap_url: str) -> list[str]:
         if not self.session:
             raise ValueError("Session is not initialized")
 
@@ -82,6 +121,13 @@ class SitemapCrawler:
     async def fetch_page(self, url: str) -> PageData | None:
         if not self.session:
             raise ValueError("Session is not initialized")
+
+        if not self.robots_parser:
+            raise ValueError("Robots parser not initialized")
+
+        if not self.robots_parser.can_fetch(self.user_agent, url):
+            logging.warning(f"URL {url} is disallowed by robots.txt")
+            return None
 
         max_retries = 5
         retry_count = 0
@@ -105,7 +151,7 @@ class SitemapCrawler:
                         retry_count += 1
                     else:
                         response.raise_for_status()
-            except aiohttp.ClientError as e:
+            except Exception as e:
                 logging.error(
                     f"Error fetching {url}: {e}. Retrying in {backoff} seconds..."
                 )
@@ -121,6 +167,8 @@ class SitemapCrawler:
         include_pattern: str | None = None,
         exclude_pattern: str | None = None,
     ) -> AsyncGenerator[PageData, None]:
+        await self.setup_robots_parser(sitemap_url)
+
         urls = await self.parse_sitemap(sitemap_url)
 
         if not urls:
@@ -140,8 +188,7 @@ class SitemapCrawler:
             if not urls:
                 raise ValueError("All URLs matched the exclude pattern")
 
-        MAX_CONCURRENT_REQUESTS = self.config.MAX_CONCURRENT_REQUESTS
-        semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+        semaphore = asyncio.Semaphore(self.max_concurrent_requests)
 
         async def fetch_with_semaphore(url: str):
             async with semaphore:
