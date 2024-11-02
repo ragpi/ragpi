@@ -202,16 +202,20 @@ async def sync_repository_documents_task(
     chunk_overlap: int,
     existing_doc_ids: list[str],
 ):
-    repository_service = RepositoryService()
+    try:
+        repository_service = RepositoryService()
 
-    repository = await repository_service.sync_repository_documents(
-        repository_name=repository_name,
-        sitemap_url=sitemap_url,
-        include_pattern=include_pattern,
-        exclude_pattern=exclude_pattern,
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-        existing_doc_ids=existing_doc_ids,
-    )
+        repository = await repository_service.sync_repository_documents(
+            repository_name=repository_name,
+            sitemap_url=sitemap_url,
+            include_pattern=include_pattern,
+            exclude_pattern=exclude_pattern,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            existing_doc_ids=existing_doc_ids,
+        )
 
-    return repository.model_dump()
+        return repository.model_dump()
+    except Exception as e:
+        logging.error(f"Error syncing repository documents: {e}")
+        return None

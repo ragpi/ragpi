@@ -1,3 +1,4 @@
+import logging
 from types import TracebackType
 from typing import AsyncGenerator, List, Type
 import aiohttp
@@ -64,20 +65,53 @@ class SitemapCrawler:
     async def parse_sitemap(self, sitemap_url: str) -> List[str]:
         if not self.session:
             raise ValueError("Session is not initialized")
+
         async with self.session.get(sitemap_url) as response:
+            if response.status == 404:
+                raise ValueError(f"Sitemap not found at {sitemap_url}")
+
             response.raise_for_status()
+
             sitemap_xml = await response.text()
             soup = BeautifulSoup(sitemap_xml, "xml")
             urls = [loc.text for loc in soup.find_all("loc")]
             return urls
 
-    async def fetch_page(self, url: str) -> PageData:
+    async def fetch_page(self, url: str) -> PageData | None:
         if not self.session:
             raise ValueError("Session is not initialized")
-        async with self.session.get(url) as response:
-            response.raise_for_status()
-            content = await response.read()
-            return extract_page_data(url, content)
+
+        max_retries = 5
+        retry_count = 0
+        backoff = 1  # 1 second
+
+        while retry_count <= max_retries:
+            try:
+                async with self.session.get(url) as response:
+                    if response.status == 200:
+                        content = await response.read()
+                        return extract_page_data(url, content)
+                    elif response.status == 404:
+                        logging.error(f"Page not found at {url}")
+                        return None
+                    elif response.status == 429:
+                        logging.warning(
+                            f"Rate limit exceeded when fetching {url}. Retrying in {backoff} seconds..."
+                        )
+                        await asyncio.sleep(backoff)
+                        backoff *= 2
+                        retry_count += 1
+                    else:
+                        response.raise_for_status()
+            except aiohttp.ClientError as e:
+                logging.error(
+                    f"Error fetching {url}: {e}. Retrying in {backoff} seconds..."
+                )
+                await asyncio.sleep(backoff)
+                backoff *= 2
+                retry_count += 1
+        logging.error(f"Failed to fetch {url} after {max_retries} retries.")
+        return None
 
     async def crawl(
         self,
@@ -109,11 +143,7 @@ class SitemapCrawler:
 
         async def fetch_with_semaphore(url: str):
             async with semaphore:
-                try:
-                    return await self.fetch_page(url)
-                except Exception as e:
-                    print(f"Error fetching {url}: {e}")
-                    return None
+                return await self.fetch_page(url)
 
         tasks = [asyncio.create_task(fetch_with_semaphore(url)) for url in urls]
 
