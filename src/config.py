@@ -37,6 +37,10 @@ class Settings(BaseSettings):
         "You are an expert on {repository} and can answer any questions about it."
     )
 
+    MAX_CONCURRENT_REQUESTS: int = 10
+
+    DOCUMENT_SYNC_BATCH_SIZE: int = 500
+
     @model_validator(mode="after")
     def set_embedding_dimensions(self):
         if self.EMBEDDING_MODEL == EmbeddingModel.TEXT_EMBEDDING_3_LARGE:

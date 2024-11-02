@@ -8,6 +8,7 @@ import uuid
 import re
 import html2text
 
+from src.config import settings
 from src.document.schemas import PageData
 
 UNWANTED_TAGS = [
@@ -50,6 +51,7 @@ def extract_page_data(url: str, content: bytes) -> PageData:
 
 class SitemapCrawler:
     def __init__(self):
+        self.config = settings
         self.session = None
 
     async def __aenter__(self):
@@ -138,7 +140,7 @@ class SitemapCrawler:
             if not urls:
                 raise ValueError("All URLs matched the exclude pattern")
 
-        MAX_CONCURRENT_REQUESTS = 10
+        MAX_CONCURRENT_REQUESTS = self.config.MAX_CONCURRENT_REQUESTS
         semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
         async def fetch_with_semaphore(url: str):

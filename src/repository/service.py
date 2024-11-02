@@ -116,7 +116,7 @@ class RepositoryService:
         existing_doc_ids_set = set(existing_doc_ids)
         extracted_doc_ids: set[str] = set()
         docs_to_add: list[Document] = []
-        batch_size = 500
+        batch_size = self.config.DOCUMENT_SYNC_BATCH_SIZE
 
         async for doc in self.document_service.create_documents_from_website(
             sitemap_url=sitemap_url,
