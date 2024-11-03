@@ -109,13 +109,15 @@ class RepositoryService:
         exclude_pattern: str | None,
         chunk_size: int,
         chunk_overlap: int,
-        existing_doc_ids: list[str],
+        existing_doc_ids: set[str],
     ) -> RepositoryOverview:
         logging.info(f"Extracting documents from {sitemap_url}")
 
-        existing_doc_ids_set = set(existing_doc_ids)
-        extracted_doc_ids: set[str] = set()
+        current_doc_ids: set[str] = set()
+
         docs_to_add: list[Document] = []
+        added_doc_ids: set[str] = set()
+
         batch_size = self.config.DOCUMENT_SYNC_BATCH_SIZE
 
         async for doc in self.document_service.create_documents_from_website(
@@ -125,19 +127,24 @@ class RepositoryService:
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
         ):
-            extracted_doc_ids.add(doc.id)
-            if doc.id not in existing_doc_ids_set:
-                docs_to_add.append(doc)
+            if doc.id in current_doc_ids:
+                continue
 
-            if len(docs_to_add) >= batch_size:
-                logging.info(
-                    f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
-                )
-                # TODO: Put this in a try-except block to handle errors. Log: Can call update endpoint to retry missing docs
-                self.vector_store_service.add_repository_documents(
-                    repository_name, docs_to_add, timestamp=get_current_datetime()
-                )
-                docs_to_add = []
+            current_doc_ids.add(doc.id)
+
+            if doc.id not in existing_doc_ids and doc.id not in added_doc_ids:
+                docs_to_add.append(doc)
+                added_doc_ids.add(doc.id)
+
+                if len(docs_to_add) >= batch_size:
+                    logging.info(
+                        f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
+                    )
+                    # TODO: Put this in a try-except block to handle errors. Log: Can call update endpoint to retry missing docs
+                    self.vector_store_service.add_repository_documents(
+                        repository_name, docs_to_add, timestamp=get_current_datetime()
+                    )
+                    docs_to_add = []
 
         if docs_to_add:
             logging.info(
@@ -148,7 +155,7 @@ class RepositoryService:
                 repository_name, docs_to_add, timestamp=get_current_datetime()
             )
 
-        doc_ids_to_remove = existing_doc_ids_set - extracted_doc_ids
+        doc_ids_to_remove = existing_doc_ids - current_doc_ids
         if doc_ids_to_remove:
             logging.info(
                 f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
@@ -215,7 +222,7 @@ async def sync_repository_documents_task(
             exclude_pattern=exclude_pattern,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            existing_doc_ids=existing_doc_ids,
+            existing_doc_ids=set(existing_doc_ids),
         )
 
         return repository.model_dump()
