@@ -161,9 +161,6 @@ class RepositoryService:
                     added_doc_ids.add(doc.id)
 
                     if len(docs_to_add) >= batch_size:
-                        logging.info(
-                            f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
-                        )
                         try:
                             self.vector_store_service.add_repository_documents(
                                 repository_name,
@@ -171,18 +168,21 @@ class RepositoryService:
                                 timestamp=get_current_datetime(),
                             )
                             docs_to_add = []
+                            logging.info(
+                                f"Added a batch of {batch_size} documents to repository {repository_name}"
+                            )
                         except Exception as e:
                             logging.error(
                                 f"Failed to add batch of documents to repository {repository_name}: {e}"
                             )
 
             if docs_to_add:
-                logging.info(
-                    f"Adding a batch of {len(docs_to_add)} documents to repository {repository_name}"
-                )
                 try:
                     self.vector_store_service.add_repository_documents(
                         repository_name, docs_to_add, timestamp=get_current_datetime()
+                    )
+                    logging.info(
+                        f"Added a batch of {len(docs_to_add)} documents to repository {repository_name}"
                     )
                 except Exception as e:
                     logging.error(
@@ -191,17 +191,20 @@ class RepositoryService:
 
             doc_ids_to_remove = existing_doc_ids - current_doc_ids
             if doc_ids_to_remove:
-                logging.info(
-                    f"Removing {len(doc_ids_to_remove)} documents from repository {repository_name}"
-                )
                 try:
                     self.vector_store_service.delete_repository_documents(
                         repository_name, list(doc_ids_to_remove)
+                    )
+                    logging.info(
+                        f"Removed {len(doc_ids_to_remove)} documents from repository {repository_name}"
                     )
                 except Exception as e:
                     logging.error(
                         f"Failed to remove documents from repository {repository_name}: {e}"
                     )
+
+            if not current_doc_ids - existing_doc_ids:
+                logging.info(f"No new documents added to repository {repository_name}")
 
             updated_repository = self.vector_store_service.update_repository_metadata(
                 repository_name,
