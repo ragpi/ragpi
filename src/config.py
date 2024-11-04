@@ -15,7 +15,7 @@ class EmbeddingModel(str, Enum):
 
 
 class Settings(BaseSettings):
-    API_KEY: str
+    API_KEY: str | None = None
 
     VECTOR_STORE_PROVIDER: VectorStoreProvider = VectorStoreProvider.REDIS
 
