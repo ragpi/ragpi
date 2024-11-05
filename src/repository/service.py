@@ -22,14 +22,16 @@ class RepositoryService:
             settings.VECTOR_STORE_PROVIDER
         )
         self.document_service = DocumentService()
-        self.config = settings
+        self.default_chunk_size = settings.CHUNK_SIZE
+        self.default_chunk_overlap = settings.CHUNK_OVERLAP
+        self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
 
     def create_repository(
         self, repository_input: RepositoryCreateInput
     ) -> tuple[RepositoryOverview, str]:
 
-        chunk_size = repository_input.chunk_size or self.config.CHUNK_SIZE
-        chunk_overlap = repository_input.chunk_overlap or self.config.CHUNK_OVERLAP
+        chunk_size = repository_input.chunk_size or self.default_chunk_size
+        chunk_overlap = repository_input.chunk_overlap or self.default_chunk_overlap
 
         timestamp = get_current_datetime()
 
@@ -141,7 +143,7 @@ class RepositoryService:
         docs_to_add: list[Document] = []
         added_doc_ids: set[str] = set()
 
-        batch_size = self.config.DOCUMENT_SYNC_BATCH_SIZE
+        batch_size = self.document_sync_batch_size
 
         try:
             async for doc in self.document_service.create_documents_from_website(

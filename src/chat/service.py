@@ -15,10 +15,11 @@ class ChatService:
     def __init__(self):
         self.openai_client = OpenAI()
         self.repository_service = RepositoryService()
-        self.config = settings
+        self.default_system_prompt = settings.SYSTEM_PROMPT
+        self.default_chat_model = settings.CHAT_MODEL
 
     def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
-        system_content = chat_input.system or self.config.SYSTEM_PROMPT.format(
+        system_content = chat_input.system or self.default_system_prompt.format(
             repository=chat_input.repository
         )
         system = ChatCompletionSystemMessageParam(role="system", content=system_content)
@@ -58,7 +59,7 @@ User Query: {query.content}"""
             *chat_history,
             query_message,
         ]
-        model = chat_input.model or self.config.CHAT_MODEL
+        model = chat_input.model or self.default_chat_model
         completion = self.openai_client.chat.completions.create(
             model=model,
             messages=messages,
