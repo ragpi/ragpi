@@ -7,7 +7,7 @@ from celery import current_task
 from celery.exceptions import Ignore
 
 
-from src.exceptions import ResourceLockedException
+from src.exceptions import RepositorySyncException, ResourceLockedException
 from src.lock.service import LockService
 
 
@@ -46,6 +46,18 @@ def lock_and_execute_repository_task():
                     meta={
                         "exc_type": "ResourceLockedException",
                         "message": f"Repository '{repository_name}' already has a task in progress",
+                    },
+                )
+                raise Ignore()
+
+            except RepositorySyncException as e:
+                logging.error(e)
+
+                current_task.update_state(
+                    state="SYNC_ERROR",
+                    meta={
+                        "exc_type": "RepositorySyncException",
+                        "message": str(e),
                     },
                 )
                 raise Ignore()

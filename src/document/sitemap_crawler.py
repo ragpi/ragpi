@@ -12,6 +12,7 @@ from urllib.robotparser import RobotFileParser
 
 from src.config import settings
 from src.document.schemas import PageData
+from src.exceptions import SiteMapCrawlerException
 
 UNWANTED_TAGS = [
     "nav",
@@ -109,7 +110,7 @@ class SitemapCrawler:
 
         async with self.session.get(sitemap_url) as response:
             if response.status == 404:
-                raise ValueError(f"Sitemap not found at {sitemap_url}")
+                raise SiteMapCrawlerException(f"Sitemap not found at {sitemap_url}")
 
             response.raise_for_status()
 
@@ -172,21 +173,27 @@ class SitemapCrawler:
         urls = await self.parse_sitemap(sitemap_url)
 
         if not urls:
-            raise ValueError("No URLs were found in the sitemap")
+            raise SiteMapCrawlerException(
+                f"No URLs found in the sitemap at {sitemap_url}"
+            )
 
         if include_pattern:
             include_regex = re.compile(include_pattern)
             urls = [url for url in urls if include_regex.search(url)]
 
             if not urls:
-                raise ValueError("No URLs matched the include pattern")
+                raise SiteMapCrawlerException(
+                    f"No URLs from the sitemap matched the include pattern {include_pattern}"
+                )
 
         if exclude_pattern:
             exclude_regex = re.compile(exclude_pattern)
             urls = [url for url in urls if not exclude_regex.search(url)]
 
             if not urls:
-                raise ValueError("All URLs matched the exclude pattern")
+                raise SiteMapCrawlerException(
+                    f"All URLs from the sitemap matched the exclude pattern {exclude_pattern}"
+                )
 
         semaphore = asyncio.Semaphore(self.max_concurrent_requests)
 

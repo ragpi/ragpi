@@ -23,6 +23,13 @@ class TaskService:
         if task.status == "LOCKED":  # type: ignore
             return TaskStatus(id=task_id, status="FAILURE", error=task.info["message"])
 
+        if task.status == "SYNC_ERROR":  # type: ignore
+            return TaskStatus(
+                id=task_id,
+                status="FAILURE",
+                error=task.info["message"],
+            )
+
         return TaskStatus(
             id=task.task_id,
             status=task.status,

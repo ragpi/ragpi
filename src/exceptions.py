@@ -30,6 +30,14 @@ class ResourceLockedException(Exception):
         super().__init__(f"Resource '{resource_name}' is locked")
 
 
+class SiteMapCrawlerException(Exception):
+    pass
+
+
+class RepositorySyncException(Exception):
+    pass
+
+
 def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
     logging.error(exc)
     return JSONResponse(

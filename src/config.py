@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -15,7 +15,7 @@ class EmbeddingModel(str, Enum):
 
 
 class Settings(BaseSettings):
-    API_KEY: str
+    API_KEY: str | None = None
 
     VECTOR_STORE_PROVIDER: VectorStoreProvider = VectorStoreProvider.REDIS
 
@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
 
     USER_AGENT: str = "RagApi"
+
+    RATE_LIMIT: str = Field(
+        pattern=r"^\d+/(second|minute|hour|day|month|year)$", default="60/minute"
+    )
 
     @model_validator(mode="after")
     def set_embedding_dimensions(self):

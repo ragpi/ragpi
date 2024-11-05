@@ -18,9 +18,7 @@ from src.task.router import router as task_router
 
 limiter = create_rate_limiter()
 
-app = FastAPI(
-    dependencies=[Depends(get_api_key)]  # TODO: Only add this if API key env var is set
-)
+app = FastAPI(dependencies=[Depends(get_api_key)])
 
 app.state.limiter = limiter
 
