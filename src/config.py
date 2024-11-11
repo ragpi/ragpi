@@ -29,9 +29,9 @@ class Settings(BaseSettings):
 
     EMBEDDING_DIMENSIONS: int = 1536
 
-    CHUNK_SIZE: int = 1024
+    CHUNK_SIZE: int = 512
 
-    CHUNK_OVERLAP: int = 20
+    CHUNK_OVERLAP: int = 128
 
     SYSTEM_PROMPT: str = (
         "You are an expert on {repository} and can answer any questions about it."
@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     RATE_LIMIT: str = Field(
         pattern=r"^\d+/(second|minute|hour|day|month|year)$", default="60/minute"
     )
+
+    # TODO: Add default num_search_results
 
     @model_validator(mode="after")
     def set_embedding_dimensions(self):
