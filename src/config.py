@@ -47,8 +47,6 @@ class Settings(BaseSettings):
         pattern=r"^\d+/(second|minute|hour|day|month|year)$", default="60/minute"
     )
 
-    # TODO: Add default num_search_results
-
     @model_validator(mode="after")
     def set_embedding_dimensions(self):
         if self.EMBEDDING_MODEL == EmbeddingModel.TEXT_EMBEDDING_3_LARGE:
