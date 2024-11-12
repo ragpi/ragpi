@@ -5,9 +5,11 @@ from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
     ChatCompletionMessageParam,
 )
+from sentence_transformers import CrossEncoder
 
 from src.chat.schemas import ChatResponse, CreateChatInput
 from src.config import settings
+from src.document.schemas import Document
 from src.repository.service import RepositoryService
 
 
@@ -18,6 +20,18 @@ class ChatService:
         self.default_system_prompt = settings.SYSTEM_PROMPT
         self.default_chat_model = settings.CHAT_MODEL
 
+    def rerank_documents(self, query: str, documents: list[Document]) -> list[Document]:
+        model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+
+        scores = model.predict(  # type: ignore
+            [[query, doc.content] for doc in documents],
+            show_progress_bar=False,
+        )
+
+        sorted_docs = sorted(zip(scores, documents), reverse=True)  # type: ignore
+
+        return [doc for _, doc in sorted_docs]
+
     def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
         system_content = chat_input.system or self.default_system_prompt.format(
             repository=chat_input.repository
@@ -27,7 +41,8 @@ class ChatService:
         documents = self.repository_service.search_repository(
             chat_input.repository, query.content, chat_input.num_sources
         )
-        doc_content = [doc.content for doc in documents]
+        sources = self.rerank_documents(query.content, documents)
+        doc_content = [doc.content for doc in sources]
         context = "\n".join(doc_content)
         query_prompt = f"""
 Use the following context taken from a knowledge base about {chat_input.repository} to answer the user's query. 
@@ -65,6 +80,6 @@ User Query: {query.content}"""
         )
         response = ChatResponse(
             message=completion.choices[0].message.content,
-            sources=documents,
+            sources=sources,
         )
         return response
