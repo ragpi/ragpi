@@ -66,40 +66,44 @@ class RedisVectorStore(VectorStoreBase):
         self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
 
-    def _get_index_prefix(self, name: str) -> str:
-        return f"{name}:documents"
+    def _get_index_prefix(self, repository_name: str) -> str:
+        return f"{repository_name}:documents"
 
-    def _get_metadata_key(self, name: str) -> str:
-        return f"{name}:metadata"
+    def _get_metadata_key(self, repository_name: str) -> str:
+        return f"{repository_name}:metadata"
 
-    def _get_index(self, name: str, should_exist: bool = True) -> SearchIndex:
-        prefix = self._get_index_prefix(name)
+    def _get_index(
+        self, repository_name: str, should_exist: bool = True
+    ) -> SearchIndex:
+        prefix = self._get_index_prefix(repository_name)
 
         index_schema = IndexSchema.from_dict(
             {
-                "index": {"name": name, "prefix": prefix},
+                "index": {"name": repository_name, "prefix": prefix},
                 **self.schema,
             }
         )
         index = SearchIndex(index_schema).set_client(self.client)  # type: ignore
 
-        if name == "*":
+        if repository_name == "*":
             return index
 
         if should_exist and not index.exists():
-            raise ResourceNotFoundException(ResourceType.REPOSITORY, name)
+            raise ResourceNotFoundException(ResourceType.REPOSITORY, repository_name)
 
         if not should_exist and index.exists():
-            raise ResourceAlreadyExistsException(ResourceType.REPOSITORY, name)
+            raise ResourceAlreadyExistsException(
+                ResourceType.REPOSITORY, repository_name
+            )
 
         return index
 
-    def _extract_doc_id(self, name: str, key: str) -> str:
-        prefix = self._get_index_prefix(name)
+    def _extract_doc_id(self, repository_name: str, key: str) -> str:
+        prefix = self._get_index_prefix(repository_name)
         return key.split(f"{prefix}:")[1]
 
-    def _get_doc_key(self, name: str, doc_id: str) -> str:
-        prefix = self._get_index_prefix(name)
+    def _get_doc_key(self, repository_name: str, doc_id: str) -> str:
+        prefix = self._get_index_prefix(repository_name)
         return f"{prefix}:{doc_id}"
 
     def create_repository(
