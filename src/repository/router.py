@@ -88,6 +88,6 @@ def search_repository(
     repository_service: RepositoryService = Depends(),
 ):
     results = repository_service.search_repository(
-        repository_name, query_input.query, query_input.num_results or 10
+        repository_name, query_input.query, query_input.num_results
     )
     return results

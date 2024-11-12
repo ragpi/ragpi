@@ -29,9 +29,9 @@ class Settings(BaseSettings):
 
     EMBEDDING_DIMENSIONS: int = 1536
 
-    CHUNK_SIZE: int = 1024
+    CHUNK_SIZE: int = 512
 
-    CHUNK_OVERLAP: int = 20
+    CHUNK_OVERLAP: int = 128
 
     SYSTEM_PROMPT: str = (
         "You are an expert on {repository} and can answer any questions about it."

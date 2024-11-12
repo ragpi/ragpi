@@ -24,9 +24,8 @@ class ChatService:
         )
         system = ChatCompletionSystemMessageParam(role="system", content=system_content)
         query = chat_input.messages[-1]
-        num_results = chat_input.num_sources or 10
         documents = self.repository_service.search_repository(
-            chat_input.repository, query.content, num_results
+            chat_input.repository, query.content, chat_input.num_sources
         )
         doc_content = [doc.content for doc in documents]
         context = "\n".join(doc_content)
