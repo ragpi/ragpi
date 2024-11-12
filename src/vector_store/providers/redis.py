@@ -305,7 +305,7 @@ class RedisVectorStore(VectorStoreBase):
             num_results=num_results,
         )
 
-        # The results are already sorted by distance by default
+        # The results are sorted by distance by default
         search_results = index.query(vector_query)
 
         return self.map_search_results_to_documents(index.name, search_results)
@@ -322,7 +322,7 @@ class RedisVectorStore(VectorStoreBase):
             )
         )
 
-        # The results are already sorted by BM25 score by default
+        # The results are sorted by score (BM25) by default
         search_results = index.search(text_query)  # type: ignore
 
         return self.map_search_results_to_documents(index.name, search_results.docs)
