@@ -25,6 +25,8 @@ class Settings(BaseSettings):
 
     CHAT_MODEL: str = "gpt-4o-mini"
 
+    RERANKING_MODEL: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
     EMBEDDING_MODEL: EmbeddingModel = EmbeddingModel.TEXT_EMBEDDING_3_SMALL
 
     EMBEDDING_DIMENSIONS: int = 1536
@@ -40,6 +42,10 @@ class Settings(BaseSettings):
     MAX_CONCURRENT_REQUESTS: int = 10
 
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
+
+    NUM_SEARCH_RESULTS: int = 25
+
+    NUM_SOURCES: int = 5
 
     USER_AGENT: str = "RagApi"
 

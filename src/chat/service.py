@@ -19,16 +19,21 @@ class ChatService:
         self.repository_service = RepositoryService()
         self.default_system_prompt = settings.SYSTEM_PROMPT
         self.default_chat_model = settings.CHAT_MODEL
+        self.default_reranking_model = settings.RERANKING_MODEL
+        self.default_num_search_results = settings.NUM_SEARCH_RESULTS
+        self.default_num_sources = settings.NUM_SOURCES
 
-    def rerank_documents(self, query: str, documents: list[Document]) -> list[Document]:
-        model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    def rerank_documents(
+        self, query: str, documents: list[Document], model: str
+    ) -> list[Document]:
+        cross_encoder = CrossEncoder(model)
 
-        scores = model.predict(  # type: ignore
+        scores = cross_encoder.predict(  # type: ignore
             [[query, doc.content] for doc in documents],
             show_progress_bar=False,
         )
 
-        sorted_docs = sorted(zip(scores, documents), reverse=True)  # type: ignore
+        sorted_docs = sorted(zip(scores, documents), key=lambda x: x[0], reverse=True)  # type: ignore
 
         return [doc for _, doc in sorted_docs]
 
@@ -38,10 +43,25 @@ class ChatService:
         )
         system = ChatCompletionSystemMessageParam(role="system", content=system_content)
         query = chat_input.messages[-1]
-        documents = self.repository_service.search_repository(
-            chat_input.repository, query.content, chat_input.num_sources
+        num_search_results = (
+            chat_input.num_search_results or self.default_num_search_results
         )
-        sources = self.rerank_documents(query.content, documents)
+        num_sources = chat_input.num_sources or self.default_num_sources
+
+        documents = self.repository_service.search_repository(
+            chat_input.repository,
+            query.content,
+            max(num_search_results, num_sources),
+        )
+        sources = documents[:num_sources]
+        if chat_input.use_reranking:
+            ranked_docs = self.rerank_documents(
+                query.content,
+                documents,
+                chat_input.reranking_model or self.default_reranking_model,
+            )
+            sources = ranked_docs[:num_sources]
+
         doc_content = [doc.content for doc in sources]
         context = "\n".join(doc_content)
         query_prompt = f"""
@@ -73,7 +93,7 @@ User Query: {query.content}"""
             *chat_history,
             query_message,
         ]
-        model = chat_input.model or self.default_chat_model
+        model = chat_input.chat_model or self.default_chat_model
         completion = self.openai_client.chat.completions.create(
             model=model,
             messages=messages,

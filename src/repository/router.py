@@ -1,5 +1,6 @@
 from fastapi import APIRouter, status, Depends
 
+from src.config import settings
 from src.repository.schemas import (
     RepositoryCreateInput,
     RepositorySearchInput,
@@ -88,6 +89,8 @@ def search_repository(
     repository_service: RepositoryService = Depends(),
 ):
     results = repository_service.search_repository(
-        repository_name, query_input.query, query_input.num_results
+        repository_name,
+        query_input.query,
+        query_input.num_results or settings.NUM_SEARCH_RESULTS,
     )
     return results
