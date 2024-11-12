@@ -20,11 +20,10 @@ class ChatService:
         self.default_system_prompt = settings.SYSTEM_PROMPT
         self.default_chat_model = settings.CHAT_MODEL
         self.default_reranking_model = settings.RERANKING_MODEL
-        self.default_num_search_results = settings.NUM_SEARCH_RESULTS
-        self.default_num_sources = settings.NUM_SOURCES
+        self.default_retrieval_limit = settings.RETRIEVAL_LIMIT
 
     def rerank_documents(
-        self, query: str, documents: list[Document], model: str
+        self, query: str, documents: list[Document], model: str, top_n: int
     ) -> list[Document]:
         cross_encoder = CrossEncoder(model)
 
@@ -35,7 +34,7 @@ class ChatService:
 
         sorted_docs = sorted(zip(scores, documents), key=lambda x: x[0], reverse=True)  # type: ignore
 
-        return [doc for _, doc in sorted_docs]
+        return [doc for _, doc in sorted_docs[:top_n]]
 
     def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
         system_content = chat_input.system or self.default_system_prompt.format(
@@ -43,24 +42,22 @@ class ChatService:
         )
         system = ChatCompletionSystemMessageParam(role="system", content=system_content)
         query = chat_input.messages[-1]
-        num_search_results = (
-            chat_input.num_search_results or self.default_num_search_results
-        )
-        num_sources = chat_input.num_sources or self.default_num_sources
+        retrieval_limit = chat_input.retrieval_limit or self.default_retrieval_limit
 
         documents = self.repository_service.search_repository(
-            chat_input.repository,
-            query.content,
-            max(num_search_results, num_sources),
+            chat_input.repository, query.content, retrieval_limit
         )
-        sources = documents[:num_sources]
-        if chat_input.use_reranking:
-            ranked_docs = self.rerank_documents(
+
+        sources = (
+            self.rerank_documents(
                 query.content,
                 documents,
                 chat_input.reranking_model or self.default_reranking_model,
+                chat_input.rerank_top_n or retrieval_limit,
             )
-            sources = ranked_docs[:num_sources]
+            if chat_input.use_reranking
+            else documents
+        )
 
         doc_content = [doc.content for doc in sources]
         context = "\n".join(doc_content)

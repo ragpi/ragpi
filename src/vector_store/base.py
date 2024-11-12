@@ -47,9 +47,7 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
-    def search_repository(
-        self, name: str, query: str, num_results: int
-    ) -> list[Document]:
+    def search_repository(self, name: str, query: str, limit: int) -> list[Document]:
         pass
 
     @abstractmethod

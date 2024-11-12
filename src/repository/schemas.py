@@ -46,7 +46,7 @@ class RepositoryUpdateInput(BaseModel):
 
 class RepositorySearchInput(BaseModel):
     query: str
-    num_results: int | None = None
+    limit: int | None = None
 
 
 class RepositoryTaskResponse(BaseModel):

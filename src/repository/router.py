@@ -91,6 +91,6 @@ def search_repository(
     results = repository_service.search_repository(
         repository_name,
         query_input.query,
-        query_input.num_results or settings.NUM_SEARCH_RESULTS,
+        query_input.limit or settings.RETRIEVAL_LIMIT,
     )
     return results

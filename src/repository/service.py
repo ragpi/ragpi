@@ -105,9 +105,9 @@ class RepositoryService:
 
         return repository, task.id
 
-    def search_repository(self, repository_name: str, query: str, num_results: int):
+    def search_repository(self, repository_name: str, query: str, limit: int):
         return self.vector_store_service.search_repository(
-            repository_name, query, num_results
+            repository_name, query, limit
         )
 
     def get_repository(self, repository_name: str):
