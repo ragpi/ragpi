@@ -301,6 +301,7 @@ class RedisVectorStore(VectorStoreBase):
             num_results=num_results,
         )
 
+        # The results are already sorted by distance by default
         search_results = index.query(vector_query)
 
         return self.map_search_results_to_documents(index.name, search_results)
@@ -317,6 +318,7 @@ class RedisVectorStore(VectorStoreBase):
             )
         )
 
+        # The results are already sorted by BM25 score by default
         search_results = index.search(text_query)  # type: ignore
 
         return self.map_search_results_to_documents(index.name, search_results.docs)
@@ -326,11 +328,13 @@ class RedisVectorStore(VectorStoreBase):
     ) -> list[Document]:
         index = self._get_index(name)
 
-        vector_results = self.vector_based_search(index, query, num_results)
+        vector_search_results = self.vector_based_search(index, query, num_results)
 
-        text_results = self.full_text_search(index, query, num_results)
+        text_search_results = self.full_text_search(index, query, num_results)
 
-        return reciprocal_rank_fusion([vector_results, text_results], num_results)
+        return reciprocal_rank_fusion(
+            [vector_search_results, text_search_results], num_results
+        )
 
     def update_repository_metadata(
         self, name: str, config: RepositoryConfig, timestamp: str
