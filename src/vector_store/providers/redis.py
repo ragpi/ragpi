@@ -19,6 +19,7 @@ from src.repository.schemas import (
     RepositoryOverview,
 )
 from src.vector_store.base import VectorStoreBase
+from src.vector_store.ranking import reciprocal_rank_fusion
 
 
 REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
@@ -65,10 +66,18 @@ class RedisVectorStore(VectorStoreBase):
         self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
 
+    def _get_index_prefix(self, name: str) -> str:
+        return f"{name}:documents"
+
+    def _get_metadata_key(self, name: str) -> str:
+        return f"{name}:metadata"
+
     def _get_index(self, name: str, should_exist: bool = True) -> SearchIndex:
+        prefix = self._get_index_prefix(name)
+
         index_schema = IndexSchema.from_dict(
             {
-                "index": {"name": name, "prefix": f"{name}:documents"},
+                "index": {"name": name, "prefix": prefix},
                 **self.schema,
             }
         )
@@ -85,10 +94,12 @@ class RedisVectorStore(VectorStoreBase):
 
         return index
 
-    def _extract_doc_id(self, prefix: str, key: str) -> str:
+    def _extract_doc_id(self, name: str, key: str) -> str:
+        prefix = self._get_index_prefix(name)
         return key.split(f"{prefix}:")[1]
 
-    def _get_doc_key(self, prefix: str, doc_id: str) -> str:
+    def _get_doc_key(self, name: str, doc_id: str) -> str:
+        prefix = self._get_index_prefix(name)
         return f"{prefix}:{doc_id}"
 
     def create_repository(
@@ -98,7 +109,7 @@ class RedisVectorStore(VectorStoreBase):
 
         index.create()
 
-        metadata_key = f"{name}:metadata"
+        metadata_key = self._get_metadata_key(name)
         id = str(uuid4())
 
         self.client.hset(
@@ -153,7 +164,7 @@ class RedisVectorStore(VectorStoreBase):
 
         keys = index.load(id_field="id", data=data)  # type: ignore
 
-        ids = [self._extract_doc_id(index.prefix, key) for key in keys]
+        ids = [self._extract_doc_id(name, key) for key in keys]
 
         return ids
 
@@ -162,7 +173,7 @@ class RedisVectorStore(VectorStoreBase):
 
         index_info = index.info()
 
-        metadata_key = f"{name}:metadata"
+        metadata_key = self._get_metadata_key(name)
 
         metadata = self.client.hgetall(metadata_key)
 
@@ -225,14 +236,12 @@ class RedisVectorStore(VectorStoreBase):
         ]
 
     def get_repository_document_ids(self, name: str) -> list[str]:
-        index = self._get_index(name)
-
         all_keys: list[str] = []
 
         for key in self.client.scan_iter(f"{name}:documents:*"):
             all_keys.append(key)
 
-        return [self._extract_doc_id(index.prefix, key) for key in all_keys]
+        return [self._extract_doc_id(name, key) for key in all_keys]
 
     def get_all_repositories(self) -> list[RepositoryOverview]:
         index = self._get_index("*")
@@ -249,34 +258,22 @@ class RedisVectorStore(VectorStoreBase):
 
         index.delete()
 
-        metadata_key = f"{name}:metadata"
+        metadata_key = self._get_metadata_key(name)
         self.client.delete(metadata_key)
 
     def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
         index = self._get_index(name)
 
-        ids = [self._get_doc_key(index.prefix, doc_id) for doc_id in doc_ids]
+        ids = [self._get_doc_key(name, doc_id) for doc_id in doc_ids]
 
         index.drop_keys(ids)
 
-    def vector_search_repository(
-        self, index: SearchIndex, query: str, num_results: int
+    def map_search_results_to_documents(
+        self, repository_name: str, search_results: list[dict[str, Any]]
     ) -> list[Document]:
-        query_embedding = self.embeddings_function.embed_query(query)
-
-        vector_query = VectorQuery(
-            vector=query_embedding,
-            vector_field_name="embedding",
-            return_fields=self.document_fields,
-            num_results=num_results,
-        )
-
-        search_results = index.query(vector_query)
-
-        # TODO: Remove reliance on prefix and create mapping method e.g. create_document
-        repository_documents = [
+        return [
             Document(
-                id=self._extract_doc_id(index.prefix, doc["id"]),
+                id=self._extract_doc_id(repository_name, doc["id"]),
                 content=doc["content"],
                 metadata={
                     "url": doc["url"],
@@ -292,9 +289,23 @@ class RedisVectorStore(VectorStoreBase):
             for doc in search_results
         ]
 
-        return repository_documents
+    def vector_based_search(
+        self, index: SearchIndex, query: str, num_results: int
+    ) -> list[Document]:
+        query_embedding = self.embeddings_function.embed_query(query)
 
-    def text_search_repository(
+        vector_query = VectorQuery(
+            vector=query_embedding,
+            vector_field_name="embedding",
+            return_fields=self.document_fields,
+            num_results=num_results,
+        )
+
+        search_results = index.query(vector_query)
+
+        return self.map_search_results_to_documents(index.name, search_results)
+
+    def full_text_search(
         self, index: SearchIndex, query: str, num_results: int
     ) -> list[Document]:
         text_query = (  # type: ignore
@@ -308,56 +319,23 @@ class RedisVectorStore(VectorStoreBase):
 
         search_results = index.search(text_query)  # type: ignore
 
-        repository_documents = [
-            Document(
-                id=self._extract_doc_id(index.prefix, doc["id"]),
-                content=doc["content"],
-                metadata={
-                    "url": doc["url"],
-                    "title": doc["title"],
-                    "created_at": doc["created_at"],
-                    **{
-                        header: doc[header]
-                        for header in ["header_1", "header_2", "header_3"]
-                        if hasattr(doc, header)
-                    },
-                },
-            )
-            for doc in search_results.docs
-        ]
-
-        return repository_documents
-
-    def reciprocal_rank_fusion(
-        self, results: list[list[Document]], num_results: int, constant: int = 60
-    ) -> list[Document]:
-        scores: dict[str, float] = {}
-        for docs in results:
-            for rank, doc in enumerate(docs):
-                scores[doc.id] = scores.get(doc.id, 0) + 1 / (rank + constant)
-
-        sorted_doc_ids = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        top_doc_ids = [doc_id for doc_id, _ in sorted_doc_ids[:num_results]]
-
-        id_to_doc = {doc.id: doc for result in results for doc in result}
-
-        return [id_to_doc[doc_id] for doc_id in top_doc_ids]
+        return self.map_search_results_to_documents(index.name, search_results.docs)
 
     def search_repository(
         self, name: str, query: str, num_results: int
     ) -> list[Document]:
         index = self._get_index(name)
 
-        vector_results = self.vector_search_repository(index, query, num_results)
+        vector_results = self.vector_based_search(index, query, num_results)
 
-        text_results = self.text_search_repository(index, query, num_results)
+        text_results = self.full_text_search(index, query, num_results)
 
-        return self.reciprocal_rank_fusion([vector_results, text_results], num_results)
+        return reciprocal_rank_fusion([vector_results, text_results], num_results)
 
     def update_repository_metadata(
         self, name: str, config: RepositoryConfig, timestamp: str
     ) -> RepositoryOverview:
-        metadata_key = f"{name}:metadata"
+        metadata_key = self._get_metadata_key(name)
 
         self.client.hset(
             metadata_key,
