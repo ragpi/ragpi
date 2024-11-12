@@ -294,7 +294,7 @@ class RedisVectorStore(VectorStoreBase):
         ]
 
     def vector_based_search(
-        self, index: SearchIndex, query: str, num_results: int
+        self, index: SearchIndex, query: str, limit: int
     ) -> list[Document]:
         query_embedding = self.embeddings_function.embed_query(query)
 
@@ -302,7 +302,7 @@ class RedisVectorStore(VectorStoreBase):
             vector=query_embedding,
             vector_field_name="embedding",
             return_fields=self.document_fields,
-            num_results=num_results,
+            num_results=limit,
         )
 
         # The results are sorted by distance by default
@@ -311,11 +311,11 @@ class RedisVectorStore(VectorStoreBase):
         return self.map_search_results_to_documents(index.name, search_results)
 
     def full_text_search(
-        self, index: SearchIndex, query: str, num_results: int
+        self, index: SearchIndex, query: str, limit: int
     ) -> list[Document]:
         text_query = (  # type: ignore
             BaseQuery(query)  # type: ignore
-            .paging(0, num_results)
+            .paging(0, limit)
             .scorer("BM25")
             .return_fields(
                 *self.document_fields,
@@ -327,17 +327,15 @@ class RedisVectorStore(VectorStoreBase):
 
         return self.map_search_results_to_documents(index.name, search_results.docs)
 
-    def search_repository(
-        self, name: str, query: str, num_results: int
-    ) -> list[Document]:
+    def search_repository(self, name: str, query: str, limit: int) -> list[Document]:
         index = self._get_index(name)
 
-        vector_search_results = self.vector_based_search(index, query, num_results)
+        vector_search_results = self.vector_based_search(index, query, limit)
 
-        text_search_results = self.full_text_search(index, query, num_results)
+        text_search_results = self.full_text_search(index, query, limit)
 
         return reciprocal_rank_fusion(
-            [vector_search_results, text_search_results], num_results
+            [vector_search_results, text_search_results], limit
         )
 
     def update_repository_metadata(

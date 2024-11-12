@@ -11,10 +11,13 @@ class Message(BaseModel):
 
 class CreateChatInput(BaseModel):
     repository: str
-    model: str | None = None
+    chat_model: str | None = None
     system: str | None = None
     messages: list[Message]
-    num_sources: int = 10
+    retrieval_limit: int | None = None
+    rerank_top_n: int | None = None
+    use_reranking: bool = False
+    reranking_model: str | None = None
 
 
 class ChatResponse(BaseModel):

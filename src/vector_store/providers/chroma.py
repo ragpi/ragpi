@@ -175,9 +175,7 @@ class ChromaVectorStore(VectorStoreBase):
         except InvalidCollectionException as e:
             raise ResourceNotFoundException(ResourceType.REPOSITORY, name) from e
 
-    def search_repository(
-        self, name: str, query: str, num_results: int
-    ) -> list[Document]:
+    def search_repository(self, name: str, query: str, limit: int) -> list[Document]:
         try:
             collection = self.client.get_collection(name)
 
@@ -186,7 +184,7 @@ class ChromaVectorStore(VectorStoreBase):
             collection_data = collection.query(  # type: ignore
                 query_embeddings=[query_embedding],
                 include=[IncludeEnum.metadatas, IncludeEnum.documents],
-                n_results=num_results,
+                n_results=limit,
             )
 
             return self._map_repository_documents(
