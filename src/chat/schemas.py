@@ -15,8 +15,7 @@ class CreateChatInput(BaseModel):
     system: str | None = None
     messages: list[ChatMessage]
     retrieval_limit: int | None = None
-    rerank_top_n: int | None = None
-    use_reranking: bool = False
+    use_reranking: bool = True
     reranking_model: str | None = None
 
 

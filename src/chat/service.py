@@ -47,7 +47,7 @@ Conversation:
         return completion.choices[0].message.content or messages[-1].content
 
     def rerank_documents(
-        self, query: str, documents: list[Document], model: str, top_n: int
+        self, query: str, documents: list[Document], model: str
     ) -> list[Document]:
         cross_encoder = CrossEncoder(model)
 
@@ -58,7 +58,11 @@ Conversation:
 
         sorted_docs = sorted(zip(scores, documents), key=lambda x: x[0], reverse=True)  # type: ignore
 
-        return [doc for _, doc in sorted_docs[:top_n]]
+        relevant_docs = [doc for score, doc in sorted_docs if score > 0]
+
+        return (
+            relevant_docs if len(relevant_docs) > 0 else [doc for _, doc in sorted_docs]
+        )
 
     def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
         retrieval_query = self.create_retrieval_query(chat_input.messages)
@@ -71,7 +75,6 @@ Conversation:
                 retrieval_query,
                 documents,
                 chat_input.reranking_model or self.default_reranking_model,
-                chat_input.rerank_top_n or retrieval_limit,
             )
             if chat_input.use_reranking
             else documents
