@@ -11,9 +11,7 @@ services:
       - REDIS_ARGS=--appendonly yes
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/gladwindos/rag-api-dev:latest
     volumes:
       - .:/app
     ports:
@@ -26,9 +24,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
 
   celery:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/gladwindos/rag-api-dev:latest
     command: celery --app=src.celery.celery_app worker --concurrency=1 --max-tasks-per-child=1 --loglevel=INFO
     volumes:
       - .:/app
