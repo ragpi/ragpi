@@ -1,14 +1,27 @@
+FROM python:3.11-slim as requirements
 
-FROM python:3.11
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends build-essential gcc && \
+  rm -rf /var/lib/apt/lists/*
 
-RUN pip install poetry
+RUN python -m pip install --no-cache-dir --upgrade poetry && \
+  poetry self add poetry-plugin-export
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock /app/
+COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.create false && \
-  poetry install --no-dev
+RUN mkdir /src
+
+RUN poetry export -f requirements.txt --without-hashes -o /src/requirements.txt
+
+FROM python:3.11-slim as base
+
+WORKDIR /app
+
+COPY --from=requirements /src/requirements.txt .
+
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY ./src /app/src
 
