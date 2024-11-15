@@ -5,7 +5,7 @@ from openai.types.chat import (
     ChatCompletionAssistantMessageParam,
     ChatCompletionMessageParam,
 )
-from sentence_transformers import CrossEncoder
+from flashrank import Ranker, RerankRequest  # type: ignore
 
 from src.chat.schemas import ChatResponse, CreateChatInput, ChatMessage
 from src.config import settings
@@ -49,20 +49,21 @@ Conversation:
     def rerank_documents(
         self, query: str, documents: list[Document], model: str
     ) -> list[Document]:
-        cross_encoder = CrossEncoder(model)
+        ranker = Ranker(model_name=model)
 
-        scores = cross_encoder.predict(  # type: ignore
-            [[query, doc.content] for doc in documents],
-            show_progress_bar=False,
-        )
+        passages = [{"id": doc.id, "text": doc.content} for doc in documents]
 
-        sorted_docs = sorted(zip(scores, documents), key=lambda x: x[0], reverse=True)  # type: ignore
+        rerank_request = RerankRequest(query=query, passages=passages)
 
-        relevant_docs = [doc for score, doc in sorted_docs if score > 0]
+        results = ranker.rerank(rerank_request)
 
-        return (
-            relevant_docs if len(relevant_docs) > 0 else [doc for _, doc in sorted_docs]
-        )
+        id_to_doc = {doc.id: doc for doc in documents}
+
+        relevant_docs = [
+            id_to_doc[result["id"]] for result in results if result["score"] > 0.5
+        ]
+
+        return relevant_docs
 
     def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
         retrieval_query = self.create_retrieval_query(chat_input.messages)
@@ -70,6 +71,7 @@ Conversation:
         documents = self.repository_service.search_repository(
             chat_input.repository, retrieval_query, retrieval_limit
         )
+
         sources = (
             self.rerank_documents(
                 retrieval_query,
@@ -79,6 +81,13 @@ Conversation:
             if chat_input.use_reranking
             else documents
         )
+
+        if len(sources) == 0:
+            return ChatResponse(
+                message="I couldn't find any relevant information to answer your question.",
+                sources=[],
+            )
+
         doc_content = [doc.content for doc in sources]
         context = "\n".join(doc_content)
 

@@ -21,9 +21,7 @@ slowapi = "^0.1.9"
 beautifulsoup4 = "^4.12.3"
 pydantic-settings = "^2.6.0"
 lxml = "^5.3.0"
-torch = "^2.5.1"
-transformers = "^4.46.2"
-sentence-transformers = "^3.3.0"
+flashrank = "^0.2.9"
 
 
 [tool.poetry.group.dev.dependencies]
