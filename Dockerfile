@@ -1,4 +1,4 @@
-FROM python:3.11-slim as requirements
+FROM python:3.11-slim AS requirements
 
 RUN apt-get update && \
   apt-get install -y --no-install-recommends build-essential gcc && \
@@ -15,7 +15,7 @@ RUN mkdir /src
 
 RUN poetry export -f requirements.txt --without-hashes -o /src/requirements.txt
 
-FROM python:3.11-slim as base
+FROM python:3.11-slim AS base
 
 WORKDIR /app
 
