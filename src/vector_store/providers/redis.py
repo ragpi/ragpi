@@ -5,6 +5,7 @@ from uuid import uuid4
 from redisvl.index import SearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery, BaseQuery  # type: ignore
+from redis.commands.search.query import Query
 
 from src.config import settings
 from src.document.schemas import Document
@@ -313,18 +314,16 @@ class RedisVectorStore(VectorStoreBase):
     def full_text_search(
         self, index: SearchIndex, query: str, limit: int
     ) -> list[Document]:
-        text_query = (  # type: ignore
-            BaseQuery(query)  # type: ignore
+        ft = self.client.ft(index.name)
+        query_obj = (  # type: ignore
+            Query(query)  # type: ignore
             .paging(0, limit)
             .scorer("BM25")
-            .return_fields(
-                *self.document_fields,
-            )
+            .return_fields(*self.document_fields)
         )
 
         # The results are sorted by score (BM25) by default
-        search_results = index.search(text_query)  # type: ignore
-
+        search_results = ft.search(query_obj)  # type: ignore
         return self.map_search_results_to_documents(index.name, search_results.docs)
 
     def search_repository(self, name: str, query: str, limit: int) -> list[Document]:

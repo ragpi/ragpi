@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI, Depends
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -14,6 +15,10 @@ from src.exceptions import (
 from src.repository.router import router as repository_router
 from src.chat.router import router as chat_router
 from src.task.router import router as task_router
+
+logging.basicConfig(
+    level=logging.INFO,
+)
 
 
 limiter = create_rate_limiter()
