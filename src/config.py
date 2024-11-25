@@ -47,7 +47,7 @@ class Settings(BaseSettings):
 
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
 
-    RETRIEVAL_LIMIT: int = 25
+    RETRIEVAL_LIMIT: int = 50
 
     USER_AGENT: str = "RagApi"
 

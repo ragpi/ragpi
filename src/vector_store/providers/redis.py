@@ -4,7 +4,7 @@ import numpy as np
 from uuid import uuid4
 from redisvl.index import SearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
-from redisvl.query import VectorQuery, BaseQuery  # type: ignore
+from redisvl.query import VectorQuery  # type: ignore
 from redis.commands.search.query import Query
 
 from src.config import settings
@@ -315,8 +315,15 @@ class RedisVectorStore(VectorStoreBase):
         self, index: SearchIndex, query: str, limit: int
     ) -> list[Document]:
         ft = self.client.ft(index.name)
+
+        # Remove any leading or trailing quotation marks
+        cleaned_query = query.strip("'\"")
+
+        # Join the query with OR operator to search for any of the words
+        formatted_query = " | ".join(cleaned_query.split())
+
         query_obj = (  # type: ignore
-            Query(query)  # type: ignore
+            Query(formatted_query)  # type: ignore
             .paging(0, limit)
             .scorer("BM25")
             .return_fields(*self.document_fields)

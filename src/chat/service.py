@@ -45,7 +45,10 @@ Conversation:
             messages=[query_message],
         )
 
-        return completion.choices[0].message.content or messages[-1].content
+        query = completion.choices[0].message.content or messages[-1].content
+
+        # Remove any leading or trailing quotation marks
+        return query.strip("'\"")
 
     def rerank_documents(
         self, query: str, documents: list[Document], model: str
@@ -92,7 +95,7 @@ Conversation:
             )
 
         doc_content = [doc.content for doc in sources]
-        context = "\n".join(doc_content)
+        context = "\n\n".join(doc_content)
 
         latest_message = chat_input.messages[-1]
 
