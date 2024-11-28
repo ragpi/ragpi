@@ -182,7 +182,7 @@ class ChromaVectorStore(VectorStoreBase):
             query_embedding = self.embeddings_function.embed_query(query)
 
             collection_data = collection.query(  # type: ignore
-                query_embeddings=[query_embedding],
+                query_embeddings=[query_embedding],  # type: ignore
                 include=[IncludeEnum.metadatas, IncludeEnum.documents],
                 n_results=limit,
             )

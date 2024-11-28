@@ -41,6 +41,7 @@ Conversation:
         )
 
         completion = self.openai_client.chat.completions.create(
+            temperature=0,
             model=self.default_chat_model,
             messages=[query_message],
         )
@@ -141,6 +142,7 @@ User Query: {latest_message.content}"""
         model = chat_input.chat_model or self.default_chat_model
 
         completion = self.openai_client.chat.completions.create(
+            temperature=0,
             model=model,
             messages=messages,
         )

@@ -53,8 +53,8 @@ def extract_page_data(url: str, content: bytes) -> PageData:
 
 
 class SitemapCrawler:
-    def __init__(self):
-        self.session = None
+    def __init__(self) -> None:
+        self.session: ClientSession | None
         self.robots_parser: RobotFileParser | None = None
         self.user_agent = settings.USER_AGENT
         self.max_concurrent_requests = settings.MAX_CONCURRENT_REQUESTS

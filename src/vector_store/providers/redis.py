@@ -59,7 +59,7 @@ DOCUMENT_FIELDS = [
 
 
 class RedisVectorStore(VectorStoreBase):
-    def __init__(self):
+    def __init__(self) -> None:
         self.client = get_redis_client()
         self.embeddings_function = OpenAIEmbeddings(
             model=settings.EMBEDDING_MODEL, dimensions=settings.EMBEDDING_DIMENSIONS
