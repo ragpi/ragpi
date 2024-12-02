@@ -54,7 +54,7 @@ Conversation:
     def rerank_documents(
         self, query: str, documents: list[Document], model: str
     ) -> list[Document]:
-        ranker = Ranker(model_name=model, cache_dir=".tmp")
+        ranker = Ranker(model_name=model, cache_dir="/tmp/rankers")
 
         passages = [{"id": doc.id, "text": doc.content} for doc in documents]
 
