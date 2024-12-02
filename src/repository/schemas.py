@@ -1,13 +1,33 @@
+from enum import Enum
 from pydantic import BaseModel, Field, field_validator
+from typing import Union, Literal
 import re
 
+from src.config import settings
 
-class RepositoryConfig(BaseModel):
+
+class SourceType(str, Enum):
+    SITEMAP = "sitemap"
+    GITHUB_ISSUES = "github_issues"
+
+
+class SitemapConfig(BaseModel):
+    type: Literal[SourceType.SITEMAP]
     sitemap_url: str
     include_pattern: str | None = None
     exclude_pattern: str | None = None
-    chunk_size: int
-    chunk_overlap: int
+    chunk_size: int = settings.CHUNK_SIZE
+    chunk_overlap: int = settings.CHUNK_OVERLAP
+
+
+class GithubIssuesConfig(BaseModel):
+    type: Literal[SourceType.GITHUB_ISSUES]
+    repo_url: str  # TODO: Update to owner and repo
+    issue_state: Literal["open", "closed", "all"] = "open"
+    labels: list[str] | None = None  # TODO: Update to include and exclude labels
+
+
+RepositorySource = Union[SitemapConfig, GithubIssuesConfig]
 
 
 class RepositoryOverview(BaseModel):
@@ -16,16 +36,12 @@ class RepositoryOverview(BaseModel):
     num_docs: int
     created_at: str
     updated_at: str
-    config: RepositoryConfig
+    source: RepositorySource
 
 
 class RepositoryCreateInput(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
-    sitemap_url: str
-    include_pattern: str | None = None
-    exclude_pattern: str | None = None
-    chunk_size: int | None = None
-    chunk_overlap: int | None = None
+    source: RepositorySource
 
     @field_validator("name")
     def validate_name(cls, value: str):
@@ -37,11 +53,9 @@ class RepositoryCreateInput(BaseModel):
 
 
 class RepositoryUpdateInput(BaseModel):
-    sitemap_url: str | None = None
-    include_pattern: str | None = None
-    exclude_pattern: str | None = None
     chunk_size: int | None = None
     chunk_overlap: int | None = None
+    source: RepositorySource | None = None
 
 
 class RepositorySearchInput(BaseModel):

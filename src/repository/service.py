@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from src.config import settings
 from src.celery import celery_app
@@ -6,10 +7,13 @@ from src.document.schemas import Document
 from src.document.service import DocumentService
 from src.exceptions import RepositorySyncException, SiteMapCrawlerException
 from src.repository.schemas import (
+    GithubIssuesConfig,
+    SitemapConfig,
+    RepositorySource,
     RepositoryCreateInput,
-    RepositoryConfig,
     RepositoryOverview,
     RepositoryUpdateInput,
+    SourceType,
 )
 from src.repository.decorators import lock_and_execute_repository_task
 from src.repository.utils import get_current_datetime
@@ -22,40 +26,25 @@ class RepositoryService:
             settings.VECTOR_STORE_PROVIDER
         )
         self.document_service = DocumentService()
-        self.default_chunk_size = settings.CHUNK_SIZE
-        self.default_chunk_overlap = settings.CHUNK_OVERLAP
         self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
 
     def create_repository(
         self, repository_input: RepositoryCreateInput
     ) -> tuple[RepositoryOverview, str]:
 
-        chunk_size = repository_input.chunk_size or self.default_chunk_size
-        chunk_overlap = repository_input.chunk_overlap or self.default_chunk_overlap
-
         timestamp = get_current_datetime()
-
-        config = RepositoryConfig(
-            sitemap_url=repository_input.sitemap_url,
-            include_pattern=repository_input.include_pattern,
-            exclude_pattern=repository_input.exclude_pattern,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
 
         created_repository = self.vector_store_service.create_repository(
             name=repository_input.name,
-            config=config,
+            source=repository_input.source,
             timestamp=timestamp,
         )
 
+        source_dict = repository_input.source.model_dump()
+
         task = sync_repository_documents_task.delay(
             repository_name=repository_input.name,
-            sitemap_url=repository_input.sitemap_url,
-            include_pattern=repository_input.include_pattern,
-            exclude_pattern=repository_input.exclude_pattern,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
+            source_dict=source_dict,
             existing_doc_ids=[],
         )
 
@@ -71,26 +60,17 @@ class RepositoryService:
             repository_name
         )
 
-        config = existing_repository.config
+        source_config = (
+            repository_input.source
+            if repository_input and repository_input.source
+            else existing_repository.source
+        )
 
-        if repository_input:
-            config = RepositoryConfig(
-                sitemap_url=repository_input.sitemap_url or config.sitemap_url,
-                include_pattern=repository_input.include_pattern
-                or config.include_pattern,
-                exclude_pattern=repository_input.exclude_pattern
-                or config.exclude_pattern,
-                chunk_size=repository_input.chunk_size or config.chunk_size,
-                chunk_overlap=repository_input.chunk_overlap or config.chunk_overlap,
-            )
+        source_dict = source_config.model_dump()
 
         task = sync_repository_documents_task.delay(
             repository_name=repository_name,
-            sitemap_url=config.sitemap_url,
-            include_pattern=config.include_pattern,
-            exclude_pattern=config.exclude_pattern,
-            chunk_size=config.chunk_size,
-            chunk_overlap=config.chunk_overlap,
+            source_dict=source_dict,
             existing_doc_ids=existing_doc_ids,
         )
 
@@ -100,7 +80,7 @@ class RepositoryService:
             num_docs=0,
             created_at=existing_repository.created_at,
             updated_at=existing_repository.updated_at,
-            config=config,
+            source=source_config,
         )
 
         return repository, task.id
@@ -129,14 +109,10 @@ class RepositoryService:
     async def sync_repository_documents(
         self,
         repository_name: str,
-        sitemap_url: str,
-        include_pattern: str | None,
-        exclude_pattern: str | None,
-        chunk_size: int,
-        chunk_overlap: int,
+        source: RepositorySource,
         existing_doc_ids: set[str],
     ) -> RepositoryOverview:
-        logging.info(f"Extracting documents from {sitemap_url}")
+        logging.info(f"Syncing documents for repository {repository_name}")
 
         current_doc_ids: set[str] = set()
 
@@ -146,81 +122,86 @@ class RepositoryService:
         batch_size = self.document_sync_batch_size
 
         try:
-            async for doc in self.document_service.create_documents_from_website(
-                sitemap_url=sitemap_url,
-                include_pattern=include_pattern,
-                exclude_pattern=exclude_pattern,
-                chunk_size=chunk_size,
-                chunk_overlap=chunk_overlap,
-            ):
-                if doc.id in current_doc_ids:
-                    continue
+            if source.type == SourceType.SITEMAP:
+                async for doc in self.document_service.create_documents_from_website(
+                    sitemap_url=source.sitemap_url,
+                    include_pattern=source.include_pattern,
+                    exclude_pattern=source.exclude_pattern,
+                    chunk_size=source.chunk_size,
+                    chunk_overlap=source.chunk_overlap,
+                ):
+                    if doc.id in current_doc_ids:
+                        continue
 
-                current_doc_ids.add(doc.id)
+                    current_doc_ids.add(doc.id)
 
-                if doc.id not in existing_doc_ids and doc.id not in added_doc_ids:
-                    docs_to_add.append(doc)
-                    added_doc_ids.add(doc.id)
+                    if doc.id not in existing_doc_ids and doc.id not in added_doc_ids:
+                        docs_to_add.append(doc)
+                        added_doc_ids.add(doc.id)
 
-                    if len(docs_to_add) >= batch_size:
-                        try:
-                            self.vector_store_service.add_repository_documents(
-                                repository_name,
-                                docs_to_add,
-                                timestamp=get_current_datetime(),
-                            )
-                            docs_to_add = []
-                            logging.info(
-                                f"Added a batch of {batch_size} documents to repository {repository_name}"
-                            )
-                        except Exception as e:
-                            logging.error(
-                                f"Failed to add batch of documents to repository {repository_name}: {e}"
-                            )
+                        if len(docs_to_add) >= batch_size:
+                            try:
+                                self.vector_store_service.add_repository_documents(
+                                    repository_name,
+                                    docs_to_add,
+                                    timestamp=get_current_datetime(),
+                                )
+                                docs_to_add = []
+                                logging.info(
+                                    f"Added a batch of {batch_size} documents to repository {repository_name}"
+                                )
+                            except Exception as e:
+                                logging.error(
+                                    f"Failed to add batch of documents to repository {repository_name}: {e}"
+                                )
 
-            if docs_to_add:
-                try:
-                    self.vector_store_service.add_repository_documents(
-                        repository_name, docs_to_add, timestamp=get_current_datetime()
-                    )
+                if docs_to_add:
+                    try:
+                        self.vector_store_service.add_repository_documents(
+                            repository_name,
+                            docs_to_add,
+                            timestamp=get_current_datetime(),
+                        )
+                        logging.info(
+                            f"Added a batch of {len(docs_to_add)} documents to repository {repository_name}"
+                        )
+                    except Exception as e:
+                        logging.error(
+                            f"Failed to add batch of documents to repository {repository_name}: {e}"
+                        )
+
+                doc_ids_to_remove = existing_doc_ids - current_doc_ids
+                if doc_ids_to_remove:
+                    try:
+                        self.vector_store_service.delete_repository_documents(
+                            repository_name, list(doc_ids_to_remove)
+                        )
+                        logging.info(
+                            f"Removed {len(doc_ids_to_remove)} documents from repository {repository_name}"
+                        )
+                    except Exception as e:
+                        logging.error(
+                            f"Failed to remove documents from repository {repository_name}: {e}"
+                        )
+
+                if not current_doc_ids - existing_doc_ids:
                     logging.info(
-                        f"Added a batch of {len(docs_to_add)} documents to repository {repository_name}"
-                    )
-                except Exception as e:
-                    logging.error(
-                        f"Failed to add batch of documents to repository {repository_name}: {e}"
+                        f"No new documents added to repository {repository_name}"
                     )
 
-            doc_ids_to_remove = existing_doc_ids - current_doc_ids
-            if doc_ids_to_remove:
-                try:
-                    self.vector_store_service.delete_repository_documents(
-                        repository_name, list(doc_ids_to_remove)
+                updated_repository = (
+                    self.vector_store_service.update_repository_metadata(
+                        repository_name,
+                        source,
+                        get_current_datetime(),
                     )
-                    logging.info(
-                        f"Removed {len(doc_ids_to_remove)} documents from repository {repository_name}"
-                    )
-                except Exception as e:
-                    logging.error(
-                        f"Failed to remove documents from repository {repository_name}: {e}"
-                    )
+                )
 
-            if not current_doc_ids - existing_doc_ids:
-                logging.info(f"No new documents added to repository {repository_name}")
-
-            updated_repository = self.vector_store_service.update_repository_metadata(
-                repository_name,
-                RepositoryConfig(
-                    sitemap_url=sitemap_url,
-                    include_pattern=include_pattern,
-                    exclude_pattern=exclude_pattern,
-                    chunk_size=chunk_size,
-                    chunk_overlap=chunk_overlap,
-                ),
-                get_current_datetime(),
-            )
-
-            return updated_repository
+                return updated_repository
+            elif source.type == SourceType.GITHUB_ISSUES:
+                raise NotImplementedError("GitHub issues sync not implemented yet")
+            else:
+                raise ValueError(f"Unsupported source type: {source.type}")
         except SiteMapCrawlerException as e:
             raise RepositorySyncException(str(e))
         except Exception as e:
@@ -231,22 +212,31 @@ class RepositoryService:
 @lock_and_execute_repository_task()
 async def sync_repository_documents_task(
     repository_name: str,
-    sitemap_url: str,
-    include_pattern: str | None,
-    exclude_pattern: str | None,
-    chunk_size: int,
-    chunk_overlap: int,
+    source_dict: dict[str, Any],
     existing_doc_ids: list[str],
 ):
     repository_service = RepositoryService()
 
+    source_type = source_dict.get("type")
+
+    source: RepositorySource
+
+    if source_type == SourceType.SITEMAP:
+        try:
+            source = SitemapConfig(**source_dict)
+        except ValueError as e:
+            raise RepositorySyncException(f"Invalid sitemap config: {e}")
+    elif source_type == SourceType.GITHUB_ISSUES:
+        try:
+            source = GithubIssuesConfig(**source_dict)
+        except ValueError as e:
+            raise RepositorySyncException(f"Invalid GitHub issues config: {e}")
+    else:
+        raise RepositorySyncException(f"Unsupported source type: {source_type}")
+
     repository = await repository_service.sync_repository_documents(
         repository_name=repository_name,
-        sitemap_url=sitemap_url,
-        include_pattern=include_pattern,
-        exclude_pattern=exclude_pattern,
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
+        source=source,
         existing_doc_ids=set(existing_doc_ids),
     )
 

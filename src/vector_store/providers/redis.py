@@ -1,3 +1,4 @@
+import json
 from typing import Any
 from langchain_openai import OpenAIEmbeddings
 import numpy as np
@@ -16,8 +17,11 @@ from src.exceptions import (
 )
 from src.redis import get_redis_client
 from src.repository.schemas import (
-    RepositoryConfig,
+    RepositorySource,
     RepositoryOverview,
+    SourceType,
+    SitemapConfig,
+    GithubIssuesConfig,
 )
 from src.vector_store.base import VectorStoreBase
 from src.vector_store.ranking import reciprocal_rank_fusion
@@ -108,7 +112,7 @@ class RedisVectorStore(VectorStoreBase):
         return f"{prefix}:{doc_id}"
 
     def create_repository(
-        self, name: str, config: RepositoryConfig, timestamp: str
+        self, name: str, source: RepositorySource, timestamp: str
     ) -> RepositoryOverview:
         index = self._get_index(name, False)
 
@@ -117,16 +121,23 @@ class RedisVectorStore(VectorStoreBase):
         metadata_key = self._get_metadata_key(name)
         id = str(uuid4())
 
+        source_dict: dict[str, Any] = {}
+
+        source_items = source.model_dump().items()
+
+        for key, value in source_items:
+            if isinstance(value, list):
+                value = json.dumps(value)
+            elif value is None:
+                value = ""
+            source_dict[f"source__{key}"] = value
+
         self.client.hset(
             metadata_key,
             mapping={
                 "id": id,
                 "name": name,
-                "sitemap_url": config.sitemap_url,
-                "include_pattern": config.include_pattern or "",
-                "exclude_pattern": config.exclude_pattern or "",
-                "chunk_size": config.chunk_size,
-                "chunk_overlap": config.chunk_overlap,
+                **source_dict,
                 "created_at": timestamp,
                 "updated_at": timestamp,
             },
@@ -182,21 +193,43 @@ class RedisVectorStore(VectorStoreBase):
 
         metadata = self.client.hgetall(metadata_key)
 
-        config = RepositoryConfig(
-            sitemap_url=metadata["sitemap_url"],
-            include_pattern=metadata["include_pattern"] or None,
-            exclude_pattern=metadata["exclude_pattern"] or None,
-            chunk_size=int(metadata["chunk_size"]),
-            chunk_overlap=int(metadata["chunk_overlap"]),
-        )
+        source_type = metadata.get("source__type")
+
+        source: RepositorySource
+
+        if source_type == SourceType.SITEMAP:
+            source_data: dict[str, Any] = {
+                "type": source_type,
+                "sitemap_url": metadata["source__sitemap_url"],
+                "include_pattern": metadata["source__include_pattern"] or None,
+                "exclude_pattern": metadata["source__exclude_pattern"] or None,
+                "chunk_size": int(metadata["source__chunk_size"]),
+                "chunk_overlap": int(metadata["source__chunk_overlap"]),
+            }
+            source = SitemapConfig(**source_data)
+        elif source_type == SourceType.GITHUB_ISSUES:
+            source_data = {
+                "type": source_type,
+                "repo_url": metadata["source__repo_url"],
+                "issue_state": metadata["source__issue_state"],
+                "labels": metadata["source__labels"] or None,
+            }
+
+            if source_data["labels"]:
+                source_data["labels"] = json.loads(source_data["labels"])
+            else:
+                source_data["labels"] = None
+            source = GithubIssuesConfig(**source_data)
+        else:
+            raise ValueError(f"Unknown source type: {source_type}")
 
         return RepositoryOverview(
             id=metadata["id"],
             name=metadata["name"],
-            num_docs=index_info["num_docs"],
+            num_docs=int(index_info["num_docs"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
-            config=config,
+            source=source,
         )
 
     def get_repository_documents(
@@ -227,14 +260,14 @@ class RedisVectorStore(VectorStoreBase):
         return [
             Document(
                 id=doc[0],
-                content=doc[7],
+                content=doc[1],
                 metadata={
-                    "url": doc[1],
-                    "title": doc[2],
-                    "header_1": doc[3],
-                    "header_2": doc[4],
-                    "header_3": doc[5],
-                    "created_at": doc[6],
+                    "url": doc[2],
+                    "title": doc[3],
+                    "header_1": doc[4],
+                    "header_2": doc[5],
+                    "header_3": doc[6],
+                    "created_at": doc[7],
                 },
             )
             for doc in docs
@@ -345,18 +378,25 @@ class RedisVectorStore(VectorStoreBase):
         )
 
     def update_repository_metadata(
-        self, name: str, config: RepositoryConfig, timestamp: str
+        self, name: str, source: RepositorySource, timestamp: str
     ) -> RepositoryOverview:
         metadata_key = self._get_metadata_key(name)
+
+        source_dict: dict[str, Any] = {}
+
+        source_items = source.model_dump().items()
+
+        for key, value in source_items:
+            if isinstance(value, list):
+                value = json.dumps(value)
+            if value is None:
+                value = ""
+            source_dict[f"source__{key}"] = value
 
         self.client.hset(
             metadata_key,
             mapping={
-                "sitemap_url": config.sitemap_url,
-                "include_pattern": config.include_pattern or "",
-                "exclude_pattern": config.exclude_pattern or "",
-                "chunk_size": config.chunk_size,
-                "chunk_overlap": config.chunk_overlap,
+                **source_dict,
                 "updated_at": timestamp,
             },
         )
