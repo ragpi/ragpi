@@ -27,21 +27,21 @@ class GithubIssuesConfig(BaseModel):
     labels: list[str] | None = None  # TODO: Update to include and exclude labels
 
 
-RepositorySource = Union[SitemapConfig, GithubIssuesConfig]
+SourceConfig = Union[SitemapConfig, GithubIssuesConfig]
 
 
-class RepositoryOverview(BaseModel):
+class SourceOverview(BaseModel):
     id: str
     name: str
     num_docs: int
     created_at: str
     updated_at: str
-    source: RepositorySource
+    config: SourceConfig
 
 
-class RepositoryCreateInput(BaseModel):
+class SourceCreateInput(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
-    source: RepositorySource
+    config: SourceConfig
 
     @field_validator("name")
     def validate_name(cls, value: str):
@@ -52,18 +52,16 @@ class RepositoryCreateInput(BaseModel):
         return value
 
 
-class RepositoryUpdateInput(BaseModel):
-    chunk_size: int | None = None
-    chunk_overlap: int | None = None
-    source: RepositorySource | None = None
+class SourceUpdateInput(BaseModel):
+    config: SourceConfig | None = None
 
 
-class RepositorySearchInput(BaseModel):
+class SourceSearchInput(BaseModel):
     query: str
     limit: int | None = None
 
 
-class RepositoryTaskResponse(BaseModel):
+class SourceTaskResponse(BaseModel):
     task_id: str
-    repository: RepositoryOverview
+    source: SourceOverview
     message: str | None = None

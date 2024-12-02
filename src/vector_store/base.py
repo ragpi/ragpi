@@ -1,57 +1,57 @@
 from abc import ABC, abstractmethod
 
 from src.document.schemas import Document
-from src.repository.schemas import (
-    RepositorySource,
-    RepositoryOverview,
+from src.source.schemas import (
+    SourceConfig,
+    SourceOverview,
 )
 
 
 class VectorStoreBase(ABC):
     @abstractmethod
-    def create_repository(
-        self, name: str, source: RepositorySource, timestamp: str
-    ) -> RepositoryOverview:
+    def create_source(
+        self, name: str, config: SourceConfig, timestamp: str
+    ) -> SourceOverview:
         pass
 
     @abstractmethod
-    def add_repository_documents(
+    def add_source_documents(
         self, name: str, documents: list[Document], timestamp: str
     ) -> list[str]:
         pass
 
     @abstractmethod
-    def get_repository(self, name: str) -> RepositoryOverview:
+    def get_source(self, name: str) -> SourceOverview:
         pass
 
     @abstractmethod
-    def get_repository_documents(
+    def get_source_documents(
         self, name: str, limit: int | None, offset: int | None
     ) -> list[Document]:
         pass
 
     @abstractmethod
-    def get_repository_document_ids(self, name: str) -> list[str]:
+    def get_source_document_ids(self, name: str) -> list[str]:
         pass
 
     @abstractmethod
-    def get_all_repositories(self) -> list[RepositoryOverview]:
+    def get_all_sources(self) -> list[SourceOverview]:
         pass
 
     @abstractmethod
-    def delete_repository(self, name: str) -> None:
+    def delete_source(self, name: str) -> None:
         pass
 
     @abstractmethod
-    def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
+    def delete_source_documents(self, name: str, doc_ids: list[str]) -> None:
         pass
 
     @abstractmethod
-    def search_repository(self, name: str, query: str, limit: int) -> list[Document]:
+    def search_source(self, name: str, query: str, limit: int) -> list[Document]:
         pass
 
     @abstractmethod
-    def update_repository_metadata(
-        self, name: str, source: RepositorySource, timestamp: str
-    ) -> RepositoryOverview:
+    def update_source_metadata(
+        self, name: str, config: SourceConfig, timestamp: str
+    ) -> SourceOverview:
         pass

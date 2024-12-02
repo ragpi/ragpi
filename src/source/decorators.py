@@ -7,20 +7,20 @@ from celery import current_task
 from celery.exceptions import Ignore
 
 
-from src.exceptions import RepositorySyncException, ResourceLockedException
+from src.exceptions import SourceSyncException, ResourceLockedException
 from src.lock.service import LockService
 
 
-def lock_and_execute_repository_task():
+def lock_and_execute_source_task():
     def decorator(func: Callable[..., Awaitable[Any]]):
         @wraps(func)
-        def wrapper(repository_name: str, *args: Any, **kwargs: Any):
+        def wrapper(source_name: str, *args: Any, **kwargs: Any):
             lock_service = LockService()
             loop: asyncio.AbstractEventLoop | None = None
             lock: Lock | None = None
 
             try:
-                lock = lock_service.acquire_lock(repository_name)
+                lock = lock_service.acquire_lock(source_name)
 
                 current_task.update_state(state="PROCESSING")
 
@@ -30,7 +30,7 @@ def lock_and_execute_repository_task():
                 async def task_with_lock_renewal():
                     renewal_task = asyncio.create_task(lock_service.renew_lock(lock))
                     try:
-                        result = await func(repository_name, *args, **kwargs)
+                        result = await func(source_name, *args, **kwargs)
                         return result
                     finally:
                         renewal_task.cancel()
@@ -45,18 +45,18 @@ def lock_and_execute_repository_task():
                     state="LOCKED",
                     meta={
                         "exc_type": "ResourceLockedException",
-                        "message": f"Repository '{repository_name}' already has a task in progress",
+                        "message": f"Source '{source_name}' already has a task in progress",
                     },
                 )
                 raise Ignore()
 
-            except RepositorySyncException as e:
+            except SourceSyncException as e:
                 logging.error(e)
 
                 current_task.update_state(
                     state="SYNC_ERROR",
                     meta={
-                        "exc_type": "RepositorySyncException",
+                        "exc_type": "SourceSyncException",
                         "message": str(e),
                     },
                 )

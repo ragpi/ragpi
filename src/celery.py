@@ -10,7 +10,7 @@ celery_app = Celery(
     __name__,
     broker=redis_url,
     backend=redis_url,
-    include=["src.repository.service"],
+    include=["src.source.service"],
 )
 
 

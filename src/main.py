@@ -12,7 +12,7 @@ from src.exceptions import (
     resource_not_found_handler,
     unexpected_exception_handler,
 )
-from src.repository.router import router as repository_router
+from src.source.router import router as source_router
 from src.chat.router import router as chat_router
 from src.task.router import router as task_router
 
@@ -34,6 +34,6 @@ app.exception_handler(Exception)(unexpected_exception_handler)
 
 app.add_middleware(SlowAPIMiddleware)
 
-app.include_router(repository_router)
+app.include_router(source_router)
 app.include_router(chat_router)
 app.include_router(task_router)

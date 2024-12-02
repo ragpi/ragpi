@@ -16,9 +16,9 @@ from src.exceptions import (
     ResourceType,
 )
 from src.redis import get_redis_client
-from src.repository.schemas import (
-    RepositorySource,
-    RepositoryOverview,
+from src.source.schemas import (
+    SourceConfig,
+    SourceOverview,
     SourceType,
     SitemapConfig,
     GithubIssuesConfig,
@@ -27,7 +27,7 @@ from src.vector_store.base import VectorStoreBase
 from src.vector_store.ranking import reciprocal_rank_fusion
 
 
-REPOSITORY_DOC_SCHEMA: dict[str, Any] = {
+SOURCE_DOC_SCHEMA: dict[str, Any] = {
     "fields": [
         {"name": "id", "type": "tag"},
         {"name": "content", "type": "text"},
@@ -68,52 +68,48 @@ class RedisVectorStore(VectorStoreBase):
         self.embeddings_function = OpenAIEmbeddings(
             model=settings.EMBEDDING_MODEL, dimensions=settings.EMBEDDING_DIMENSIONS
         )
-        self.schema: dict[str, Any] = REPOSITORY_DOC_SCHEMA
+        self.schema: dict[str, Any] = SOURCE_DOC_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
 
-    def _get_index_prefix(self, repository_name: str) -> str:
-        return f"{repository_name}:documents"
+    def _get_index_prefix(self, source_name: str) -> str:
+        return f"{source_name}:documents"
 
-    def _get_metadata_key(self, repository_name: str) -> str:
-        return f"{repository_name}:metadata"
+    def _get_metadata_key(self, source_name: str) -> str:
+        return f"{source_name}:metadata"
 
-    def _get_index(
-        self, repository_name: str, should_exist: bool = True
-    ) -> SearchIndex:
-        prefix = self._get_index_prefix(repository_name)
+    def _get_index(self, source_name: str, should_exist: bool = True) -> SearchIndex:
+        prefix = self._get_index_prefix(source_name)
 
         index_schema = IndexSchema.from_dict(
             {
-                "index": {"name": repository_name, "prefix": prefix},
+                "index": {"name": source_name, "prefix": prefix},
                 **self.schema,
             }
         )
         index = SearchIndex(index_schema).set_client(self.client)  # type: ignore
 
-        if repository_name == "*":
+        if source_name == "*":
             return index
 
         if should_exist and not index.exists():
-            raise ResourceNotFoundException(ResourceType.REPOSITORY, repository_name)
+            raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
         if not should_exist and index.exists():
-            raise ResourceAlreadyExistsException(
-                ResourceType.REPOSITORY, repository_name
-            )
+            raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_name)
 
         return index
 
-    def _extract_doc_id(self, repository_name: str, key: str) -> str:
-        prefix = self._get_index_prefix(repository_name)
+    def _extract_doc_id(self, source_name: str, key: str) -> str:
+        prefix = self._get_index_prefix(source_name)
         return key.split(f"{prefix}:")[1]
 
-    def _get_doc_key(self, repository_name: str, doc_id: str) -> str:
-        prefix = self._get_index_prefix(repository_name)
+    def _get_doc_key(self, source_name: str, doc_id: str) -> str:
+        prefix = self._get_index_prefix(source_name)
         return f"{prefix}:{doc_id}"
 
-    def create_repository(
-        self, name: str, source: RepositorySource, timestamp: str
-    ) -> RepositoryOverview:
+    def create_source(
+        self, name: str, config: SourceConfig, timestamp: str
+    ) -> SourceOverview:
         index = self._get_index(name, False)
 
         index.create()
@@ -121,31 +117,31 @@ class RedisVectorStore(VectorStoreBase):
         metadata_key = self._get_metadata_key(name)
         id = str(uuid4())
 
-        source_dict: dict[str, Any] = {}
+        config_dict: dict[str, Any] = {}
 
-        source_items = source.model_dump().items()
+        config_items = config.model_dump().items()
 
-        for key, value in source_items:
+        for key, value in config_items:
             if isinstance(value, list):
                 value = json.dumps(value)
             elif value is None:
                 value = ""
-            source_dict[f"source__{key}"] = value
+            config_dict[f"config__{key}"] = value
 
         self.client.hset(
             metadata_key,
             mapping={
                 "id": id,
                 "name": name,
-                **source_dict,
+                **config_dict,
                 "created_at": timestamp,
                 "updated_at": timestamp,
             },
         )
 
-        return self.get_repository(name)
+        return self.get_source(name)
 
-    def add_repository_documents(
+    def add_source_documents(
         self, name: str, documents: list[Document], timestamp: str
     ) -> list[str]:
         index = self._get_index(name)
@@ -184,7 +180,7 @@ class RedisVectorStore(VectorStoreBase):
 
         return ids
 
-    def get_repository(self, name: str) -> RepositoryOverview:
+    def get_source(self, name: str) -> SourceOverview:
         index = self._get_index(name)
 
         index_info = index.info()
@@ -193,46 +189,46 @@ class RedisVectorStore(VectorStoreBase):
 
         metadata = self.client.hgetall(metadata_key)
 
-        source_type = metadata.get("source__type")
+        source_type = metadata.get("config__type")
 
-        source: RepositorySource
+        source_config: SourceConfig
 
         if source_type == SourceType.SITEMAP:
             source_data: dict[str, Any] = {
                 "type": source_type,
-                "sitemap_url": metadata["source__sitemap_url"],
-                "include_pattern": metadata["source__include_pattern"] or None,
-                "exclude_pattern": metadata["source__exclude_pattern"] or None,
-                "chunk_size": int(metadata["source__chunk_size"]),
-                "chunk_overlap": int(metadata["source__chunk_overlap"]),
+                "sitemap_url": metadata["config__sitemap_url"],
+                "include_pattern": metadata["config__include_pattern"] or None,
+                "exclude_pattern": metadata["config__exclude_pattern"] or None,
+                "chunk_size": int(metadata["config__chunk_size"]),
+                "chunk_overlap": int(metadata["config__chunk_overlap"]),
             }
-            source = SitemapConfig(**source_data)
+            source_config = SitemapConfig(**source_data)
         elif source_type == SourceType.GITHUB_ISSUES:
             source_data = {
                 "type": source_type,
-                "repo_url": metadata["source__repo_url"],
-                "issue_state": metadata["source__issue_state"],
-                "labels": metadata["source__labels"] or None,
+                "repo_url": metadata["config__repo_url"],
+                "issue_state": metadata["config__issue_state"],
+                "labels": metadata["config__labels"] or None,
             }
 
             if source_data["labels"]:
                 source_data["labels"] = json.loads(source_data["labels"])
             else:
                 source_data["labels"] = None
-            source = GithubIssuesConfig(**source_data)
+            source_config = GithubIssuesConfig(**source_data)
         else:
             raise ValueError(f"Unknown source type: {source_type}")
 
-        return RepositoryOverview(
+        return SourceOverview(
             id=metadata["id"],
             name=metadata["name"],
             num_docs=int(index_info["num_docs"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
-            source=source,
+            config=source_config,
         )
 
-    def get_repository_documents(
+    def get_source_documents(
         self, name: str, limit: int | None, offset: int | None
     ) -> list[Document]:
         self._get_index(name)
@@ -273,7 +269,7 @@ class RedisVectorStore(VectorStoreBase):
             for doc in docs
         ]
 
-    def get_repository_document_ids(self, name: str) -> list[str]:
+    def get_source_document_ids(self, name: str) -> list[str]:
         all_keys: list[str] = []
 
         for key in self.client.scan_iter(f"{name}:documents:*"):
@@ -281,25 +277,25 @@ class RedisVectorStore(VectorStoreBase):
 
         return [self._extract_doc_id(name, key) for key in all_keys]
 
-    def get_all_repositories(self) -> list[RepositoryOverview]:
+    def get_all_sources(self) -> list[SourceOverview]:
         index = self._get_index("*")
 
-        repo_names = index.listall()
+        source_names = index.listall()
 
-        return [self.get_repository(name) for name in repo_names]
+        return [self.get_source(name) for name in source_names]
 
-    def delete_repository(self, name: str) -> None:
+    def delete_source(self, name: str) -> None:
         index = self._get_index(name)
 
         if not index.exists():
-            raise ResourceNotFoundException(ResourceType.REPOSITORY, name)
+            raise ResourceNotFoundException(ResourceType.SOURCE, name)
 
         index.delete()
 
         metadata_key = self._get_metadata_key(name)
         self.client.delete(metadata_key)
 
-    def delete_repository_documents(self, name: str, doc_ids: list[str]) -> None:
+    def delete_source_documents(self, name: str, doc_ids: list[str]) -> None:
         index = self._get_index(name)
 
         ids = [self._get_doc_key(name, doc_id) for doc_id in doc_ids]
@@ -307,11 +303,11 @@ class RedisVectorStore(VectorStoreBase):
         index.drop_keys(ids)
 
     def map_search_results_to_documents(
-        self, repository_name: str, search_results: list[dict[str, Any]]
+        self, source_name: str, search_results: list[dict[str, Any]]
     ) -> list[Document]:
         return [
             Document(
-                id=self._extract_doc_id(repository_name, doc["id"]),
+                id=self._extract_doc_id(source_name, doc["id"]),
                 content=doc["content"],
                 metadata={
                     "url": doc["url"],
@@ -366,7 +362,7 @@ class RedisVectorStore(VectorStoreBase):
         search_results = ft.search(query_obj)  # type: ignore
         return self.map_search_results_to_documents(index.name, search_results.docs)
 
-    def search_repository(self, name: str, query: str, limit: int) -> list[Document]:
+    def search_source(self, name: str, query: str, limit: int) -> list[Document]:
         index = self._get_index(name)
 
         vector_search_results = self.vector_based_search(index, query, limit)
@@ -377,28 +373,28 @@ class RedisVectorStore(VectorStoreBase):
             [vector_search_results, text_search_results], limit
         )
 
-    def update_repository_metadata(
-        self, name: str, source: RepositorySource, timestamp: str
-    ) -> RepositoryOverview:
+    def update_source_metadata(
+        self, name: str, config: SourceConfig, timestamp: str
+    ) -> SourceOverview:
         metadata_key = self._get_metadata_key(name)
 
-        source_dict: dict[str, Any] = {}
+        config_dict: dict[str, Any] = {}
 
-        source_items = source.model_dump().items()
+        config_items = config.model_dump().items()
 
-        for key, value in source_items:
+        for key, value in config_items:
             if isinstance(value, list):
                 value = json.dumps(value)
             if value is None:
                 value = ""
-            source_dict[f"source__{key}"] = value
+            config_dict[f"config__{key}"] = value
 
         self.client.hset(
             metadata_key,
             mapping={
-                **source_dict,
+                **config_dict,
                 "updated_at": timestamp,
             },
         )
 
-        return self.get_repository(name)
+        return self.get_source(name)

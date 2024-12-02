@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 128
 
     SYSTEM_PROMPT: str = (
-        "You are an expert on {repository} and can answer any questions about it."
+        "You are an expert on {source} and can answer any questions about it."
     )
 
     MAX_CONCURRENT_REQUESTS: int = 10

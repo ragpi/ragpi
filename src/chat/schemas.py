@@ -11,7 +11,7 @@ class ChatMessage(BaseModel):
 
 
 class CreateChatInput(BaseModel):
-    repository: str
+    source: str
     chat_model: str | None = None
     system: str | None = None
     messages: list[ChatMessage]
@@ -22,4 +22,4 @@ class CreateChatInput(BaseModel):
 
 class ChatResponse(BaseModel):
     message: str | None
-    sources: list[Document]
+    source_documents: list[Document]

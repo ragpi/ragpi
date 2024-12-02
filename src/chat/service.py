@@ -11,13 +11,13 @@ from flashrank import Ranker, RerankRequest  # type: ignore
 from src.chat.schemas import ChatResponse, CreateChatInput, ChatMessage
 from src.config import settings
 from src.document.schemas import Document
-from src.repository.service import RepositoryService
+from src.source.service import SourceService
 
 
 class ChatService:
     def __init__(self):
         self.openai_client = OpenAI()
-        self.repository_service = RepositoryService()
+        self.source_service = SourceService()
         self.default_system_prompt = settings.SYSTEM_PROMPT
         self.default_chat_model = settings.CHAT_MODEL
         self.default_reranking_model = settings.RERANKING_MODEL
@@ -75,11 +75,11 @@ Conversation:
         logging.info(f"Retrieval query: {retrieval_query}")
 
         retrieval_limit = chat_input.retrieval_limit or self.default_retrieval_limit
-        documents = self.repository_service.search_repository(
-            chat_input.repository, retrieval_query, retrieval_limit
+        documents = self.source_service.search_source(
+            chat_input.source, retrieval_query, retrieval_limit
         )
 
-        sources = (
+        source_documents = (
             self.rerank_documents(
                 retrieval_query,
                 documents,
@@ -89,19 +89,19 @@ Conversation:
             else documents
         )
 
-        if len(sources) == 0:
+        if len(source_documents) == 0:
             return ChatResponse(
                 message="I couldn't find any relevant information to answer your question.",
-                sources=[],
+                source_documents=[],
             )
 
-        doc_content = [doc.content for doc in sources]
+        doc_content = [doc.content for doc in source_documents]
         context = "\n\n".join(doc_content)
 
         latest_message = chat_input.messages[-1]
 
         query_prompt = f"""
-Use the following context taken from a knowledge base about {chat_input.repository} to answer the user's query. 
+Use the following context taken from a knowledge base about {chat_input.source} to answer the user's query. 
 If you don't know the answer, say "I don't know".
 Respond without mentioning that there is a context provided.
 Respond as if the user has not seen the context.
@@ -129,7 +129,7 @@ User Query: {latest_message.content}"""
         ]
 
         system_content = chat_input.system or self.default_system_prompt.format(
-            repository=chat_input.repository
+            source=chat_input.source
         )
         system = ChatCompletionSystemMessageParam(role="system", content=system_content)
 
@@ -148,6 +148,6 @@ User Query: {latest_message.content}"""
         )
         response = ChatResponse(
             message=completion.choices[0].message.content,
-            sources=sources,
+            source_documents=source_documents,
         )
         return response

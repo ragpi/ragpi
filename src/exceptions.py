@@ -6,7 +6,7 @@ from slowapi.errors import RateLimitExceeded
 
 
 class ResourceType(str, Enum):
-    REPOSITORY = "repository"
+    SOURCE = "source"
     TASK = "task"
 
 
@@ -34,7 +34,7 @@ class SiteMapCrawlerException(Exception):
     pass
 
 
-class RepositorySyncException(Exception):
+class SourceSyncException(Exception):
     pass
 
 
