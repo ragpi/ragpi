@@ -120,82 +120,73 @@ class SourceService:
         batch_size = self.document_sync_batch_size
 
         try:
-            if source_config.type == SourceType.SITEMAP:
-                async for doc in self.document_service.create_documents_from_website(
-                    sitemap_url=source_config.sitemap_url,
-                    include_pattern=source_config.include_pattern,
-                    exclude_pattern=source_config.exclude_pattern,
-                    chunk_size=source_config.chunk_size,
-                    chunk_overlap=source_config.chunk_overlap,
-                ):
-                    if doc.id in current_doc_ids:
-                        continue
+            async for doc in self.document_service.create_documents(
+                source_config,
+            ):
+                if doc.id in current_doc_ids:
+                    continue
 
-                    current_doc_ids.add(doc.id)
+                current_doc_ids.add(doc.id)
 
-                    if doc.id not in existing_doc_ids and doc.id not in added_doc_ids:
-                        docs_to_add.append(doc)
-                        added_doc_ids.add(doc.id)
+                if doc.id not in existing_doc_ids and doc.id not in added_doc_ids:
+                    docs_to_add.append(doc)
+                    added_doc_ids.add(doc.id)
 
-                        if len(docs_to_add) >= batch_size:
-                            try:
-                                self.vector_store_service.add_source_documents(
-                                    source_name,
-                                    docs_to_add,
-                                    timestamp=get_current_datetime(),
-                                )
-                                docs_to_add = []
-                                logging.info(
-                                    f"Added a batch of {batch_size} documents to source {source_name}"
-                                )
-                            except Exception as e:
-                                logging.error(
-                                    f"Failed to add batch of documents to source {source_name}: {e}"
-                                )
+                    if len(docs_to_add) >= batch_size:
+                        try:
+                            self.vector_store_service.add_source_documents(
+                                source_name,
+                                docs_to_add,
+                                timestamp=get_current_datetime(),
+                            )
+                            docs_to_add = []
+                            logging.info(
+                                f"Added a batch of {batch_size} documents to source {source_name}"
+                            )
+                        except Exception as e:
+                            logging.error(
+                                f"Failed to add batch of documents to source {source_name}: {e}"
+                            )
 
-                if docs_to_add:
-                    try:
-                        self.vector_store_service.add_source_documents(
-                            source_name,
-                            docs_to_add,
-                            timestamp=get_current_datetime(),
-                        )
-                        logging.info(
-                            f"Added a batch of {len(docs_to_add)} documents to source {source_name}"
-                        )
-                    except Exception as e:
-                        logging.error(
-                            f"Failed to add batch of documents to source {source_name}: {e}"
-                        )
+            if docs_to_add:
+                try:
+                    self.vector_store_service.add_source_documents(
+                        source_name,
+                        docs_to_add,
+                        timestamp=get_current_datetime(),
+                    )
+                    logging.info(
+                        f"Added a batch of {len(docs_to_add)} documents to source {source_name}"
+                    )
+                except Exception as e:
+                    logging.error(
+                        f"Failed to add batch of documents to source {source_name}: {e}"
+                    )
 
-                doc_ids_to_remove = existing_doc_ids - current_doc_ids
-                if doc_ids_to_remove:
-                    try:
-                        self.vector_store_service.delete_source_documents(
-                            source_name, list(doc_ids_to_remove)
-                        )
-                        logging.info(
-                            f"Removed {len(doc_ids_to_remove)} documents from source {source_name}"
-                        )
-                    except Exception as e:
-                        logging.error(
-                            f"Failed to remove documents from source {source_name}: {e}"
-                        )
+            doc_ids_to_remove = existing_doc_ids - current_doc_ids
+            if doc_ids_to_remove:
+                try:
+                    self.vector_store_service.delete_source_documents(
+                        source_name, list(doc_ids_to_remove)
+                    )
+                    logging.info(
+                        f"Removed {len(doc_ids_to_remove)} documents from source {source_name}"
+                    )
+                except Exception as e:
+                    logging.error(
+                        f"Failed to remove documents from source {source_name}: {e}"
+                    )
 
-                if not current_doc_ids - existing_doc_ids:
-                    logging.info(f"No new documents added to source {source_name}")
+            if not current_doc_ids - existing_doc_ids:
+                logging.info(f"No new documents added to source {source_name}")
 
-                updated_source = self.vector_store_service.update_source_metadata(
-                    source_name,
-                    source_config,
-                    get_current_datetime(),
-                )
+            updated_source = self.vector_store_service.update_source_metadata(
+                source_name,
+                source_config,
+                get_current_datetime(),
+            )
 
-                return updated_source
-            elif source_config.type == SourceType.GITHUB_ISSUES:
-                raise NotImplementedError("GitHub issues sync not implemented yet")
-            else:
-                raise ValueError(f"Unsupported source type: {source_config.type}")
+            return updated_source
         except SiteMapCrawlerException as e:
             raise SourceSyncException(str(e))
         except Exception as e:
