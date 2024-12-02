@@ -10,7 +10,6 @@ readme = "README.md"
 python = "^3.11"
 fastapi = { extras = ["standard"], version = "^0.114.1" }
 html2text = "^2024.2.26"
-chromadb = "^0.5.7"
 langchain = "^0.3.0"
 langchain-openai = "^0.2.0"
 openai = "^1.51.1"

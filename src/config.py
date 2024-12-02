@@ -21,7 +21,7 @@ RERANKING_MODELS = Literal[
 class Settings(BaseSettings):
     API_KEY: str | None = None
 
-    VECTOR_STORE_PROVIDER: Literal["redis", "chroma"] = "redis"
+    VECTOR_STORE_PROVIDER: Literal["redis"] = "redis"
 
     OPENAI_API_KEY: str
 
