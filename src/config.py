@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str
 
+    GITHUB_TOKEN: str | None = None
+
+    GITHUB_API_VERSION: str = "2022-11-28"
+
     REDIS_URL: str = "redis://localhost:6379"
 
     CHAT_MODEL: str = "gpt-4o-mini"

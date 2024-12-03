@@ -15,8 +15,15 @@ class PageData(BaseModel):
     content: str  # markdown
 
 
+class GithubIssueComment(BaseModel):
+    id: str
+    url: str
+    body: str
+
+
 class GithubIssue(BaseModel):
     id: str
     url: str
     title: str
     body: str
+    comments: list[GithubIssueComment] = []

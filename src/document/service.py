@@ -37,6 +37,7 @@ class DocumentService:
                     metadata={
                         "url": issue.url,
                         "title": issue.title,
+                        "comments": issue.comments,
                     },
                 )
 
