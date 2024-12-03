@@ -22,9 +22,11 @@ class SitemapConfig(BaseModel):
 
 class GithubIssuesConfig(BaseModel):
     type: Literal[SourceType.GITHUB_ISSUES]
-    repo_url: str  # TODO: Update to owner and repo
-    issue_state: Literal["open", "closed", "all"] = "open"
-    labels: list[str] | None = None  # TODO: Update to include and exclude labels
+    repo: str  # TODO: Validate repo format (e.g. "owner/repo")
+    state: Literal["open", "closed"] | None = None
+    include_labels: list[str] | None = None
+    exclude_labels: list[str] | None = None
+    max_age: int | None = None  # Days
 
 
 SourceConfig = Union[SitemapConfig, GithubIssuesConfig]

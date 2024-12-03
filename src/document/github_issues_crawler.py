@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 import logging
 import time
 from types import TracebackType
@@ -141,20 +142,51 @@ class GitHubIssueCrawler:
     async def fetch_issues(
         self,
         repo: str,
+        state: str | None = None,
+        include_labels: list[str] | None = None,
+        exclude_labels: list[str] | None = None,
+        max_age: int | None = None,
     ) -> AsyncGenerator[GithubIssue, None]:
         logging.info(f"Fetching issues for repo: {repo}")
 
         base_url = "https://api.github.com/search/issues"
-        per_page = 100
+
+        query_parts = [
+            "type:issue",
+            f"repo:{repo}",
+        ]
+
+        if max_age:
+            cutoff_datetime = datetime.now(timezone.utc) - timedelta(days=max_age)
+            cutoff_date_str: str | None = cutoff_datetime.strftime("%Y-%m-%d")
+            query_parts.append(f"updated:>{cutoff_date_str}")
+
+        if state:
+            query_parts.append(f"state:{state}")
+
+        if include_labels:
+            label: str | None = (
+                ",".join(f'"{label}"' for label in include_labels)
+                if include_labels
+                else None
+            )
+            query_parts.append(f"label:{label}")
+
+        query = " ".join(query_parts)
+
         params: dict[str, str | int] | None = {
-            "q": f"type:issue repo:{repo}",
-            "per_page": per_page,
+            "q": query,
+            "per_page": 100,
             "sort": "updated",
             "order": "desc",
         }
         url = base_url
 
-        async def process_item(item: Any) -> GithubIssue:
+        async def process_item(item: Any) -> GithubIssue | None:
+            labels = [label["name"] for label in item["labels"]]
+            if exclude_labels and any(label in exclude_labels for label in labels):
+                return None
+
             comments = await self.fetch_comments(item["comments_url"])
             return GithubIssue(
                 id=str(item["id"]),
@@ -176,7 +208,8 @@ class GitHubIssueCrawler:
             tasks = [asyncio.create_task(process_item(item)) for item in items]
             for task in asyncio.as_completed(tasks):
                 issue = await task
-                yield issue
+                if issue:
+                    yield issue
 
             # Check for 'next' link in headers
             link_header = headers.get("Link")

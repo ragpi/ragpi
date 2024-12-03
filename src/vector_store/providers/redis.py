@@ -206,9 +206,11 @@ class RedisVectorStore(VectorStoreBase):
         elif source_type == SourceType.GITHUB_ISSUES:
             source_data = {
                 "type": source_type,
-                "repo_url": metadata["config__repo_url"],
-                "issue_state": metadata["config__issue_state"],
-                "labels": metadata["config__labels"] or None,
+                "repo": metadata["config__repo"],
+                "state": metadata["config__state"] or None,
+                "include_labels": metadata["config__include_labels"] or None,
+                "exclude_labels": metadata["config__exclude_labels"] or None,
+                "max_age": metadata["config__max_age"] or None,
             }
 
             if source_data["labels"]:
