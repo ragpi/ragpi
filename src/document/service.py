@@ -1,5 +1,6 @@
 from typing import AsyncGenerator
 from src.document.chunker import split_markdown_page
+from src.document.github_issues_crawler import GitHubIssueCrawler
 from src.document.schemas import Document
 from src.document.sitemap_crawler import SitemapCrawler
 from src.source.schemas import SourceConfig, SourceType
@@ -23,6 +24,21 @@ class DocumentService:
                 chunks = split_markdown_page(page, chunk_size, chunk_overlap)
                 for chunk in chunks:
                     yield chunk
+
+    async def create_documents_from_github_issues(
+        self,
+        repo: str,
+    ) -> AsyncGenerator[Document, None]:
+        async with GitHubIssueCrawler() as crawler:
+            async for issue in crawler.fetch_issues(repo):
+                yield Document(
+                    id=issue.id,
+                    content=issue.body,
+                    metadata={
+                        "url": issue.url,
+                        "title": issue.title,
+                    },
+                )
 
     async def create_documents(
         self,

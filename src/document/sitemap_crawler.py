@@ -60,7 +60,8 @@ class SitemapCrawler:
         self.max_concurrent_requests = settings.MAX_CONCURRENT_REQUESTS
 
     async def __aenter__(self):
-        self.session = ClientSession()
+        headers = {"User-Agent": self.user_agent}
+        self.session = ClientSession(headers=headers)
         return self
 
     async def __aexit__(

@@ -13,3 +13,10 @@ class PageData(BaseModel):
     url: str
     title: str
     content: str  # markdown
+
+
+class GithubIssue(BaseModel):
+    id: str
+    url: str
+    title: str
+    body: str
