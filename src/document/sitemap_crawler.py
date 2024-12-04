@@ -53,11 +53,11 @@ def extract_page_data(url: str, content: bytes) -> PageData:
 
 
 class SitemapCrawler:
-    def __init__(self) -> None:
+    def __init__(self, concurrent_requests: int = settings.CONCURRENT_REQUESTS) -> None:
         self.session: ClientSession | None
         self.robots_parser: RobotFileParser | None = None
         self.user_agent = settings.USER_AGENT
-        self.concurrent_requests = settings.CONCURRENT_REQUESTS
+        self.concurrent_requests = concurrent_requests
 
     async def __aenter__(self):
         headers = {"User-Agent": self.user_agent}

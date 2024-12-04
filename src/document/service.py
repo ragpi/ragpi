@@ -10,13 +10,14 @@ from src.source.schemas import SourceConfig, SourceType
 class DocumentService:
     async def create_documents_from_sitemap(
         self,
+        concurrent_requests: int,
         sitemap_url: str,
         include_pattern: str | None,
         exclude_pattern: str | None,
         chunk_size: int,
         chunk_overlap: int,
     ) -> AsyncGenerator[Document, None]:
-        async with SitemapCrawler() as crawler:
+        async with SitemapCrawler(concurrent_requests) as crawler:
             async for page in crawler.crawl(
                 sitemap_url=sitemap_url,
                 include_pattern=include_pattern,
@@ -28,6 +29,7 @@ class DocumentService:
 
     async def create_documents_from_github_issues(
         self,
+        concurrent_requests: int,
         repo_owner: str,
         repo_name: str,
         state: str | None = None,
@@ -35,7 +37,7 @@ class DocumentService:
         exclude_labels: list[str] | None = None,
         max_age: int | None = None,
     ) -> AsyncGenerator[Document, None]:
-        async with GitHubIssueCrawler() as crawler:
+        async with GitHubIssueCrawler(concurrent_requests) as crawler:
             async for issue in crawler.fetch_issues(
                 repo_owner, repo_name, state, include_labels, exclude_labels, max_age
             ):
@@ -64,6 +66,7 @@ class DocumentService:
     ) -> AsyncGenerator[Document, None]:
         if source_config.type == SourceType.SITEMAP:
             async for doc in self.create_documents_from_sitemap(
+                concurrent_requests=source_config.concurrent_requests,
                 sitemap_url=source_config.sitemap_url,
                 include_pattern=source_config.include_pattern,
                 exclude_pattern=source_config.exclude_pattern,
@@ -73,6 +76,7 @@ class DocumentService:
                 yield doc
         elif source_config.type == SourceType.GITHUB_ISSUES:
             async for doc in self.create_documents_from_github_issues(
+                concurrent_requests=source_config.concurrent_requests,
                 repo_owner=source_config.repo_owner,
                 repo_name=source_config.repo_name,
                 state=source_config.state,

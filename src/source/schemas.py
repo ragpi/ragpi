@@ -18,6 +18,7 @@ class SitemapConfig(BaseModel):
     exclude_pattern: str | None = None
     chunk_size: int = settings.CHUNK_SIZE
     chunk_overlap: int = settings.CHUNK_OVERLAP
+    concurrent_requests: int = settings.CONCURRENT_REQUESTS
 
 
 class GithubIssuesConfig(BaseModel):
@@ -28,6 +29,7 @@ class GithubIssuesConfig(BaseModel):
     include_labels: list[str] | None = None
     exclude_labels: list[str] | None = None
     max_age: int | None = None  # Days
+    concurrent_requests: int = settings.CONCURRENT_REQUESTS
 
 
 SourceConfig = Union[SitemapConfig, GithubIssuesConfig]

@@ -11,14 +11,12 @@ from src.document.schemas import GithubIssue, GithubIssueComment
 
 
 class GitHubIssueCrawler:
-    def __init__(self) -> None:
+    def __init__(self, concurrent_requests: int = settings.CONCURRENT_REQUESTS) -> None:
         self.session: aiohttp.ClientSession | None = None
         self.github_api_version = settings.GITHUB_API_VERSION
         self.github_token: str | None = settings.GITHUB_TOKEN
         self.user_agent = settings.USER_AGENT
-        self.semaphore = asyncio.Semaphore(
-            settings.CONCURRENT_REQUESTS
-        )  # TODO: Add to input
+        self.semaphore = asyncio.Semaphore(concurrent_requests)
         self.rate_limit_event = asyncio.Event()
         self.rate_limit_event.set()
 
