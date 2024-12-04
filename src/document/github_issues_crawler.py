@@ -11,9 +11,7 @@ from src.document.schemas import GithubIssue, GithubIssueComment
 
 
 class GitHubIssueCrawler:
-    def __init__(
-        self,
-    ) -> None:
+    def __init__(self) -> None:
         self.session: aiohttp.ClientSession | None = None
         self.github_api_version = settings.GITHUB_API_VERSION
         self.github_token: str | None = settings.GITHUB_TOKEN
@@ -141,53 +139,49 @@ class GitHubIssueCrawler:
 
     async def fetch_issues(
         self,
-        repo: str,
+        repo_owner: str,
+        repo_name: str,
         state: str | None = None,
         include_labels: list[str] | None = None,
         exclude_labels: list[str] | None = None,
         max_age: int | None = None,
     ) -> AsyncGenerator[GithubIssue, None]:
-        logging.info(f"Fetching issues for repo: {repo}")
+        logging.info(f"Fetching issues from repo: {repo_owner}/{repo_name}")
 
-        base_url = "https://api.github.com/search/issues"
+        base_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
 
-        query_parts = [
-            "type:issue",
-            f"repo:{repo}",
-        ]
+        params: dict[str, str | int] | None = {
+            "per_page": 100,
+            "state": state or "all",
+            "sort": "updated",
+            "direction": "desc",
+        }
 
         if max_age:
             cutoff_datetime = datetime.now(timezone.utc) - timedelta(days=max_age)
-            cutoff_date_str: str | None = cutoff_datetime.strftime("%Y-%m-%d")
-            query_parts.append(f"updated:>{cutoff_date_str}")
+            cutoff_str = cutoff_datetime.strftime("%Y-%m-%d")
+            assert params is not None, "params should not be None"
+            params["since"] = cutoff_str
 
-        if state:
-            query_parts.append(f"state:{state}")
-
-        if include_labels:
-            label: str | None = (
-                ",".join(f'"{label}"' for label in include_labels)
-                if include_labels
-                else None
-            )
-            query_parts.append(f"label:{label}")
-
-        query = " ".join(query_parts)
-
-        params: dict[str, str | int] | None = {
-            "q": query,
-            "per_page": 100,
-            "sort": "updated",
-            "order": "desc",
-        }
         url = base_url
 
         async def process_item(item: Any) -> GithubIssue | None:
-            labels = [label["name"] for label in item["labels"]]
+            # Skip pull requests
+            if "pull_request" in item:
+                return None
+
+            labels = [label["name"] for label in item.get("labels", [])]
+            if include_labels and not any(label in include_labels for label in labels):
+                return None
+
             if exclude_labels and any(label in exclude_labels for label in labels):
                 return None
 
-            comments = await self.fetch_comments(item["comments_url"])
+            comments_count = item.get("comments", 0)
+            comments: list[GithubIssueComment] = []
+            if comments_count > 0:
+                comments = await self.fetch_comments(item["comments_url"])
+
             return GithubIssue(
                 id=str(item["id"]),
                 url=item["html_url"],
@@ -201,17 +195,13 @@ class GitHubIssueCrawler:
             if not data:
                 break
 
-            items = data.get("items", [])
-            if not items:
-                break
-
-            tasks = [asyncio.create_task(process_item(item)) for item in items]
+            tasks = [asyncio.create_task(process_item(item)) for item in data]
             for task in asyncio.as_completed(tasks):
                 issue = await task
                 if issue:
                     yield issue
 
-            # Check for 'next' link in headers
+            # Check for 'next' link in headers for pagination
             link_header = headers.get("Link")
             if link_header:
                 links = self._parse_link_header(link_header)

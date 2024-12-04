@@ -22,7 +22,8 @@ class SitemapConfig(BaseModel):
 
 class GithubIssuesConfig(BaseModel):
     type: Literal[SourceType.GITHUB_ISSUES]
-    repo: str  # TODO: Validate repo format (e.g. "owner/repo")
+    repo_owner: str
+    repo_name: str
     state: Literal["open", "closed"] | None = None
     include_labels: list[str] | None = None
     exclude_labels: list[str] | None = None

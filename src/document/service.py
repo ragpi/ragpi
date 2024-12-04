@@ -27,7 +27,8 @@ class DocumentService:
 
     async def create_documents_from_github_issues(
         self,
-        repo: str,
+        repo_owner: str,
+        repo_name: str,
         state: str | None = None,
         include_labels: list[str] | None = None,
         exclude_labels: list[str] | None = None,
@@ -35,7 +36,7 @@ class DocumentService:
     ) -> AsyncGenerator[Document, None]:
         async with GitHubIssueCrawler() as crawler:
             async for issue in crawler.fetch_issues(
-                repo, state, include_labels, exclude_labels, max_age
+                repo_owner, repo_name, state, include_labels, exclude_labels, max_age
             ):
                 yield Document(
                     id=issue.id,
@@ -62,7 +63,8 @@ class DocumentService:
                 yield doc
         elif source_config.type == SourceType.GITHUB_ISSUES:
             async for doc in self.create_documents_from_github_issues(
-                repo=source_config.repo,
+                repo_owner=source_config.repo_owner,
+                repo_name=source_config.repo_name,
                 state=source_config.state,
                 include_labels=source_config.include_labels,
                 exclude_labels=source_config.exclude_labels,

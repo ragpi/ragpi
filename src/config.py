@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     MAX_CONCURRENT_REQUESTS: int = 10
 
-    DOCUMENT_SYNC_BATCH_SIZE: int = 500
+    DOCUMENT_SYNC_BATCH_SIZE: int = 300
 
     RETRIEVAL_LIMIT: int = 50
 

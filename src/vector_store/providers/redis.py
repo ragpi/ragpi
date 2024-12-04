@@ -206,7 +206,8 @@ class RedisVectorStore(VectorStoreBase):
         elif source_type == SourceType.GITHUB_ISSUES:
             source_data = {
                 "type": source_type,
-                "repo": metadata["config__repo"],
+                "repo_owner": metadata["config__repo_owner"],
+                "repo_name": metadata["config__repo_name"],
                 "state": metadata["config__state"] or None,
                 "include_labels": metadata["config__include_labels"] or None,
                 "exclude_labels": metadata["config__exclude_labels"] or None,
