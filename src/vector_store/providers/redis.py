@@ -213,10 +213,18 @@ class RedisVectorStore(VectorStoreBase):
                 "max_age": metadata["config__max_age"] or None,
             }
 
-            if source_data["labels"]:
-                source_data["labels"] = json.loads(source_data["labels"])
-            else:
-                source_data["labels"] = None
+            source_data["include_labels"] = (
+                json.loads(source_data["include_labels"])
+                if source_data["include_labels"]
+                else None
+            )
+
+            source_data["exclude_labels"] = (
+                json.loads(source_data["exclude_labels"])
+                if source_data["exclude_labels"]
+                else None
+            )
+
             source_config = GithubIssuesConfig(**source_data)
         else:
             raise ValueError(f"Unknown source type: {source_type}")
