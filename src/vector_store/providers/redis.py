@@ -1,8 +1,8 @@
 import json
 from typing import Any
-from langchain_openai import OpenAIEmbeddings
 import numpy as np
 from uuid import uuid4
+from openai import OpenAI
 from redisvl.index import SearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
@@ -59,9 +59,9 @@ DOCUMENT_FIELDS = [
 class RedisVectorStore(VectorStoreBase):
     def __init__(self) -> None:
         self.client = get_redis_client()
-        self.embeddings_function = OpenAIEmbeddings(
-            model=settings.EMBEDDING_MODEL, dimensions=settings.EMBEDDING_DIMENSIONS
-        )
+        self.embedding_model = settings.EMBEDDING_MODEL
+        self.embedding_dimensions = settings.EMBEDDING_DIMENSIONS
+        self.embedding_client = OpenAI().embeddings
         self.schema: dict[str, Any] = SOURCE_DOC_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
 
@@ -140,9 +140,13 @@ class RedisVectorStore(VectorStoreBase):
     ) -> list[str]:
         index = self._get_index(name)
 
-        doc_embeddings = self.embeddings_function.embed_documents(
-            [doc.content for doc in documents]
-        )
+        embeddings_data = self.embedding_client.create(
+            input=[doc.content for doc in documents],
+            model=self.embedding_model,
+            dimensions=self.embedding_dimensions,
+        ).data
+
+        doc_embeddings = [embedding.embedding for embedding in embeddings_data]
 
         def create_doc_dict(doc: Document, embedding: list[float]) -> dict[str, Any]:
             doc_dict: dict[str, Any] = {
@@ -320,7 +324,15 @@ class RedisVectorStore(VectorStoreBase):
     def vector_based_search(
         self, index: SearchIndex, query: str, limit: int
     ) -> list[Document]:
-        query_embedding = self.embeddings_function.embed_query(query)
+        query_embedding = (
+            self.embedding_client.create(
+                input=query,
+                model=self.embedding_model,
+                dimensions=self.embedding_dimensions,
+            )
+            .data[0]
+            .embedding
+        )
 
         vector_query = VectorQuery(
             vector=query_embedding,

@@ -1,6 +1,6 @@
 import logging
 from typing import AsyncGenerator
-from src.document.chunker import chunk_github_issue_data, chunk_markdown_page
+from src.document.chunker import chunk_github_issue, chunk_markdown_page
 from src.document.clients.github_issue import GitHubIssueClient
 from src.document.schemas import Document
 from src.document.clients.sitemap import SitemapClient
@@ -46,7 +46,7 @@ class DocumentService:
                 exclude_labels=config.exclude_labels,
                 max_age=config.max_age,
             ):
-                chunks = chunk_github_issue_data(
+                chunks = chunk_github_issue(
                     issue, config.chunk_size, config.chunk_overlap
                 )
                 for chunk in chunks:
