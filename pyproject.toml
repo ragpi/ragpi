@@ -10,7 +10,6 @@ readme = "README.md"
 python = "^3.11"
 fastapi = { extras = ["standard"], version = "^0.114.1" }
 html2text = "^2024.2.26"
-langchain = "^0.3.0"
 langchain-openai = "^0.2.0"
 openai = "^1.51.1"
 redis = "^5.1.1"
@@ -22,6 +21,8 @@ pydantic-settings = "^2.6.0"
 lxml = "^5.3.0"
 flashrank = "^0.2.9"
 pydantic = "^2.10.2"
+chonkie = "^0.2.1.post1"
+aiohttp = "^3.11.9"
 
 
 [tool.poetry.group.dev.dependencies]
