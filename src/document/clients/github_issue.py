@@ -10,7 +10,7 @@ from src.config import settings
 from src.document.schemas import GithubIssue, GithubIssueComment
 
 
-class GitHubIssueCrawler:
+class GitHubIssueClient:
     def __init__(self, concurrent_requests: int = settings.CONCURRENT_REQUESTS) -> None:
         self.session: aiohttp.ClientSession | None = None
         self.github_api_version = settings.GITHUB_API_VERSION

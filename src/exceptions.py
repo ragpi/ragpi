@@ -30,7 +30,7 @@ class ResourceLockedException(Exception):
         super().__init__(f"Resource '{resource_name}' is locked")
 
 
-class SiteMapCrawlerException(Exception):
+class SitemapClientException(Exception):
     pass
 
 

@@ -12,7 +12,7 @@ from urllib.robotparser import RobotFileParser
 
 from src.config import settings
 from src.document.schemas import PageData
-from src.exceptions import SiteMapCrawlerException
+from src.exceptions import SitemapClientException
 
 UNWANTED_TAGS = [
     "nav",
@@ -52,7 +52,7 @@ def extract_page_data(url: str, content: bytes) -> PageData:
     return PageData(id=page_id, url=url, title=title, content=page_content)
 
 
-class SitemapCrawler:
+class SitemapClient:
     def __init__(self, concurrent_requests: int = settings.CONCURRENT_REQUESTS) -> None:
         self.session: ClientSession | None
         self.robots_parser: RobotFileParser | None = None
@@ -111,7 +111,7 @@ class SitemapCrawler:
 
         async with self.session.get(sitemap_url) as response:
             if response.status == 404:
-                raise SiteMapCrawlerException(f"Sitemap not found at {sitemap_url}")
+                raise SitemapClientException(f"Sitemap not found at {sitemap_url}")
 
             response.raise_for_status()
 
@@ -163,7 +163,7 @@ class SitemapCrawler:
         logging.error(f"Failed to fetch {url} after {max_retries} retries.")
         return None
 
-    async def crawl(
+    async def fetch_sitemap_pages(
         self,
         sitemap_url: str,
         include_pattern: str | None = None,
@@ -174,7 +174,7 @@ class SitemapCrawler:
         urls = await self.parse_sitemap(sitemap_url)
 
         if not urls:
-            raise SiteMapCrawlerException(
+            raise SitemapClientException(
                 f"No URLs found in the sitemap at {sitemap_url}"
             )
 
@@ -183,7 +183,7 @@ class SitemapCrawler:
             urls = [url for url in urls if include_regex.search(url)]
 
             if not urls:
-                raise SiteMapCrawlerException(
+                raise SitemapClientException(
                     f"No URLs from the sitemap matched the include pattern {include_pattern}"
                 )
 
@@ -192,7 +192,7 @@ class SitemapCrawler:
             urls = [url for url in urls if not exclude_regex.search(url)]
 
             if not urls:
-                raise SiteMapCrawlerException(
+                raise SitemapClientException(
                     f"All URLs from the sitemap matched the exclude pattern {exclude_pattern}"
                 )
 

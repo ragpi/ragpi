@@ -5,7 +5,7 @@ from src.config import settings
 from src.celery import celery_app
 from src.document.schemas import Document
 from src.document.service import DocumentService
-from src.exceptions import SourceSyncException, SiteMapCrawlerException
+from src.exceptions import SourceSyncException, SitemapClientException
 from src.source.schemas import (
     GithubIssuesConfig,
     SitemapConfig,
@@ -187,7 +187,7 @@ class SourceService:
             )
 
             return updated_source
-        except SiteMapCrawlerException as e:
+        except SitemapClientException as e:
             raise SourceSyncException(str(e))
         except Exception as e:
             raise e

@@ -1,9 +1,9 @@
 from typing import AsyncGenerator
 from src.document.chunker import split_markdown_page
-from src.document.github_issues_crawler import GitHubIssueCrawler
+from src.document.clients.github_issue import GitHubIssueClient
 from src.document.id_generator import generate_stable_id
 from src.document.schemas import Document
-from src.document.sitemap_crawler import SitemapCrawler
+from src.document.clients.sitemap import SitemapClient
 from src.source.schemas import SourceConfig, SourceType
 
 
@@ -17,8 +17,8 @@ class DocumentService:
         chunk_size: int,
         chunk_overlap: int,
     ) -> AsyncGenerator[Document, None]:
-        async with SitemapCrawler(concurrent_requests) as crawler:
-            async for page in crawler.crawl(
+        async with SitemapClient(concurrent_requests) as client:
+            async for page in client.fetch_sitemap_pages(
                 sitemap_url=sitemap_url,
                 include_pattern=include_pattern,
                 exclude_pattern=exclude_pattern,
@@ -37,8 +37,8 @@ class DocumentService:
         exclude_labels: list[str] | None = None,
         max_age: int | None = None,
     ) -> AsyncGenerator[Document, None]:
-        async with GitHubIssueCrawler(concurrent_requests) as crawler:
-            async for issue in crawler.fetch_issues(
+        async with GitHubIssueClient(concurrent_requests) as client:
+            async for issue in client.fetch_issues(
                 repo_owner, repo_name, state, include_labels, exclude_labels, max_age
             ):
                 yield Document(
