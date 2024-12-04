@@ -1,6 +1,7 @@
 from typing import AsyncGenerator
 from src.document.chunker import split_markdown_page
 from src.document.github_issues_crawler import GitHubIssueCrawler
+from src.document.id_generator import generate_stable_id
 from src.document.schemas import Document
 from src.document.sitemap_crawler import SitemapCrawler
 from src.source.schemas import SourceConfig, SourceType
@@ -39,14 +40,23 @@ class DocumentService:
                 repo_owner, repo_name, state, include_labels, exclude_labels, max_age
             ):
                 yield Document(
-                    id=issue.id,
+                    id=generate_stable_id(issue.url, issue.body),
                     content=issue.body,
                     metadata={
                         "url": issue.url,
                         "title": issue.title,
-                        "comments": issue.comments,
                     },
                 )
+
+                for comment in issue.comments:
+                    yield Document(
+                        id=generate_stable_id(comment.url, comment.body),
+                        content=comment.body,
+                        metadata={
+                            "url": comment.url,
+                            "title": f"{issue.title}",
+                        },
+                    )
 
     async def create_documents(
         self,

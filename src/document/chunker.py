@@ -31,21 +31,24 @@ def split_markdown_page(
     docs: list[Document] = []
 
     for split in splits:
+        metadata = split.metadata  # type: ignore
+        title = page_data.title
+
+        if "header_1" in metadata:
+            title += f" - {metadata['header_1']}"
+        if "header_2" in metadata:
+            title += f" - {metadata['header_2']}"
+        if "header_3" in metadata:
+            title += f" - {metadata['header_3']}"
+
         doc = Document(
             id=generate_stable_id(page_data.url, split.page_content),
             content=split.page_content,
             metadata={
                 "url": page_data.url,
-                "title": page_data.title,
+                "title": title,
             },
         )
-
-        if "header_1" in split.metadata:  # type: ignore
-            doc.metadata["header_1"] = split.metadata["header_1"]  # type: ignore
-        if "header_2" in split.metadata:  # type: ignore
-            doc.metadata["header_2"] = split.metadata["header_2"]  # type: ignore
-        if "header_3" in split.metadata:  # type: ignore
-            doc.metadata["header_3"] = split.metadata["header_3"]  # type: ignore
 
         docs.append(doc)
 

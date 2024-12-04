@@ -16,7 +16,9 @@ class GitHubIssueCrawler:
         self.github_api_version = settings.GITHUB_API_VERSION
         self.github_token: str | None = settings.GITHUB_TOKEN
         self.user_agent = settings.USER_AGENT
-        self.semaphore = asyncio.Semaphore(settings.MAX_CONCURRENT_REQUESTS)
+        self.semaphore = asyncio.Semaphore(
+            settings.CONCURRENT_REQUESTS
+        )  # TODO: Add to input
         self.rate_limit_event = asyncio.Event()
         self.rate_limit_event.set()
 

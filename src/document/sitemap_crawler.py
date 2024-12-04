@@ -57,7 +57,7 @@ class SitemapCrawler:
         self.session: ClientSession | None
         self.robots_parser: RobotFileParser | None = None
         self.user_agent = settings.USER_AGENT
-        self.max_concurrent_requests = settings.MAX_CONCURRENT_REQUESTS
+        self.concurrent_requests = settings.CONCURRENT_REQUESTS
 
     async def __aenter__(self):
         headers = {"User-Agent": self.user_agent}
@@ -196,7 +196,7 @@ class SitemapCrawler:
                     f"All URLs from the sitemap matched the exclude pattern {exclude_pattern}"
                 )
 
-        semaphore = asyncio.Semaphore(self.max_concurrent_requests)
+        semaphore = asyncio.Semaphore(self.concurrent_requests)
 
         async def fetch_with_semaphore(url: str):
             async with semaphore:

@@ -34,9 +34,6 @@ SOURCE_DOC_SCHEMA: dict[str, Any] = {
         {"name": "url", "type": "tag"},
         {"name": "created_at", "type": "tag"},
         {"name": "title", "type": "text"},
-        {"name": "header_1", "type": "text"},
-        {"name": "header_2", "type": "text"},
-        {"name": "header_3", "type": "text"},
         {
             "name": "embedding",
             "type": "vector",
@@ -55,9 +52,6 @@ DOCUMENT_FIELDS = [
     "content",
     "url",
     "title",
-    "header_1",
-    "header_2",
-    "header_3",
     "created_at",
 ]
 
@@ -161,9 +155,6 @@ class RedisVectorStore(VectorStoreBase):
             for key in [
                 "url",
                 "title",
-                "header_1",
-                "header_2",
-                "header_3",
             ]:
                 if key in doc.metadata:
                     doc_dict[key] = doc.metadata[key]
@@ -271,10 +262,7 @@ class RedisVectorStore(VectorStoreBase):
                 metadata={
                     "url": doc[2],
                     "title": doc[3],
-                    "header_1": doc[4],
-                    "header_2": doc[5],
-                    "header_3": doc[6],
-                    "created_at": doc[7],
+                    "created_at": doc[4],
                 },
             )
             for doc in docs
@@ -324,11 +312,6 @@ class RedisVectorStore(VectorStoreBase):
                     "url": doc["url"],
                     "title": doc["title"],
                     "created_at": doc["created_at"],
-                    **{
-                        header: doc[header]
-                        for header in ["header_1", "header_2", "header_3"]
-                        if hasattr(doc, header)
-                    },
                 },
             )
             for doc in search_results

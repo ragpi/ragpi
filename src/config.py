@@ -47,7 +47,7 @@ class Settings(BaseSettings):
         "You are an expert on {source} and can answer any questions about it."
     )
 
-    MAX_CONCURRENT_REQUESTS: int = 10
+    CONCURRENT_REQUESTS: int = 10
 
     DOCUMENT_SYNC_BATCH_SIZE: int = 300
 
