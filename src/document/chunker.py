@@ -4,11 +4,52 @@ from langchain_text_splitters import (
 )
 
 from src.document.id_generator import generate_stable_id
-from src.document.schemas import Document, PageData
+from src.document.schemas import Document, GithubIssue, MarkdownPage
+
+
+def split_github_issue_data(
+    issue: GithubIssue, chunk_size: int, chunk_overlap: int
+) -> list[Document]:
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size, chunk_overlap=chunk_overlap
+    )
+
+    issue_chunks = text_splitter.split_text(issue.body)
+
+    docs: list[Document] = []
+
+    for chunk in issue_chunks:
+        doc = Document(
+            id=generate_stable_id(issue.url, chunk),
+            content=chunk,
+            metadata={
+                "url": issue.url,
+                "title": issue.title,
+            },
+        )
+
+        docs.append(doc)
+
+    for comment in issue.comments:
+        comment_chunks = text_splitter.split_text(comment.body)
+
+        for chunk in comment_chunks:
+            doc = Document(
+                id=generate_stable_id(comment.url, chunk),
+                content=chunk,
+                metadata={
+                    "url": comment.url,
+                    "title": issue.title,
+                },
+            )
+
+            docs.append(doc)
+
+    return docs
 
 
 def split_markdown_page(
-    page_data: PageData, chunk_size: int, chunk_overlap: int
+    page_data: MarkdownPage, chunk_size: int, chunk_overlap: int
 ) -> list[Document]:
     headers_to_split_on = [
         ("#", "header_1"),
@@ -20,18 +61,18 @@ def split_markdown_page(
         headers_to_split_on, strip_headers=False
     )
 
-    md_header_splits = markdown_splitter.split_text(page_data.content)
+    header_chunks = markdown_splitter.split_text(page_data.content)
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size, chunk_overlap=chunk_overlap
     )
 
-    splits = text_splitter.split_documents(md_header_splits)
+    chunks = text_splitter.split_documents(header_chunks)
 
     docs: list[Document] = []
 
-    for split in splits:
-        metadata = split.metadata  # type: ignore
+    for chunk in chunks:
+        metadata = chunk.metadata  # type: ignore
         title = page_data.title
 
         if "header_1" in metadata:
@@ -42,8 +83,8 @@ def split_markdown_page(
             title += f" - {metadata['header_3']}"
 
         doc = Document(
-            id=generate_stable_id(page_data.url, split.page_content),
-            content=split.page_content,
+            id=generate_stable_id(page_data.url, chunk.page_content),
+            content=chunk.page_content,
             metadata={
                 "url": page_data.url,
                 "title": title,

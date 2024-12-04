@@ -8,11 +8,11 @@ class Document(BaseModel):
     metadata: dict[str, Any]
 
 
-class PageData(BaseModel):
+class MarkdownPage(BaseModel):
     id: str
     url: str
     title: str
-    content: str  # markdown
+    content: str
 
 
 class GithubIssueComment(BaseModel):

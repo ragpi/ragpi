@@ -1,8 +1,7 @@
 import logging
 from typing import AsyncGenerator
-from src.document.chunker import split_markdown_page
+from src.document.chunker import split_github_issue_data, split_markdown_page
 from src.document.clients.github_issue import GitHubIssueClient
-from src.document.id_generator import generate_stable_id
 from src.document.schemas import Document
 from src.document.clients.sitemap import SitemapClient
 from src.exceptions import (
@@ -47,24 +46,9 @@ class DocumentService:
             async for issue in client.fetch_issues(
                 repo_owner, repo_name, state, include_labels, exclude_labels, max_age
             ):
-                yield Document(
-                    id=generate_stable_id(issue.url, issue.body),
-                    content=issue.body,
-                    metadata={
-                        "url": issue.url,
-                        "title": issue.title,
-                    },
-                )
-
-                for comment in issue.comments:
-                    yield Document(
-                        id=generate_stable_id(comment.url, comment.body),
-                        content=comment.body,
-                        metadata={
-                            "url": comment.url,
-                            "title": f"{issue.title}",
-                        },
-                    )
+                chunks = split_github_issue_data(issue, 1024, 256)
+                for chunk in chunks:
+                    yield chunk
 
     async def create_documents(
         self,

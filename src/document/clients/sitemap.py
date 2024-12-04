@@ -11,7 +11,7 @@ from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
 from src.config import settings
-from src.document.schemas import PageData
+from src.document.schemas import MarkdownPage
 from src.exceptions import SitemapClientException
 
 UNWANTED_TAGS = [
@@ -35,7 +35,7 @@ UNWANTED_TAGS = [
 ]
 
 
-def extract_page_data(url: str, content: bytes) -> PageData:
+def extract_markdown_page(url: str, content: bytes) -> MarkdownPage:
     page_id = str(uuid.uuid4())
     soup = BeautifulSoup(content, "html.parser")
     title = soup.title.string if soup.title and soup.title.string else url
@@ -45,11 +45,11 @@ def extract_page_data(url: str, content: bytes) -> PageData:
     if main_content:
         for unwanted in main_content.find_all(UNWANTED_TAGS):
             unwanted.decompose()
-        page_content = html2text.html2text(str(main_content))
+        markdown_content = html2text.html2text(str(main_content))
     else:
-        page_content = html2text.html2text(str(soup))
+        markdown_content = html2text.html2text(str(soup))
 
-    return PageData(id=page_id, url=url, title=title, content=page_content)
+    return MarkdownPage(id=page_id, url=url, title=title, content=markdown_content)
 
 
 class SitemapClient:
@@ -115,7 +115,7 @@ class SitemapClient:
 
     async def fetch_page(
         self, url: str, robots_parser: RobotFileParser
-    ) -> PageData | None:
+    ) -> MarkdownPage | None:
         if not robots_parser.can_fetch(self.user_agent, url):
             logging.warning(f"URL {url} is disallowed by robots.txt")
             return None
@@ -129,7 +129,7 @@ class SitemapClient:
                 async with self.session.get(url) as response:
                     if response.status == 200:
                         content = await response.read()
-                        return extract_page_data(url, content)
+                        return extract_markdown_page(url, content)
                     elif response.status == 404:
                         logging.error(f"Page not found at {url}")
                         return None
@@ -157,7 +157,7 @@ class SitemapClient:
         sitemap_url: str,
         include_pattern: str | None = None,
         exclude_pattern: str | None = None,
-    ) -> AsyncGenerator[PageData, None]:
+    ) -> AsyncGenerator[MarkdownPage, None]:
 
         urls = await self.parse_sitemap(sitemap_url)
 
@@ -195,6 +195,6 @@ class SitemapClient:
         tasks = [asyncio.create_task(fetch_with_semaphore(url)) for url in urls]
 
         for task in asyncio.as_completed(tasks):
-            page_data = await task
-            if page_data:
-                yield page_data
+            markdown_page = await task
+            if markdown_page:
+                yield markdown_page
