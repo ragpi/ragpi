@@ -1,9 +1,15 @@
+import logging
 from typing import AsyncGenerator
 from src.document.chunker import split_markdown_page
 from src.document.clients.github_issue import GitHubIssueClient
 from src.document.id_generator import generate_stable_id
 from src.document.schemas import Document
 from src.document.clients.sitemap import SitemapClient
+from src.exceptions import (
+    DocumentServiceException,
+    GitHubIssueClientException,
+    SitemapClientException,
+)
 from src.source.schemas import SourceConfig, SourceType
 
 
@@ -65,23 +71,39 @@ class DocumentService:
         source_config: SourceConfig,
     ) -> AsyncGenerator[Document, None]:
         if source_config.type == SourceType.SITEMAP:
-            async for doc in self.create_documents_from_sitemap(
-                concurrent_requests=source_config.concurrent_requests,
-                sitemap_url=source_config.sitemap_url,
-                include_pattern=source_config.include_pattern,
-                exclude_pattern=source_config.exclude_pattern,
-                chunk_size=source_config.chunk_size,
-                chunk_overlap=source_config.chunk_overlap,
-            ):
-                yield doc
+            try:
+                async for doc in self.create_documents_from_sitemap(
+                    concurrent_requests=source_config.concurrent_requests,
+                    sitemap_url=source_config.sitemap_url,
+                    include_pattern=source_config.include_pattern,
+                    exclude_pattern=source_config.exclude_pattern,
+                    chunk_size=source_config.chunk_size,
+                    chunk_overlap=source_config.chunk_overlap,
+                ):
+                    yield doc
+            except SitemapClientException as e:
+                raise DocumentServiceException(str(e))
+            except Exception as e:
+                logging.exception(e)
+                raise DocumentServiceException(
+                    "Failed to create documents from sitemap"
+                )
         elif source_config.type == SourceType.GITHUB_ISSUES:
-            async for doc in self.create_documents_from_github_issues(
-                concurrent_requests=source_config.concurrent_requests,
-                repo_owner=source_config.repo_owner,
-                repo_name=source_config.repo_name,
-                state=source_config.state,
-                include_labels=source_config.include_labels,
-                exclude_labels=source_config.exclude_labels,
-                max_age=source_config.max_age,
-            ):
-                yield doc
+            try:
+                async for doc in self.create_documents_from_github_issues(
+                    concurrent_requests=source_config.concurrent_requests,
+                    repo_owner=source_config.repo_owner,
+                    repo_name=source_config.repo_name,
+                    state=source_config.state,
+                    include_labels=source_config.include_labels,
+                    exclude_labels=source_config.exclude_labels,
+                    max_age=source_config.max_age,
+                ):
+                    yield doc
+            except GitHubIssueClientException as e:
+                raise DocumentServiceException(str(e))
+            except Exception as e:
+                logging.exception(e)
+                raise DocumentServiceException(
+                    "Failed to create documents from GitHub issues"
+                )

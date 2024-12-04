@@ -54,14 +54,13 @@ def extract_page_data(url: str, content: bytes) -> PageData:
 
 class SitemapClient:
     def __init__(self, concurrent_requests: int = settings.CONCURRENT_REQUESTS) -> None:
-        self.session: ClientSession | None
-        self.robots_parser: RobotFileParser | None = None
         self.user_agent = settings.USER_AGENT
+        self.session: ClientSession = ClientSession(
+            headers={"User-Agent": self.user_agent}
+        )
         self.concurrent_requests = concurrent_requests
 
     async def __aenter__(self):
-        headers = {"User-Agent": self.user_agent}
-        self.session = ClientSession(headers=headers)
         return self
 
     async def __aexit__(
@@ -71,9 +70,6 @@ class SitemapClient:
             await self.session.close()
 
     async def fetch_robots_txt(self, base_url: str) -> str:
-        if not self.session:
-            raise ValueError("Session is not initialized")
-
         robots_url = urljoin(base_url, "/robots.txt")
 
         try:
@@ -96,19 +92,16 @@ class SitemapClient:
             )
             return ""
 
-    async def setup_robots_parser(self, sitemap_url: str):
+    async def setup_robots_parser(self, sitemap_url: str) -> RobotFileParser:
         parsed_url = urlparse(sitemap_url)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
-        self.robots_parser = RobotFileParser()
+        robots_parser = RobotFileParser()
         robots_content = await self.fetch_robots_txt(base_url)
-
-        return self.robots_parser.parse(robots_content.splitlines())
+        robots_parser.parse(robots_content.splitlines())
+        return robots_parser
 
     async def parse_sitemap(self, sitemap_url: str) -> list[str]:
-        if not self.session:
-            raise ValueError("Session is not initialized")
-
         async with self.session.get(sitemap_url) as response:
             if response.status == 404:
                 raise SitemapClientException(f"Sitemap not found at {sitemap_url}")
@@ -120,14 +113,10 @@ class SitemapClient:
             urls = [loc.text for loc in soup.find_all("loc")]
             return urls
 
-    async def fetch_page(self, url: str) -> PageData | None:
-        if not self.session:
-            raise ValueError("Session is not initialized")
-
-        if not self.robots_parser:
-            raise ValueError("Robots parser not initialized")
-
-        if not self.robots_parser.can_fetch(self.user_agent, url):
+    async def fetch_page(
+        self, url: str, robots_parser: RobotFileParser
+    ) -> PageData | None:
+        if not robots_parser.can_fetch(self.user_agent, url):
             logging.warning(f"URL {url} is disallowed by robots.txt")
             return None
 
@@ -169,7 +158,6 @@ class SitemapClient:
         include_pattern: str | None = None,
         exclude_pattern: str | None = None,
     ) -> AsyncGenerator[PageData, None]:
-        await self.setup_robots_parser(sitemap_url)
 
         urls = await self.parse_sitemap(sitemap_url)
 
@@ -196,11 +184,13 @@ class SitemapClient:
                     f"All URLs from the sitemap matched the exclude pattern {exclude_pattern}"
                 )
 
+        robots_parser = await self.setup_robots_parser(sitemap_url)
+
         semaphore = asyncio.Semaphore(self.concurrent_requests)
 
         async def fetch_with_semaphore(url: str):
             async with semaphore:
-                return await self.fetch_page(url)
+                return await self.fetch_page(url, robots_parser)
 
         tasks = [asyncio.create_task(fetch_with_semaphore(url)) for url in urls]
 

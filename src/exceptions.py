@@ -34,6 +34,14 @@ class SitemapClientException(Exception):
     pass
 
 
+class GitHubIssueClientException(Exception):
+    pass
+
+
+class DocumentServiceException(Exception):
+    pass
+
+
 class SourceSyncException(Exception):
     pass
 

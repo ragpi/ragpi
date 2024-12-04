@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str
 
-    GITHUB_TOKEN: str | None = None
+    GITHUB_TOKEN: str
 
     GITHUB_API_VERSION: str = "2022-11-28"
 
@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     CONCURRENT_REQUESTS: int = 10
 
-    DOCUMENT_SYNC_BATCH_SIZE: int = 300
+    DOCUMENT_SYNC_BATCH_SIZE: int = 500
 
     RETRIEVAL_LIMIT: int = 50
 

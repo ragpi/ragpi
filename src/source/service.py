@@ -5,7 +5,10 @@ from src.config import settings
 from src.celery import celery_app
 from src.document.schemas import Document
 from src.document.service import DocumentService
-from src.exceptions import SourceSyncException, SitemapClientException
+from src.exceptions import (
+    DocumentServiceException,
+    SourceSyncException,
+)
 from src.source.schemas import (
     GithubIssuesConfig,
     SitemapConfig,
@@ -147,6 +150,9 @@ class SourceService:
                             logging.error(
                                 f"Failed to add batch of documents to source {source_name}: {e}"
                             )
+                            raise SourceSyncException(
+                                f"Failed to sync documents for source {source_name}"
+                            )
 
             if docs_to_add:
                 try:
@@ -162,6 +168,9 @@ class SourceService:
                     logging.error(
                         f"Failed to add batch of documents to source {source_name}: {e}"
                     )
+                    raise SourceSyncException(
+                        f"Failed to sync documents for source {source_name}"
+                    )
 
             doc_ids_to_remove = existing_doc_ids - current_doc_ids
             if doc_ids_to_remove:
@@ -176,6 +185,9 @@ class SourceService:
                     logging.error(
                         f"Failed to remove documents from source {source_name}: {e}"
                     )
+                    raise SourceSyncException(
+                        f"Failed to sync documents for source {source_name}"
+                    )
 
             if not current_doc_ids - existing_doc_ids:
                 logging.info(f"No new documents added to source {source_name}")
@@ -187,7 +199,10 @@ class SourceService:
             )
 
             return updated_source
-        except SitemapClientException as e:
+        # SourceSyncException is handled in the lock_and_execute_source_task decorator to trigger SYNC_ERROR task state
+        except SourceSyncException as e:
+            raise e
+        except DocumentServiceException as e:
             raise SourceSyncException(str(e))
         except Exception as e:
             raise e
