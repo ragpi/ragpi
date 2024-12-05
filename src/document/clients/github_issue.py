@@ -142,10 +142,10 @@ class GitHubIssueClient:
                 ]
             )
 
-            # Check for 'next' link in headers
             if not headers:
                 break
 
+            # Check for 'next' link in headers
             link_header = headers.get("Link")
             if link_header:
                 links = self._parse_link_header(link_header)
@@ -226,7 +226,7 @@ class GitHubIssueClient:
             if not headers:
                 break
 
-            # Check for 'next' link in headers for pagination
+            # Check for 'next' link in headers
             link_header = headers.get("Link")
             if link_header:
                 links = self._parse_link_header(link_header)

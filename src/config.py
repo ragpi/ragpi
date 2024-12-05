@@ -41,7 +41,7 @@ class Settings(BaseSettings):
 
     CHUNK_SIZE: int = 512
 
-    CHUNK_OVERLAP: int = 128
+    CHUNK_OVERLAP: int = 50
 
     SYSTEM_PROMPT: str = (
         "You are an expert on {source} and can answer any questions about it."

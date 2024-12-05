@@ -7,47 +7,6 @@ from src.document.id_generator import generate_stable_id
 from src.document.schemas import Document, GithubIssue, MarkdownPage
 
 
-def chunk_github_issue(
-    issue: GithubIssue, chunk_size: int, chunk_overlap: int
-) -> list[Document]:
-    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=chunk_size, chunk_overlap=chunk_overlap
-    )
-
-    issue_chunks = text_splitter.split_text(issue.body)
-
-    docs: list[Document] = []
-
-    for chunk in issue_chunks:
-        doc = Document(
-            id=generate_stable_id(issue.url, chunk),
-            content=chunk,
-            metadata={
-                "url": issue.url,
-                "title": issue.title,
-            },
-        )
-
-        docs.append(doc)
-
-    for comment in issue.comments:
-        comment_chunks = text_splitter.split_text(comment.body)
-
-        for chunk in comment_chunks:
-            doc = Document(
-                id=generate_stable_id(comment.url, chunk),
-                content=chunk,
-                metadata={
-                    "url": comment.url,
-                    "title": issue.title,
-                },
-            )
-
-            docs.append(doc)
-
-    return docs
-
-
 def chunk_markdown_page(
     page_data: MarkdownPage, chunk_size: int, chunk_overlap: int
 ) -> list[Document]:
@@ -92,5 +51,46 @@ def chunk_markdown_page(
         )
 
         docs.append(doc)
+
+    return docs
+
+
+def chunk_github_issue(
+    issue: GithubIssue, chunk_size: int, chunk_overlap: int
+) -> list[Document]:
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=chunk_size, chunk_overlap=chunk_overlap
+    )
+
+    issue_chunks = text_splitter.split_text(issue.body)
+
+    docs: list[Document] = []
+
+    for chunk in issue_chunks:
+        doc = Document(
+            id=generate_stable_id(issue.url, chunk),
+            content=chunk,
+            metadata={
+                "url": issue.url,
+                "title": issue.title,
+            },
+        )
+
+        docs.append(doc)
+
+    for comment in issue.comments:
+        comment_chunks = text_splitter.split_text(comment.body)
+
+        for chunk in comment_chunks:
+            doc = Document(
+                id=generate_stable_id(comment.url, chunk),
+                content=chunk,
+                metadata={
+                    "url": comment.url,
+                    "title": issue.title,
+                },
+            )
+
+            docs.append(doc)
 
     return docs
