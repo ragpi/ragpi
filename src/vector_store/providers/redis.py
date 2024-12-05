@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Any
 import numpy as np
 from uuid import uuid4
@@ -349,13 +350,18 @@ class RedisVectorStore(VectorStoreBase):
     def full_text_search(
         self, index: SearchIndex, query: str, limit: int
     ) -> list[Document]:
-        ft = self.client.ft(index.name)
 
-        # Remove any leading or trailing quotation marks
-        cleaned_query = query.strip("'\"")
+        def escape_special_characters(text: str) -> str:
+            special_chars = r'.,<>{}\[\]"\'\:;!@#$%^&*()\-\+=~'
+
+            pattern = re.compile(f"([{re.escape(special_chars)}])")
+            return pattern.sub(r"\\\1", text)
+
+        # Escape special characters in the query
+        escaped_terms = [escape_special_characters(term) for term in query.split()]
 
         # Join the query with OR operator to search for any of the words
-        formatted_query = " | ".join(cleaned_query.split())
+        formatted_query = " | ".join(escaped_terms)
 
         query_obj = (  # type: ignore
             Query(formatted_query)  # type: ignore
@@ -363,6 +369,8 @@ class RedisVectorStore(VectorStoreBase):
             .scorer("BM25")
             .return_fields(*self.document_fields)
         )
+
+        ft = self.client.ft(index.name)
 
         # The results are sorted by score (BM25) by default
         search_results = ft.search(query_obj)  # type: ignore
