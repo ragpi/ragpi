@@ -1,24 +1,80 @@
+import logging
 from typing import AsyncGenerator
-from src.document.chunker import split_markdown_page
+from src.document.chunker import chunk_github_issue, chunk_markdown_page
+from src.document.clients.github_issue import GitHubIssueClient
 from src.document.schemas import Document
-from src.document.sitemap_crawler import SitemapCrawler
+from src.document.clients.sitemap import SitemapClient
+from src.exceptions import (
+    DocumentServiceException,
+    GitHubIssueClientException,
+    SitemapClientException,
+)
+from src.source.schemas import (
+    GithubIssuesConfig,
+    SitemapConfig,
+    SourceConfig,
+    SourceType,
+)
 
 
 class DocumentService:
-    async def create_documents_from_website(
-        self,
-        sitemap_url: str,
-        include_pattern: str | None,
-        exclude_pattern: str | None,
-        chunk_size: int,
-        chunk_overlap: int,
+    async def create_documents_from_sitemap(
+        self, config: SitemapConfig
     ) -> AsyncGenerator[Document, None]:
-        async with SitemapCrawler() as crawler:
-            async for page in crawler.crawl(
-                sitemap_url=sitemap_url,
-                include_pattern=include_pattern,
-                exclude_pattern=exclude_pattern,
-            ):
-                chunks = split_markdown_page(page, chunk_size, chunk_overlap)
-                for chunk in chunks:
-                    yield chunk
+        try:
+            async with SitemapClient(config.concurrent_requests) as client:
+                async for page in client.fetch_sitemap_pages(
+                    sitemap_url=config.sitemap_url,
+                    include_pattern=config.include_pattern,
+                    exclude_pattern=config.exclude_pattern,
+                ):
+                    chunks = chunk_markdown_page(
+                        page, config.chunk_size, config.chunk_overlap
+                    )
+                    for chunk in chunks:
+                        yield chunk
+        except SitemapClientException as e:
+            raise DocumentServiceException(str(e))
+        except Exception as e:
+            logging.exception("Unexpected error while processing sitemap.")
+            raise DocumentServiceException("Failed to create documents from sitemap")
+
+    async def create_documents_from_github_issues(
+        self,
+        config: GithubIssuesConfig,
+    ) -> AsyncGenerator[Document, None]:
+        try:
+            async with GitHubIssueClient(config.concurrent_requests) as client:
+                async for issue in client.fetch_issues(
+                    repo_owner=config.repo_owner,
+                    repo_name=config.repo_name,
+                    state=config.state,
+                    include_labels=config.include_labels,
+                    exclude_labels=config.exclude_labels,
+                    max_age=config.max_age,
+                ):
+                    chunks = chunk_github_issue(
+                        issue, config.chunk_size, config.chunk_overlap
+                    )
+                    for chunk in chunks:
+                        yield chunk
+        except GitHubIssueClientException as e:
+            raise DocumentServiceException(str(e))
+        except Exception as e:
+            logging.exception("Unexpected error while processing GitHub issues.")
+            raise DocumentServiceException(
+                "Failed to create documents from GitHub issues"
+            )
+
+    async def create_documents(
+        self,
+        source_config: SourceConfig,
+    ) -> AsyncGenerator[Document, None]:
+        if source_config.type == SourceType.SITEMAP:
+            async for doc in self.create_documents_from_sitemap(source_config):
+                yield doc
+        elif source_config.type == SourceType.GITHUB_ISSUES:
+            async for doc in self.create_documents_from_github_issues(source_config):
+                yield doc
+        else:
+            raise DocumentServiceException("Unsupported source type.")

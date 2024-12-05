@@ -20,13 +20,12 @@ class TaskService:
 
         task = self.celery_app.AsyncResult(task_id)
 
-        if task.status == "LOCKED":  # type: ignore
-            return TaskStatus(id=task_id, status="FAILURE", error=task.info["message"])
+        known_error_states = ["LOCKED", "SYNC_ERROR"]
 
-        if task.status == "SYNC_ERROR":  # type: ignore
+        if task.status in known_error_states:
             return TaskStatus(
                 id=task_id,
-                status="FAILURE",
+                status=task.status,
                 error=task.info["message"],
             )
 

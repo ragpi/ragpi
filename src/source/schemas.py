@@ -18,13 +18,20 @@ class SitemapConfig(BaseModel):
     exclude_pattern: str | None = None
     chunk_size: int = settings.CHUNK_SIZE
     chunk_overlap: int = settings.CHUNK_OVERLAP
+    concurrent_requests: int = settings.CONCURRENT_REQUESTS
 
 
 class GithubIssuesConfig(BaseModel):
     type: Literal[SourceType.GITHUB_ISSUES]
-    repo_url: str  # TODO: Update to owner and repo
-    issue_state: Literal["open", "closed", "all"] = "open"
-    labels: list[str] | None = None  # TODO: Update to include and exclude labels
+    repo_owner: str
+    repo_name: str
+    state: Literal["open", "closed"] | None = None
+    include_labels: list[str] | None = None
+    exclude_labels: list[str] | None = None
+    max_age: int | None = None  # Days
+    chunk_size: int = settings.CHUNK_SIZE
+    chunk_overlap: int = settings.CHUNK_OVERLAP
+    concurrent_requests: int = settings.CONCURRENT_REQUESTS
 
 
 SourceConfig = Union[SitemapConfig, GithubIssuesConfig]

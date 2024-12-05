@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str
 
+    GITHUB_TOKEN: str
+
+    GITHUB_API_VERSION: str = "2022-11-28"
+
     REDIS_URL: str = "redis://localhost:6379"
 
     CHAT_MODEL: str = "gpt-4o-mini"
@@ -37,13 +41,13 @@ class Settings(BaseSettings):
 
     CHUNK_SIZE: int = 512
 
-    CHUNK_OVERLAP: int = 128
+    CHUNK_OVERLAP: int = 50
 
     SYSTEM_PROMPT: str = (
         "You are an expert on {source} and can answer any questions about it."
     )
 
-    MAX_CONCURRENT_REQUESTS: int = 10
+    CONCURRENT_REQUESTS: int = 10
 
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
 

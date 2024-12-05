@@ -1,8 +1,8 @@
 import json
 from typing import Any
-from langchain_openai import OpenAIEmbeddings
 import numpy as np
 from uuid import uuid4
+from openai import OpenAI
 from redisvl.index import SearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
@@ -34,9 +34,6 @@ SOURCE_DOC_SCHEMA: dict[str, Any] = {
         {"name": "url", "type": "tag"},
         {"name": "created_at", "type": "tag"},
         {"name": "title", "type": "text"},
-        {"name": "header_1", "type": "text"},
-        {"name": "header_2", "type": "text"},
-        {"name": "header_3", "type": "text"},
         {
             "name": "embedding",
             "type": "vector",
@@ -55,9 +52,6 @@ DOCUMENT_FIELDS = [
     "content",
     "url",
     "title",
-    "header_1",
-    "header_2",
-    "header_3",
     "created_at",
 ]
 
@@ -65,9 +59,9 @@ DOCUMENT_FIELDS = [
 class RedisVectorStore(VectorStoreBase):
     def __init__(self) -> None:
         self.client = get_redis_client()
-        self.embeddings_function = OpenAIEmbeddings(
-            model=settings.EMBEDDING_MODEL, dimensions=settings.EMBEDDING_DIMENSIONS
-        )
+        self.embedding_model = settings.EMBEDDING_MODEL
+        self.embedding_dimensions = settings.EMBEDDING_DIMENSIONS
+        self.embedding_client = OpenAI().embeddings
         self.schema: dict[str, Any] = SOURCE_DOC_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
 
@@ -146,9 +140,13 @@ class RedisVectorStore(VectorStoreBase):
     ) -> list[str]:
         index = self._get_index(name)
 
-        doc_embeddings = self.embeddings_function.embed_documents(
-            [doc.content for doc in documents]
-        )
+        embeddings_data = self.embedding_client.create(
+            input=[doc.content for doc in documents],
+            model=self.embedding_model,
+            dimensions=self.embedding_dimensions,
+        ).data
+
+        doc_embeddings = [embedding.embedding for embedding in embeddings_data]
 
         def create_doc_dict(doc: Document, embedding: list[float]) -> dict[str, Any]:
             doc_dict: dict[str, Any] = {
@@ -161,9 +159,6 @@ class RedisVectorStore(VectorStoreBase):
             for key in [
                 "url",
                 "title",
-                "header_1",
-                "header_2",
-                "header_3",
             ]:
                 if key in doc.metadata:
                     doc_dict[key] = doc.metadata[key]
@@ -206,15 +201,26 @@ class RedisVectorStore(VectorStoreBase):
         elif source_type == SourceType.GITHUB_ISSUES:
             source_data = {
                 "type": source_type,
-                "repo_url": metadata["config__repo_url"],
-                "issue_state": metadata["config__issue_state"],
-                "labels": metadata["config__labels"] or None,
+                "repo_owner": metadata["config__repo_owner"],
+                "repo_name": metadata["config__repo_name"],
+                "state": metadata["config__state"] or None,
+                "include_labels": metadata["config__include_labels"] or None,
+                "exclude_labels": metadata["config__exclude_labels"] or None,
+                "max_age": metadata["config__max_age"] or None,
             }
 
-            if source_data["labels"]:
-                source_data["labels"] = json.loads(source_data["labels"])
-            else:
-                source_data["labels"] = None
+            source_data["include_labels"] = (
+                json.loads(source_data["include_labels"])
+                if source_data["include_labels"]
+                else None
+            )
+
+            source_data["exclude_labels"] = (
+                json.loads(source_data["exclude_labels"])
+                if source_data["exclude_labels"]
+                else None
+            )
+
             source_config = GithubIssuesConfig(**source_data)
         else:
             raise ValueError(f"Unknown source type: {source_type}")
@@ -260,10 +266,7 @@ class RedisVectorStore(VectorStoreBase):
                 metadata={
                     "url": doc[2],
                     "title": doc[3],
-                    "header_1": doc[4],
-                    "header_2": doc[5],
-                    "header_3": doc[6],
-                    "created_at": doc[7],
+                    "created_at": doc[4],
                 },
             )
             for doc in docs
@@ -313,11 +316,6 @@ class RedisVectorStore(VectorStoreBase):
                     "url": doc["url"],
                     "title": doc["title"],
                     "created_at": doc["created_at"],
-                    **{
-                        header: doc[header]
-                        for header in ["header_1", "header_2", "header_3"]
-                        if hasattr(doc, header)
-                    },
                 },
             )
             for doc in search_results
@@ -326,7 +324,15 @@ class RedisVectorStore(VectorStoreBase):
     def vector_based_search(
         self, index: SearchIndex, query: str, limit: int
     ) -> list[Document]:
-        query_embedding = self.embeddings_function.embed_query(query)
+        query_embedding = (
+            self.embedding_client.create(
+                input=query,
+                model=self.embedding_model,
+                dimensions=self.embedding_dimensions,
+            )
+            .data[0]
+            .embedding
+        )
 
         vector_query = VectorQuery(
             vector=query_embedding,
