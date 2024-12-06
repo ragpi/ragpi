@@ -23,6 +23,7 @@ pydantic = "^2.10.2"
 aiohttp = "^3.11.9"
 langchain-text-splitters = "^0.3.2"
 tiktoken = "^0.8.0"
+traceloop-sdk = "^0.33.12"
 
 
 [tool.poetry.group.dev.dependencies]

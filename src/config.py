@@ -27,6 +27,12 @@ class Settings(BaseSettings):
 
     GITHUB_TOKEN: str
 
+    TRACELOOP_API_KEY: str | None = None
+
+    TRACELOOP_BASE_URL: str | None = None
+
+    TRACELOOP_HEADERS: str | None = None
+
     GITHUB_API_VERSION: str = "2022-11-28"
 
     REDIS_URL: str = "redis://localhost:6379"
