@@ -103,7 +103,7 @@ class RedisVectorStore(VectorStoreBase):
         return f"{prefix}:{doc_id}"
 
     def create_source(
-        self, name: str, config: SourceConfig, timestamp: str
+        self, name: str, description: str, config: SourceConfig, timestamp: str
     ) -> SourceOverview:
         index = self._get_index(name, False)
 
@@ -128,6 +128,7 @@ class RedisVectorStore(VectorStoreBase):
             mapping={
                 "id": id,
                 "name": name,
+                "description": description,
                 **config_dict,
                 "created_at": timestamp,
                 "updated_at": timestamp,
@@ -229,6 +230,7 @@ class RedisVectorStore(VectorStoreBase):
         return SourceOverview(
             id=metadata["id"],
             name=metadata["name"],
+            description=metadata["description"],
             num_docs=int(index_info["num_docs"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],

@@ -11,11 +11,12 @@ from src.exceptions import (
 )
 from src.source.schemas import (
     GithubIssuesConfig,
+    SearchSourceInput,
     SitemapConfig,
     SourceConfig,
-    SourceCreateInput,
+    CreateSourceRequest,
     SourceOverview,
-    SourceUpdateInput,
+    UpdateSourceRequest,
     SourceType,
 )
 from src.source.decorators import lock_and_execute_source_task
@@ -32,13 +33,14 @@ class SourceService:
         self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
 
     def create_source(
-        self, source_input: SourceCreateInput
+        self, source_input: CreateSourceRequest
     ) -> tuple[SourceOverview, str]:
 
         timestamp = get_current_datetime()
 
         created_source = self.vector_store_service.create_source(
             name=source_input.name,
+            description=source_input.description,
             config=source_input.config,
             timestamp=timestamp,
         )
@@ -56,7 +58,7 @@ class SourceService:
     def update_source(
         self,
         source_name: str,
-        source_input: SourceUpdateInput | None = None,
+        source_input: UpdateSourceRequest | None = None,
     ) -> tuple[SourceOverview, str]:
         existing_source = self.vector_store_service.get_source(source_name)
         existing_doc_ids = self.vector_store_service.get_source_document_ids(
@@ -80,6 +82,7 @@ class SourceService:
         source = SourceOverview(
             id=existing_source.id,
             name=source_name,
+            description=existing_source.description,  # TODO: Update description
             num_docs=0,
             created_at=existing_source.created_at,
             updated_at=existing_source.updated_at,
@@ -88,8 +91,10 @@ class SourceService:
 
         return source, task.id
 
-    def search_source(self, source_name: str, query: str, limit: int):
-        return self.vector_store_service.search_source(source_name, query, limit)
+    def search_source(self, source_input: SearchSourceInput):
+        return self.vector_store_service.search_source(
+            source_input.name, source_input.query, source_input.limit
+        )
 
     def get_source(self, source_name: str):
         return self.vector_store_service.get_source(source_name)

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, status, Depends
 
-from src.config import settings
 from src.source.schemas import (
-    SourceCreateInput,
-    SourceSearchInput,
+    SearchSourceInput,
+    CreateSourceRequest,
+    SearchSourceRequest,
     SourceTaskResponse,
-    SourceUpdateInput,
+    UpdateSourceRequest,
 )
 from src.source.service import SourceService
 
@@ -24,7 +24,7 @@ def get_all_sources(source_service: SourceService = Depends()):
 
 @router.post("/", status_code=status.HTTP_202_ACCEPTED)
 def create_source(
-    source_input: SourceCreateInput,
+    source_input: CreateSourceRequest,
     source_service: SourceService = Depends(),
 ):
     source, task_id = source_service.create_source(source_input)
@@ -51,7 +51,7 @@ def delete_source(source_name: str, source_service: SourceService = Depends()):
 @router.put("/{source_name}", status_code=status.HTTP_202_ACCEPTED)
 def update_source(
     source_name: str,
-    source_input: SourceUpdateInput | None = None,
+    source_input: UpdateSourceRequest | None = None,
     source_service: SourceService = Depends(),
 ):
     source, task_id = source_service.update_source(source_name, source_input)
@@ -77,12 +77,12 @@ def get_source_documents(
 @router.get("/{source_name}/search")
 def search_source(
     source_name: str,
-    query_input: SourceSearchInput,
+    query_input: SearchSourceRequest,
     source_service: SourceService = Depends(),
 ):
     results = source_service.search_source(
-        source_name,
-        query_input.query,
-        query_input.limit or settings.RETRIEVAL_LIMIT,
+        SearchSourceInput(
+            name=source_name, query=query_input.query, limit=query_input.limit
+        )
     )
     return results

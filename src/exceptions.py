@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
 
+# TODO: Move exceptions to relevant modules
 class ResourceType(str, Enum):
     SOURCE = "source"
     TASK = "task"

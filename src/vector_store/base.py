@@ -10,7 +10,7 @@ from src.source.schemas import (
 class VectorStoreBase(ABC):
     @abstractmethod
     def create_source(
-        self, name: str, config: SourceConfig, timestamp: str
+        self, name: str, description: str, config: SourceConfig, timestamp: str
     ) -> SourceOverview:
         pass
 
