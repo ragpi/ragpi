@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
 
-# TODO: Move exceptions to relevant modules
 class ResourceType(str, Enum):
     SOURCE = "source"
     TASK = "task"
@@ -29,22 +28,6 @@ class ResourceLockedException(Exception):
     def __init__(self, resource_name: str):
         self.resource_name = resource_name
         super().__init__(f"Resource '{resource_name}' is locked")
-
-
-class SitemapClientException(Exception):
-    pass
-
-
-class GitHubIssueClientException(Exception):
-    pass
-
-
-class DocumentServiceException(Exception):
-    pass
-
-
-class SourceSyncException(Exception):
-    pass
 
 
 def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):

@@ -8,8 +8,8 @@ from aiohttp import ClientError, ClientSession
 from multidict import CIMultiDictProxy
 
 from src.config import settings
+from src.document.exceptions import GitHubIssueClientException
 from src.document.schemas import GithubIssue, GithubIssueComment
-from src.exceptions import GitHubIssueClientException
 
 
 class GitHubIssueClient:

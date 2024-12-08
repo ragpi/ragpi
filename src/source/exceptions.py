@@ -1,0 +1,2 @@
+class SyncSourceException(Exception):
+    pass

@@ -3,12 +3,10 @@ from typing import Any
 
 from src.config import settings
 from src.celery import celery_app
+from src.document.exceptions import DocumentServiceException
 from src.document.schemas import Document
 from src.document.service import DocumentService
-from src.exceptions import (
-    DocumentServiceException,
-    SourceSyncException,
-)
+from src.source.exceptions import SyncSourceException
 from src.source.schemas import (
     GithubIssuesConfig,
     SearchSourceInput,
@@ -165,7 +163,7 @@ class SourceService:
                             logging.error(
                                 f"Failed to add batch of documents to source {source_name}: {e}"
                             )
-                            raise SourceSyncException(
+                            raise SyncSourceException(
                                 f"Failed to sync documents for source {source_name}"
                             )
 
@@ -182,7 +180,7 @@ class SourceService:
                     logging.error(
                         f"Failed to add batch of documents to source {source_name}: {e}"
                     )
-                    raise SourceSyncException(
+                    raise SyncSourceException(
                         f"Failed to sync documents for source {source_name}"
                     )
 
@@ -199,7 +197,7 @@ class SourceService:
                     logging.error(
                         f"Failed to remove documents from source {source_name}: {e}"
                     )
-                    raise SourceSyncException(
+                    raise SyncSourceException(
                         f"Failed to sync documents for source {source_name}"
                     )
 
@@ -215,11 +213,11 @@ class SourceService:
             )
 
             return updated_source
-        # SourceSyncException is handled in the lock_and_execute_source_task decorator to trigger SYNC_ERROR task state
-        except SourceSyncException as e:
+        # SyncSourceException is handled in the lock_and_execute_source_task decorator to trigger SYNC_ERROR task state
+        except SyncSourceException as e:
             raise e
         except DocumentServiceException as e:
-            raise SourceSyncException(str(e))
+            raise SyncSourceException(str(e))
         except Exception as e:
             raise e
 
@@ -241,14 +239,14 @@ async def sync_source_documents_task(
         try:
             source_config = SitemapConfig(**source_config_dict)
         except ValueError as e:
-            raise SourceSyncException(f"Invalid sitemap config: {e}")
+            raise SyncSourceException(f"Invalid sitemap config: {e}")
     elif source_type == SourceType.GITHUB_ISSUES:
         try:
             source_config = GithubIssuesConfig(**source_config_dict)
         except ValueError as e:
-            raise SourceSyncException(f"Invalid GitHub issues config: {e}")
+            raise SyncSourceException(f"Invalid GitHub issues config: {e}")
     else:
-        raise SourceSyncException(f"Unsupported source type: {source_type}")
+        raise SyncSourceException(f"Unsupported source type: {source_type}")
 
     source_overview = await source_service.sync_source_documents(
         source_name=source_name,
