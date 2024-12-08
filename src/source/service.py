@@ -156,7 +156,6 @@ class SourceService:
                             self.vector_store_service.add_source_documents(
                                 source_name,
                                 docs_to_add,
-                                timestamp=get_current_datetime(),
                             )
                             docs_to_add = []
                             logging.info(
@@ -175,7 +174,6 @@ class SourceService:
                     self.vector_store_service.add_source_documents(
                         source_name,
                         docs_to_add,
-                        timestamp=get_current_datetime(),
                     )
                     logging.info(
                         f"Added a batch of {len(docs_to_add)} documents to source {source_name}"

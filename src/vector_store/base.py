@@ -15,9 +15,7 @@ class VectorStoreBase(ABC):
         pass
 
     @abstractmethod
-    def add_source_documents(
-        self, name: str, documents: list[Document], timestamp: str
-    ) -> list[str]:
+    def add_source_documents(self, name: str, documents: list[Document]) -> list[str]:
         pass
 
     @abstractmethod

@@ -137,9 +137,7 @@ class RedisVectorStore(VectorStoreBase):
 
         return self.get_source(name)
 
-    def add_source_documents(
-        self, name: str, documents: list[Document], timestamp: str
-    ) -> list[str]:
+    def add_source_documents(self, name: str, documents: list[Document]) -> list[str]:
         index = self._get_index(name)
 
         embeddings_data = self.embedding_client.create(
@@ -154,16 +152,11 @@ class RedisVectorStore(VectorStoreBase):
             doc_dict: dict[str, Any] = {
                 "id": doc.id,
                 "content": doc.content,
-                "created_at": timestamp,
+                "title": doc.title,
+                "url": doc.url,
+                "created_at": doc.created_at,
                 "embedding": np.array(embedding, dtype=np.float32).tobytes(),
             }
-
-            for key in [
-                "url",
-                "title",
-            ]:
-                if key in doc.metadata:
-                    doc_dict[key] = doc.metadata[key]
             return doc_dict
 
         data = [
@@ -266,11 +259,9 @@ class RedisVectorStore(VectorStoreBase):
             Document(
                 id=doc[0],
                 content=doc[1],
-                metadata={
-                    "url": doc[2],
-                    "title": doc[3],
-                    "created_at": doc[4],
-                },
+                title=doc[3],
+                url=doc[2],
+                created_at=doc[4],
             )
             for doc in docs
         ]
@@ -315,11 +306,9 @@ class RedisVectorStore(VectorStoreBase):
             Document(
                 id=self._extract_doc_id(source_name, doc["id"]),
                 content=doc["content"],
-                metadata={
-                    "url": doc["url"],
-                    "title": doc["title"],
-                    "created_at": doc["created_at"],
-                },
+                title=doc["title"],
+                url=doc["url"],
+                created_at=doc["created_at"],
             )
             for doc in search_results
         ]

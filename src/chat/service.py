@@ -105,7 +105,7 @@ You are an automated AI technical support assistant for a software product.
                         content = json.dumps(
                             [
                                 {
-                                    "url": doc.metadata["url"],
+                                    "url": doc.url,
                                     "content": doc.content,
                                 }
                                 for doc in documents

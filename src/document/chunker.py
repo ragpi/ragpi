@@ -5,6 +5,7 @@ from langchain_text_splitters import (
 
 from src.document.id_generator import generate_stable_id
 from src.document.schemas import Document, GithubIssue, MarkdownPage
+from src.source.utils import get_current_datetime
 
 
 def chunk_markdown_page(
@@ -41,13 +42,14 @@ def chunk_markdown_page(
         if "header_3" in metadata:
             title += f" - {metadata['header_3']}"
 
+        created_at = get_current_datetime()
+
         doc = Document(
             id=generate_stable_id(page_data.url, chunk.page_content),
             content=chunk.page_content,
-            metadata={
-                "url": page_data.url,
-                "title": title,
-            },
+            title=title,
+            url=page_data.url,
+            created_at=created_at,
         )
 
         docs.append(doc)
@@ -66,14 +68,15 @@ def chunk_github_issue(
 
     docs: list[Document] = []
 
+    created_at = get_current_datetime()
+
     for chunk in issue_chunks:
         doc = Document(
             id=generate_stable_id(issue.url, chunk),
             content=chunk,
-            metadata={
-                "url": issue.url,
-                "title": issue.title,
-            },
+            title=issue.title,
+            url=issue.url,
+            created_at=created_at,
         )
 
         docs.append(doc)
@@ -85,10 +88,9 @@ def chunk_github_issue(
             doc = Document(
                 id=generate_stable_id(comment.url, chunk),
                 content=chunk,
-                metadata={
-                    "url": comment.url,
-                    "title": issue.title,
-                },
+                title=issue.title,
+                url=comment.url,
+                created_at=created_at,
             )
 
             docs.append(doc)

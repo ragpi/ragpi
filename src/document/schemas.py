@@ -1,11 +1,12 @@
-from typing import Any
 from pydantic import BaseModel
 
 
 class Document(BaseModel):
     id: str
     content: str
-    metadata: dict[str, Any]  # TODO: Move title and url to own fields?
+    title: str
+    url: str
+    created_at: str
 
 
 class MarkdownPage(BaseModel):
