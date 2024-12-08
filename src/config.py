@@ -29,6 +29,8 @@ class Settings(BaseSettings):
 
     CHAT_MODEL: str = "gpt-4o-mini"
 
+    CHAT_MAX_ATTEMPTS: int = 5
+
     EMBEDDING_MODEL: EMBEDDING_MODELS = "text-embedding-3-small"
 
     EMBEDDING_DIMENSIONS: int = 1536
