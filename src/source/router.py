@@ -51,10 +51,17 @@ def delete_source(source_name: str, source_service: SourceService = Depends()):
 @router.put("/{source_name}", status_code=status.HTTP_202_ACCEPTED)
 def update_source(
     source_name: str,
-    source_input: UpdateSourceRequest | None = None,
+    source_input: UpdateSourceRequest,
     source_service: SourceService = Depends(),
 ):
     source, task_id = source_service.update_source(source_name, source_input)
+
+    if not task_id:
+        return SourceTaskResponse(
+            source=source,
+            task_id=task_id,
+            message="Source configuration has been updated. If you want to sync the documents, set 'sync' to true in the request body.",
+        )
 
     return SourceTaskResponse(
         source=source,

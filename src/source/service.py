@@ -59,37 +59,48 @@ class SourceService:
         self,
         source_name: str,
         source_input: UpdateSourceRequest | None = None,
-    ) -> tuple[SourceOverview, str]:
+    ) -> tuple[SourceOverview, str | None]:
         existing_source = self.vector_store_service.get_source(source_name)
         existing_doc_ids = self.vector_store_service.get_source_document_ids(
             source_name
         )
 
-        source_config = (
-            source_input.config
-            if source_input and source_input.config
-            else existing_source.config
-        )
+        source_config = existing_source.config
+
+        if source_input:
+            if source_input.config:
+                source_config = source_input.config
+
+            if source_input.description:
+                existing_source = self.vector_store_service.update_source_metadata(
+                    source_name,
+                    source_input.description,
+                    source_config,
+                    get_current_datetime(),
+                )
 
         source_config_dict = source_config.model_dump()
 
-        task = sync_source_documents_task.delay(
-            source_name=source_name,
-            source_config_dict=source_config_dict,
-            existing_doc_ids=existing_doc_ids,
-        )
+        task = None
+
+        if source_input and source_input.sync:
+            task = sync_source_documents_task.delay(
+                source_name=source_name,
+                source_config_dict=source_config_dict,
+                existing_doc_ids=existing_doc_ids,
+            )
 
         source = SourceOverview(
             id=existing_source.id,
             name=source_name,
-            description=existing_source.description,  # TODO: Update description
-            num_docs=0,
+            description=existing_source.description,
+            num_docs=existing_source.num_docs,
             created_at=existing_source.created_at,
             updated_at=existing_source.updated_at,
             config=source_config,
         )
 
-        return source, task.id
+        return source, task.id if task else None
 
     def search_source(self, source_input: SearchSourceInput):
         return self.vector_store_service.search_source(
@@ -197,10 +208,12 @@ class SourceService:
             if not current_doc_ids - existing_doc_ids:
                 logging.info(f"No new documents added to source {source_name}")
 
+            # Update updated_at timestamp
             updated_source = self.vector_store_service.update_source_metadata(
-                source_name,
-                source_config,
-                get_current_datetime(),
+                name=source_name,
+                description=None,
+                config=None,
+                timestamp=get_current_datetime(),
             )
 
             return updated_source

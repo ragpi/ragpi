@@ -390,20 +390,28 @@ class RedisVectorStore(VectorStoreBase):
         )
 
     def update_source_metadata(
-        self, name: str, config: SourceConfig, timestamp: str
+        self,
+        name: str,
+        description: str | None,
+        config: SourceConfig | None,
+        timestamp: str,
     ) -> SourceOverview:
         metadata_key = self._get_metadata_key(name)
 
+        if description is not None:
+            self.client.hset(metadata_key, "description", description)
+
         config_dict: dict[str, Any] = {}
 
-        config_items = config.model_dump().items()
+        if config is not None:
+            config_items = config.model_dump().items()
 
-        for key, value in config_items:
-            if isinstance(value, list):
-                value = json.dumps(value)
-            if value is None:
-                value = ""
-            config_dict[f"config__{key}"] = value
+            for key, value in config_items:
+                if isinstance(value, list):
+                    value = json.dumps(value)
+                if value is None:
+                    value = ""
+                config_dict[f"config__{key}"] = value
 
         self.client.hset(
             metadata_key,

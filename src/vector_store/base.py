@@ -52,6 +52,10 @@ class VectorStoreBase(ABC):
 
     @abstractmethod
     def update_source_metadata(
-        self, name: str, config: SourceConfig, timestamp: str
+        self,
+        name: str,
+        description: str | None,
+        config: SourceConfig | None,
+        timestamp: str,
     ) -> SourceOverview:
         pass

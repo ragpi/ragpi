@@ -72,9 +72,9 @@ class CreateSourceRequest(BaseModel):
 
 
 class UpdateSourceRequest(BaseModel):
-    # TODO: Add description
+    sync: bool = False
+    description: str | None = None
     config: SourceConfig | None = None
-    # TODO: Add re_index flag
 
 
 class SearchSourceRequest(BaseModel):
@@ -84,6 +84,6 @@ class SearchSourceRequest(BaseModel):
 
 # Responses
 class SourceTaskResponse(BaseModel):
-    task_id: str
+    task_id: str | None
     source: SourceOverview
     message: str | None = None
