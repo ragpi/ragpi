@@ -98,7 +98,6 @@ You are an automated AI technical support assistant for a software product.
                 for tool_call in message.tool_calls:
                     if tool_call.function.name == "search_source":
                         args = json.loads(tool_call.function.arguments)
-                        print(args)
                         documents = self.source_service.search_source(
                             SearchSourceInput(**args)
                         )
