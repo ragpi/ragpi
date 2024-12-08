@@ -11,6 +11,7 @@ class SourceType(str, Enum):
     GITHUB_ISSUES = "github_issues"
 
 
+# Configs
 class SitemapConfig(BaseModel):
     type: Literal[SourceType.SITEMAP]
     sitemap_url: str
@@ -37,17 +38,28 @@ class GithubIssuesConfig(BaseModel):
 SourceConfig = Union[SitemapConfig, GithubIssuesConfig]
 
 
+# Inputs
+class SearchSourceInput(BaseModel):
+    name: str
+    query: str
+    limit: int
+
+
+# Outputs
 class SourceOverview(BaseModel):
     id: str
     name: str
+    description: str
     num_docs: int
     created_at: str
     updated_at: str
     config: SourceConfig
 
 
-class SourceCreateInput(BaseModel):
+# Requests
+class CreateSourceRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
+    description: str
     config: SourceConfig
 
     @field_validator("name")
@@ -59,16 +71,19 @@ class SourceCreateInput(BaseModel):
         return value
 
 
-class SourceUpdateInput(BaseModel):
+class UpdateSourceRequest(BaseModel):
+    sync: bool = False
+    description: str | None = None
     config: SourceConfig | None = None
 
 
-class SourceSearchInput(BaseModel):
+class SearchSourceRequest(BaseModel):
     query: str
-    limit: int | None = None
+    limit: int = 10
 
 
+# Responses
 class SourceTaskResponse(BaseModel):
-    task_id: str
+    task_id: str | None
     source: SourceOverview
     message: str | None = None

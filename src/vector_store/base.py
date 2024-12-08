@@ -10,14 +10,12 @@ from src.source.schemas import (
 class VectorStoreBase(ABC):
     @abstractmethod
     def create_source(
-        self, name: str, config: SourceConfig, timestamp: str
+        self, name: str, description: str, config: SourceConfig, timestamp: str
     ) -> SourceOverview:
         pass
 
     @abstractmethod
-    def add_source_documents(
-        self, name: str, documents: list[Document], timestamp: str
-    ) -> list[str]:
+    def add_source_documents(self, name: str, documents: list[Document]) -> list[str]:
         pass
 
     @abstractmethod
@@ -52,6 +50,10 @@ class VectorStoreBase(ABC):
 
     @abstractmethod
     def update_source_metadata(
-        self, name: str, config: SourceConfig, timestamp: str
+        self,
+        name: str,
+        description: str | None,
+        config: SourceConfig | None,
+        timestamp: str,
     ) -> SourceOverview:
         pass

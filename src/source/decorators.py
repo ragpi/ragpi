@@ -7,7 +7,8 @@ from celery import current_task
 from celery.exceptions import Ignore
 
 
-from src.exceptions import SourceSyncException, ResourceLockedException
+from src.exceptions import ResourceLockedException
+from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 
 
@@ -50,13 +51,13 @@ def lock_and_execute_source_task():
                 )
                 raise Ignore()
 
-            except SourceSyncException as e:
+            except SyncSourceException as e:
                 logging.error(e)
 
                 current_task.update_state(
                     state="SYNC_ERROR",
                     meta={
-                        "exc_type": "SourceSyncException",
+                        "exc_type": "SyncSourceException",
                         "message": str(e),
                     },
                 )

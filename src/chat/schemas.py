@@ -1,8 +1,7 @@
 from typing import Literal
 from pydantic import BaseModel
 
-from src.config import RERANKING_MODELS
-from src.document.schemas import Document
+from src.config import settings
 
 
 class ChatMessage(BaseModel):
@@ -11,15 +10,12 @@ class ChatMessage(BaseModel):
 
 
 class CreateChatInput(BaseModel):
-    source: str
+    sources: list[str]
     chat_model: str | None = None
     system: str | None = None
     messages: list[ChatMessage]
-    retrieval_limit: int | None = None
-    use_reranking: bool = True
-    reranking_model: RERANKING_MODELS | None = None
+    max_attempts: int = settings.CHAT_MAX_ATTEMPTS
 
 
 class ChatResponse(BaseModel):
     message: str | None
-    source_documents: list[Document]

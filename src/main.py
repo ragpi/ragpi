@@ -2,6 +2,7 @@ import logging
 from fastapi import FastAPI, Depends
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from traceloop.sdk import Traceloop  #  type: ignore
 
 from src.dependencies import create_rate_limiter, get_api_key
 from src.exceptions import (
@@ -20,6 +21,10 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+Traceloop.init(  #  type: ignore
+    disable_batch=True,  # TODO: Disable for prod
+    app_name="rag-api",
+)
 
 limiter = create_rate_limiter()
 

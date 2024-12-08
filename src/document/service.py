@@ -2,13 +2,13 @@ import logging
 from typing import AsyncGenerator
 from src.document.chunker import chunk_github_issue, chunk_markdown_page
 from src.document.clients.github_issue import GitHubIssueClient
-from src.document.schemas import Document
-from src.document.clients.sitemap import SitemapClient
-from src.exceptions import (
+from src.document.exceptions import (
     DocumentServiceException,
     GitHubIssueClientException,
     SitemapClientException,
 )
+from src.document.schemas import Document
+from src.document.clients.sitemap import SitemapClient
 from src.source.schemas import (
     GithubIssuesConfig,
     SitemapConfig,

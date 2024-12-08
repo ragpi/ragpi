@@ -3,19 +3,18 @@ from typing import Any
 
 from src.config import settings
 from src.celery import celery_app
+from src.document.exceptions import DocumentServiceException
 from src.document.schemas import Document
 from src.document.service import DocumentService
-from src.exceptions import (
-    DocumentServiceException,
-    SourceSyncException,
-)
+from src.source.exceptions import SyncSourceException
 from src.source.schemas import (
     GithubIssuesConfig,
+    SearchSourceInput,
     SitemapConfig,
     SourceConfig,
-    SourceCreateInput,
+    CreateSourceRequest,
     SourceOverview,
-    SourceUpdateInput,
+    UpdateSourceRequest,
     SourceType,
 )
 from src.source.decorators import lock_and_execute_source_task
@@ -32,13 +31,14 @@ class SourceService:
         self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
 
     def create_source(
-        self, source_input: SourceCreateInput
+        self, source_input: CreateSourceRequest
     ) -> tuple[SourceOverview, str]:
 
         timestamp = get_current_datetime()
 
         created_source = self.vector_store_service.create_source(
             name=source_input.name,
+            description=source_input.description,
             config=source_input.config,
             timestamp=timestamp,
         )
@@ -56,40 +56,54 @@ class SourceService:
     def update_source(
         self,
         source_name: str,
-        source_input: SourceUpdateInput | None = None,
-    ) -> tuple[SourceOverview, str]:
+        source_input: UpdateSourceRequest | None = None,
+    ) -> tuple[SourceOverview, str | None]:
         existing_source = self.vector_store_service.get_source(source_name)
         existing_doc_ids = self.vector_store_service.get_source_document_ids(
             source_name
         )
 
-        source_config = (
-            source_input.config
-            if source_input and source_input.config
-            else existing_source.config
-        )
+        source_config = existing_source.config
+
+        if source_input:
+            if source_input.config:
+                source_config = source_input.config
+
+            if source_input.description:
+                existing_source = self.vector_store_service.update_source_metadata(
+                    source_name,
+                    source_input.description,
+                    source_config,
+                    get_current_datetime(),
+                )
 
         source_config_dict = source_config.model_dump()
 
-        task = sync_source_documents_task.delay(
-            source_name=source_name,
-            source_config_dict=source_config_dict,
-            existing_doc_ids=existing_doc_ids,
-        )
+        task = None
+
+        if source_input and source_input.sync:
+            task = sync_source_documents_task.delay(
+                source_name=source_name,
+                source_config_dict=source_config_dict,
+                existing_doc_ids=existing_doc_ids,
+            )
 
         source = SourceOverview(
             id=existing_source.id,
             name=source_name,
-            num_docs=0,
+            description=existing_source.description,
+            num_docs=existing_source.num_docs,
             created_at=existing_source.created_at,
             updated_at=existing_source.updated_at,
             config=source_config,
         )
 
-        return source, task.id
+        return source, task.id if task else None
 
-    def search_source(self, source_name: str, query: str, limit: int):
-        return self.vector_store_service.search_source(source_name, query, limit)
+    def search_source(self, source_input: SearchSourceInput):
+        return self.vector_store_service.search_source(
+            source_input.name, source_input.query, source_input.limit
+        )
 
     def get_source(self, source_name: str):
         return self.vector_store_service.get_source(source_name)
@@ -140,7 +154,6 @@ class SourceService:
                             self.vector_store_service.add_source_documents(
                                 source_name,
                                 docs_to_add,
-                                timestamp=get_current_datetime(),
                             )
                             docs_to_add = []
                             logging.info(
@@ -150,7 +163,7 @@ class SourceService:
                             logging.error(
                                 f"Failed to add batch of documents to source {source_name}: {e}"
                             )
-                            raise SourceSyncException(
+                            raise SyncSourceException(
                                 f"Failed to sync documents for source {source_name}"
                             )
 
@@ -159,7 +172,6 @@ class SourceService:
                     self.vector_store_service.add_source_documents(
                         source_name,
                         docs_to_add,
-                        timestamp=get_current_datetime(),
                     )
                     logging.info(
                         f"Added a batch of {len(docs_to_add)} documents to source {source_name}"
@@ -168,7 +180,7 @@ class SourceService:
                     logging.error(
                         f"Failed to add batch of documents to source {source_name}: {e}"
                     )
-                    raise SourceSyncException(
+                    raise SyncSourceException(
                         f"Failed to sync documents for source {source_name}"
                     )
 
@@ -185,25 +197,27 @@ class SourceService:
                     logging.error(
                         f"Failed to remove documents from source {source_name}: {e}"
                     )
-                    raise SourceSyncException(
+                    raise SyncSourceException(
                         f"Failed to sync documents for source {source_name}"
                     )
 
             if not current_doc_ids - existing_doc_ids:
                 logging.info(f"No new documents added to source {source_name}")
 
+            # Update updated_at timestamp
             updated_source = self.vector_store_service.update_source_metadata(
-                source_name,
-                source_config,
-                get_current_datetime(),
+                name=source_name,
+                description=None,
+                config=None,
+                timestamp=get_current_datetime(),
             )
 
             return updated_source
-        # SourceSyncException is handled in the lock_and_execute_source_task decorator to trigger SYNC_ERROR task state
-        except SourceSyncException as e:
+        # SyncSourceException is handled in the lock_and_execute_source_task decorator to trigger SYNC_ERROR task state
+        except SyncSourceException as e:
             raise e
         except DocumentServiceException as e:
-            raise SourceSyncException(str(e))
+            raise SyncSourceException(str(e))
         except Exception as e:
             raise e
 
@@ -225,14 +239,14 @@ async def sync_source_documents_task(
         try:
             source_config = SitemapConfig(**source_config_dict)
         except ValueError as e:
-            raise SourceSyncException(f"Invalid sitemap config: {e}")
+            raise SyncSourceException(f"Invalid sitemap config: {e}")
     elif source_type == SourceType.GITHUB_ISSUES:
         try:
             source_config = GithubIssuesConfig(**source_config_dict)
         except ValueError as e:
-            raise SourceSyncException(f"Invalid GitHub issues config: {e}")
+            raise SyncSourceException(f"Invalid GitHub issues config: {e}")
     else:
-        raise SourceSyncException(f"Unsupported source type: {source_type}")
+        raise SyncSourceException(f"Unsupported source type: {source_type}")
 
     source_overview = await source_service.sync_source_documents(
         source_name=source_name,

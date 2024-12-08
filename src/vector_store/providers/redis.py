@@ -103,7 +103,7 @@ class RedisVectorStore(VectorStoreBase):
         return f"{prefix}:{doc_id}"
 
     def create_source(
-        self, name: str, config: SourceConfig, timestamp: str
+        self, name: str, description: str, config: SourceConfig, timestamp: str
     ) -> SourceOverview:
         index = self._get_index(name, False)
 
@@ -128,6 +128,7 @@ class RedisVectorStore(VectorStoreBase):
             mapping={
                 "id": id,
                 "name": name,
+                "description": description,
                 **config_dict,
                 "created_at": timestamp,
                 "updated_at": timestamp,
@@ -136,9 +137,7 @@ class RedisVectorStore(VectorStoreBase):
 
         return self.get_source(name)
 
-    def add_source_documents(
-        self, name: str, documents: list[Document], timestamp: str
-    ) -> list[str]:
+    def add_source_documents(self, name: str, documents: list[Document]) -> list[str]:
         index = self._get_index(name)
 
         embeddings_data = self.embedding_client.create(
@@ -153,16 +152,11 @@ class RedisVectorStore(VectorStoreBase):
             doc_dict: dict[str, Any] = {
                 "id": doc.id,
                 "content": doc.content,
-                "created_at": timestamp,
+                "title": doc.title,
+                "url": doc.url,
+                "created_at": doc.created_at,
                 "embedding": np.array(embedding, dtype=np.float32).tobytes(),
             }
-
-            for key in [
-                "url",
-                "title",
-            ]:
-                if key in doc.metadata:
-                    doc_dict[key] = doc.metadata[key]
             return doc_dict
 
         data = [
@@ -229,6 +223,7 @@ class RedisVectorStore(VectorStoreBase):
         return SourceOverview(
             id=metadata["id"],
             name=metadata["name"],
+            description=metadata["description"],
             num_docs=int(index_info["num_docs"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
@@ -264,11 +259,9 @@ class RedisVectorStore(VectorStoreBase):
             Document(
                 id=doc[0],
                 content=doc[1],
-                metadata={
-                    "url": doc[2],
-                    "title": doc[3],
-                    "created_at": doc[4],
-                },
+                title=doc[3],
+                url=doc[2],
+                created_at=doc[4],
             )
             for doc in docs
         ]
@@ -313,11 +306,9 @@ class RedisVectorStore(VectorStoreBase):
             Document(
                 id=self._extract_doc_id(source_name, doc["id"]),
                 content=doc["content"],
-                metadata={
-                    "url": doc["url"],
-                    "title": doc["title"],
-                    "created_at": doc["created_at"],
-                },
+                title=doc["title"],
+                url=doc["url"],
+                created_at=doc["created_at"],
             )
             for doc in search_results
         ]
@@ -388,20 +379,28 @@ class RedisVectorStore(VectorStoreBase):
         )
 
     def update_source_metadata(
-        self, name: str, config: SourceConfig, timestamp: str
+        self,
+        name: str,
+        description: str | None,
+        config: SourceConfig | None,
+        timestamp: str,
     ) -> SourceOverview:
         metadata_key = self._get_metadata_key(name)
 
+        if description is not None:
+            self.client.hset(metadata_key, "description", description)
+
         config_dict: dict[str, Any] = {}
 
-        config_items = config.model_dump().items()
+        if config is not None:
+            config_items = config.model_dump().items()
 
-        for key, value in config_items:
-            if isinstance(value, list):
-                value = json.dumps(value)
-            if value is None:
-                value = ""
-            config_dict[f"config__{key}"] = value
+            for key, value in config_items:
+                if isinstance(value, list):
+                    value = json.dumps(value)
+                if value is None:
+                    value = ""
+                config_dict[f"config__{key}"] = value
 
         self.client.hset(
             metadata_key,

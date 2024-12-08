@@ -11,8 +11,8 @@ from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
 from src.config import settings
+from src.document.exceptions import SitemapClientException
 from src.document.schemas import MarkdownPage
-from src.exceptions import SitemapClientException
 
 UNWANTED_TAGS = [
     "nav",

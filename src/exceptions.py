@@ -30,22 +30,6 @@ class ResourceLockedException(Exception):
         super().__init__(f"Resource '{resource_name}' is locked")
 
 
-class SitemapClientException(Exception):
-    pass
-
-
-class GitHubIssueClientException(Exception):
-    pass
-
-
-class DocumentServiceException(Exception):
-    pass
-
-
-class SourceSyncException(Exception):
-    pass
-
-
 def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
     logging.error(exc)
     return JSONResponse(
