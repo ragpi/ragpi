@@ -79,7 +79,7 @@ class UpdateSourceRequest(BaseModel):
 
 class SearchSourceRequest(BaseModel):
     query: str
-    limit: int = settings.RETRIEVAL_LIMIT
+    limit: int = 10
 
 
 # Responses

@@ -83,7 +83,7 @@ You are an automated AI technical support assistant for a software product.
         ]
 
         attempts = 0
-        while attempts < chat_input.max_attempts + 1:
+        while attempts < chat_input.max_attempts:
             response = self.openai_client.chat.completions.create(
                 model=chat_input.chat_model or self.default_chat_model,
                 messages=messages,
@@ -123,7 +123,7 @@ You are an automated AI technical support assistant for a software product.
                             f"Unknown tool call: {tool_call.function.name}"
                         )
             elif message.content:
-                return ChatResponse(message=message.content, source_documents=[])
+                return ChatResponse(message=message.content)
             else:
                 raise ValueError(
                     "No response content or tool call found in completion."
@@ -133,5 +133,4 @@ You are an automated AI technical support assistant for a software product.
 
         return ChatResponse(
             message="I'm sorry, but I don't have the information you're looking for.",
-            source_documents=[],
         )

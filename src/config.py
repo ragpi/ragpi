@@ -7,16 +7,6 @@ EMBEDDING_MODELS = Literal[
     "text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"
 ]
 
-RERANKING_MODELS = Literal[
-    "ms-marco-TinyBERT-L-2-v2",
-    "ms-marco-MiniLM-L-12-v2",
-    "ms-marco-MultiBERT-L-12",
-    "rank-T5-flan",
-    "ce-esci-MiniLM-L12-v2",
-    "rank_zephyr_7b_v1_full",
-    "miniReranker_arabic_v1",
-]
-
 
 class Settings(BaseSettings):
     API_KEY: str | None = None
@@ -39,8 +29,6 @@ class Settings(BaseSettings):
 
     CHAT_MODEL: str = "gpt-4o-mini"
 
-    RERANKING_MODEL: RERANKING_MODELS = "ms-marco-TinyBERT-L-2-v2"
-
     EMBEDDING_MODEL: EMBEDDING_MODELS = "text-embedding-3-small"
 
     EMBEDDING_DIMENSIONS: int = 1536
@@ -49,15 +37,9 @@ class Settings(BaseSettings):
 
     CHUNK_OVERLAP: int = 50
 
-    SYSTEM_PROMPT: str = (
-        "You are an expert on {source} and can answer any questions about it."
-    )
-
     CONCURRENT_REQUESTS: int = 10
 
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
-
-    RETRIEVAL_LIMIT: int = 50
 
     USER_AGENT: str = "RagApi"
 
