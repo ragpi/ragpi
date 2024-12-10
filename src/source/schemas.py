@@ -40,9 +40,9 @@ SourceConfig = Union[SitemapConfig, GithubIssuesConfig]
 
 # Inputs
 class SearchSourceInput(BaseModel):
-    name: str
-    query: str
-    limit: int
+    name: str = Field(description="Source name")
+    query: str = Field(description="Search query")
+    top_k: int = Field(description="Number of results to return")
 
 
 # Outputs
@@ -79,7 +79,7 @@ class UpdateSourceRequest(BaseModel):
 
 class SearchSourceRequest(BaseModel):
     query: str
-    limit: int = 10
+    top_k: int = 10
 
 
 # Responses

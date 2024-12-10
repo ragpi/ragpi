@@ -9,6 +9,10 @@ EMBEDDING_MODELS = Literal[
 
 
 class Settings(BaseSettings):
+    BASE_SYSTEM_PROMPT: str = (
+        "You are an automated AI support assistant designed to assist users with their queries."
+    )
+
     API_KEY: str | None = None
 
     VECTOR_STORE_PROVIDER: Literal["redis"] = "redis"

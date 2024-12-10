@@ -15,6 +15,7 @@ class CreateChatInput(BaseModel):
     system: str | None = None
     messages: list[ChatMessage]
     max_attempts: int = settings.CHAT_MAX_ATTEMPTS
+    # TODO: Add max_retrieval_top_k?
 
 
 class ChatResponse(BaseModel):

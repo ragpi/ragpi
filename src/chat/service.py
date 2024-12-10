@@ -9,6 +9,7 @@ from openai.types.chat import (
 )
 
 from src.chat.schemas import ChatResponse, CreateChatInput
+from src.chat.tools import FUNCTION_TOOLS
 from src.config import settings
 from src.source.schemas import SearchSourceInput
 from src.source.service import SourceService
@@ -18,9 +19,18 @@ class ChatService:
     def __init__(self):
         self.openai_client = OpenAI()
         self.default_chat_model = settings.CHAT_MODEL
+        self.base_system_prompt = settings.BASE_SYSTEM_PROMPT
+        self.tools = [
+            pydantic_function_tool(
+                model=tool.model,
+                name=tool.name,
+                description=tool.description,
+            )
+            for tool in FUNCTION_TOOLS
+        ]
         self.source_service = SourceService()
 
-    def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
+    def _create_system_prompt(self, chat_input: CreateChatInput) -> str:
         sources = [self.source_service.get_source(name) for name in chat_input.sources]
 
         sources_info = [
@@ -31,12 +41,10 @@ class ChatService:
             for source in sources
         ]
 
-        system_prompt = f"""
-You are an automated AI technical support assistant for a software product.
+        return f"""
+{self.base_system_prompt}
 
-**Responsibilities:**
-- Assist users with their technical issues and questions.
-- Utilize the `search_source` tool to find relevant information from the available sources.
+Utilize the `search_source` tool to find relevant information from the available sources.
 
 **Available Sources:**
 {sources_info}
@@ -45,7 +53,7 @@ You are an automated AI technical support assistant for a software product.
 1. **Relevance:** 
     - Always prioritize the most relevant sources when addressing the user's query.
 2. **Search Strategy:** 
-    - If initial searches do not yield sufficient information, expand the search by increasing the retrieval limit or refining the search query.
+    - If initial searches do not yield sufficient information, expand the search by increasing the search top_k or refining the search query.
 3. **Attempts:**
     - You have {chat_input.max_attempts} attempts to answer the user's question.
 4. **Providing Information:**
@@ -53,13 +61,8 @@ You are an automated AI technical support assistant for a software product.
     - If unable to find an answer after exhausting all attempts, respond with: "I'm sorry, but I don't have the information you're looking for."
 """
 
-        tools = [
-            pydantic_function_tool(
-                model=SearchSourceInput,
-                name="search_source",
-                description="Search a source for relevant documents using semantic and keyword-based search.",
-            ),
-        ]
+    def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
+        system_prompt = self._create_system_prompt(chat_input)
 
         chat_history = chat_input.messages[:-1]
 
@@ -87,7 +90,7 @@ You are an automated AI technical support assistant for a software product.
             response = self.openai_client.chat.completions.create(
                 model=chat_input.chat_model or self.default_chat_model,
                 messages=messages,
-                tools=tools,
+                tools=self.tools,
             )
 
             message = response.choices[0].message

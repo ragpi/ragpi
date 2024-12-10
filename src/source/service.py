@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from traceloop.sdk.decorators import task  #  type: ignore
 
 from src.config import settings
 from src.celery import celery_app
@@ -100,9 +101,10 @@ class SourceService:
 
         return source, task.id if task else None
 
+    @task(name="search_source")  #  type: ignore
     def search_source(self, source_input: SearchSourceInput):
         return self.vector_store_service.search_source(
-            source_input.name, source_input.query, source_input.limit
+            source_input.name, source_input.query, source_input.top_k
         )
 
     def get_source(self, source_name: str):

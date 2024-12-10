@@ -314,7 +314,7 @@ class RedisVectorStore(VectorStoreBase):
         ]
 
     def vector_based_search(
-        self, index: SearchIndex, query: str, limit: int
+        self, index: SearchIndex, query: str, top_k: int
     ) -> list[Document]:
         query_embedding = (
             self.embedding_client.create(
@@ -330,7 +330,7 @@ class RedisVectorStore(VectorStoreBase):
             vector=query_embedding,
             vector_field_name="embedding",
             return_fields=self.document_fields,
-            num_results=limit,
+            num_results=top_k,
         )
 
         # The results are sorted by distance by default
@@ -339,7 +339,7 @@ class RedisVectorStore(VectorStoreBase):
         return self.map_search_results_to_documents(index.name, search_results)
 
     def full_text_search(
-        self, index: SearchIndex, query: str, limit: int
+        self, index: SearchIndex, query: str, top_k: int
     ) -> list[Document]:
 
         def escape_special_characters(text: str) -> str:
@@ -356,7 +356,7 @@ class RedisVectorStore(VectorStoreBase):
 
         query_obj = (  # type: ignore
             Query(formatted_query)  # type: ignore
-            .paging(0, limit)
+            .paging(0, top_k)
             .scorer("BM25")
             .return_fields(*self.document_fields)
         )
@@ -367,15 +367,15 @@ class RedisVectorStore(VectorStoreBase):
         search_results = ft.search(query_obj)  # type: ignore
         return self.map_search_results_to_documents(index.name, search_results.docs)
 
-    def search_source(self, name: str, query: str, limit: int) -> list[Document]:
+    def search_source(self, name: str, query: str, top_k: int) -> list[Document]:
         index = self._get_index(name)
 
-        vector_search_results = self.vector_based_search(index, query, limit)
+        vector_search_results = self.vector_based_search(index, query, top_k)
 
-        text_search_results = self.full_text_search(index, query, limit)
+        text_search_results = self.full_text_search(index, query, top_k)
 
         return reciprocal_rank_fusion(
-            [vector_search_results, text_search_results], limit
+            [vector_search_results, text_search_results], top_k
         )
 
     def update_source_metadata(

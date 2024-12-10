@@ -89,7 +89,7 @@ def search_source(
 ):
     results = source_service.search_source(
         SearchSourceInput(
-            name=source_name, query=query_input.query, limit=query_input.limit
+            name=source_name, query=query_input.query, top_k=query_input.top_k
         )
     )
     return results
