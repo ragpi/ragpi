@@ -10,7 +10,6 @@ class Document(BaseModel):
 
 
 class MarkdownPage(BaseModel):
-    id: str
     url: str
     title: str
     content: str

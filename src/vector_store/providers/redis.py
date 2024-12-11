@@ -18,6 +18,7 @@ from src.exceptions import (
 )
 from src.redis import get_redis_client
 from src.source.schemas import (
+    GithubReadmeConfig,
     SourceConfig,
     SourceOverview,
     SourceType,
@@ -119,6 +120,8 @@ class RedisVectorStore(VectorStoreBase):
         for key, value in config_items:
             if isinstance(value, list):
                 value = json.dumps(value)
+            elif isinstance(value, bool):
+                value = int(value)  # 1 for True, 0 for False
             elif value is None:
                 value = ""
             config_dict[f"config__{key}"] = value
@@ -183,6 +186,7 @@ class RedisVectorStore(VectorStoreBase):
 
         source_config: SourceConfig
 
+        # TODO: Generalize this
         if source_type == SourceType.SITEMAP:
             source_data: dict[str, Any] = {
                 "type": source_type,
@@ -203,20 +207,31 @@ class RedisVectorStore(VectorStoreBase):
                 "exclude_labels": metadata["config__exclude_labels"] or None,
                 "max_age": metadata["config__max_age"] or None,
             }
-
             source_data["include_labels"] = (
                 json.loads(source_data["include_labels"])
                 if source_data["include_labels"]
                 else None
             )
-
             source_data["exclude_labels"] = (
                 json.loads(source_data["exclude_labels"])
                 if source_data["exclude_labels"]
                 else None
             )
-
             source_config = GithubIssuesConfig(**source_data)
+        elif source_type == SourceType.GITHUB_README:
+            source_data = {
+                "type": source_type,
+                "repo_owner": metadata["config__repo_owner"],
+                "repo_name": metadata["config__repo_name"],
+                "include_root": bool(int(metadata["config__include_root"])),
+                "sub_dirs": (
+                    json.loads(metadata["config__sub_dirs"])
+                    if metadata["config__sub_dirs"]
+                    else None
+                ),
+                "ref": metadata["config__ref"],
+            }
+            source_config = GithubReadmeConfig(**source_data)
         else:
             raise ValueError(f"Unknown source type: {source_type}")
 
@@ -398,6 +413,8 @@ class RedisVectorStore(VectorStoreBase):
             for key, value in config_items:
                 if isinstance(value, list):
                     value = json.dumps(value)
+                elif isinstance(value, bool):
+                    value = int(value)  # 1 for True, 0 for False
                 if value is None:
                     value = ""
                 config_dict[f"config__{key}"] = value

@@ -4,7 +4,6 @@ from typing import AsyncGenerator, Type
 import asyncio
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
-import uuid
 import re
 import html2text
 from urllib.parse import urlparse, urljoin
@@ -36,7 +35,6 @@ UNWANTED_TAGS = [
 
 
 def extract_markdown_page(url: str, content: bytes) -> MarkdownPage:
-    page_id = str(uuid.uuid4())
     soup = BeautifulSoup(content, "html.parser")
     title = soup.title.string if soup.title and soup.title.string else url
 
@@ -49,7 +47,7 @@ def extract_markdown_page(url: str, content: bytes) -> MarkdownPage:
     else:
         markdown_content = html2text.html2text(str(soup))
 
-    return MarkdownPage(id=page_id, url=url, title=title, content=markdown_content)
+    return MarkdownPage(url=url, title=title, content=markdown_content)
 
 
 class SitemapClient:
@@ -158,6 +156,7 @@ class SitemapClient:
         include_pattern: str | None = None,
         exclude_pattern: str | None = None,
     ) -> AsyncGenerator[MarkdownPage, None]:
+        logging.info(f"Fetching pages from sitemap: {sitemap_url}")
 
         urls = await self.parse_sitemap(sitemap_url)
 
