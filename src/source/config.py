@@ -84,7 +84,7 @@ class GithubReadmeConfig(BaseSourceConfig):
 
 SourceConfig = Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig]
 
-SOURCE_CONFIG_CLASSES: dict[
+SOURCE_CONFIG_REGISTRY: dict[
     str, type[SitemapConfig] | type[GithubIssuesConfig] | type[GithubReadmeConfig]
 ] = {
     SourceType.SITEMAP: SitemapConfig,

@@ -17,7 +17,7 @@ from src.exceptions import (
     ResourceType,
 )
 from src.redis import get_redis_client
-from src.source.config import SOURCE_CONFIG_CLASSES, SourceConfig
+from src.source.config import SOURCE_CONFIG_REGISTRY, SourceConfig
 from src.source.schemas import (
     SourceOverview,
 )
@@ -37,7 +37,7 @@ class RedisVectorStore(VectorStoreBase):
         self.embedding_client = OpenAI().embeddings
         self.schema: dict[str, Any] = SOURCE_DOC_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
-        self.source_config_classes = SOURCE_CONFIG_CLASSES
+        self.source_config_classes = SOURCE_CONFIG_REGISTRY
         self.config_prefix = "config__"
 
     def _get_index_prefix(self, source_name: str) -> str:
@@ -162,7 +162,7 @@ class RedisVectorStore(VectorStoreBase):
                 config_key = key.split(f"{self.config_prefix}")[1]
                 config_dict[config_key] = value
 
-        # The pydantic models defined in SOURCE_CONFIG_CLASSES should be able to parse the string inputs
+        # The pydantic models defined in SOURCE_CONFIG_REGISTRY should be able to parse the string inputs
         source_config = self.source_config_classes[source_type](**config_dict)
 
         return SourceOverview(

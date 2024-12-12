@@ -9,11 +9,8 @@ from src.document.schemas import Document
 from src.document.service import DocumentService
 from src.source.exceptions import SyncSourceException
 from src.source.config import (
+    SOURCE_CONFIG_REGISTRY,
     SourceConfig,
-    SourceType,
-    SitemapConfig,
-    GithubIssuesConfig,
-    GithubReadmeConfig,
 )
 from src.source.schemas import (
     SearchSourceInput,
@@ -240,24 +237,13 @@ async def sync_source_documents_task(
 
     source_config: SourceConfig
 
-    match source_type:
-        case SourceType.SITEMAP:
-            try:
-                source_config = SitemapConfig(**source_config_dict)
-            except ValueError as e:
-                raise SyncSourceException(f"Invalid sitemap config: {e}")
-        case SourceType.GITHUB_ISSUES:
-            try:
-                source_config = GithubIssuesConfig(**source_config_dict)
-            except ValueError as e:
-                raise SyncSourceException(f"Invalid GitHub issues config: {e}")
-        case SourceType.GITHUB_README:
-            try:
-                source_config = GithubReadmeConfig(**source_config_dict)
-            except ValueError as e:
-                raise SyncSourceException(f"Invalid GitHub readme config: {e}")
-        case _:
-            raise SyncSourceException(f"Unsupported source type: {source_type}")
+    if source_type not in SOURCE_CONFIG_REGISTRY:
+        raise SyncSourceException(f"Unsupported source type: {source_type}")
+
+    try:
+        source_config = SOURCE_CONFIG_REGISTRY[source_type](**source_config_dict)
+    except ValueError as e:
+        raise SyncSourceException(f"Invalid config: {e}")
 
     source_overview = await source_service.sync_source_documents(
         source_name=source_name,
