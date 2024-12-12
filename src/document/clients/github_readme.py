@@ -1,5 +1,4 @@
 import base64
-import logging
 from typing import AsyncGenerator
 from src.document.clients.github import GitHubClient
 from src.document.exceptions import GitHubClientException
@@ -20,18 +19,18 @@ class GitHubReadmeClient(GitHubClient):
     ) -> AsyncGenerator[MarkdownPage, None]:
         base_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/readme"
 
-        targets: list[str] = []
+        dirs: list[str] = []
 
         if include_root:
-            targets.append("")
+            dirs.append("")
 
         if sub_dirs:
-            targets.extend(sub_dirs)
+            dirs.extend(sub_dirs)
 
-        if not targets:
-            raise GitHubClientException("No targets to fetch READMEs")
+        if not dirs:
+            raise GitHubClientException("No directories specified to fetch READMEs")
 
-        for dir in targets:
+        for dir in dirs:
             url = base_url + (f"/{dir}" if dir else "")
             params = {}
             if ref:
@@ -39,8 +38,7 @@ class GitHubReadmeClient(GitHubClient):
 
             data, _ = await self.request("GET", url, params=params)
             if not data:
-                logging.error(f"No README found at {url}")
-                continue
+                raise GitHubClientException(f"Failed to fetch README content at {url}")
 
             content_b64 = data["content"]
             encoding = data["encoding"]
