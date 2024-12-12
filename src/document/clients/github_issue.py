@@ -55,7 +55,7 @@ class GitHubIssueClient(GitHubClient):
         self,
         repo_owner: str,
         repo_name: str,
-        state: str | None = None,
+        state: str = "all",
         include_labels: list[str] | None = None,
         exclude_labels: list[str] | None = None,
         max_age: int | None = None,
@@ -66,7 +66,7 @@ class GitHubIssueClient(GitHubClient):
 
         params: dict[str, str] | None = {
             "per_page": "100",
-            "state": state or "all",
+            "state": "all",
             "sort": "updated",
             "direction": "desc",
         }

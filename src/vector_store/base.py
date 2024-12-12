@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 from src.document.schemas import Document
+from src.source.config import SourceConfig
 from src.source.schemas import (
-    SourceConfig,
     SourceOverview,
 )
 

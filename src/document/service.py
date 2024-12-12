@@ -10,7 +10,7 @@ from src.document.exceptions import (
 )
 from src.document.schemas import Document
 from src.document.clients.sitemap import SitemapClient
-from src.source.schemas import (
+from src.source.config import (
     GithubIssuesConfig,
     GithubReadmeConfig,
     SitemapConfig,

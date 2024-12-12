@@ -8,16 +8,18 @@ from src.document.exceptions import DocumentServiceException
 from src.document.schemas import Document
 from src.document.service import DocumentService
 from src.source.exceptions import SyncSourceException
-from src.source.schemas import (
+from src.source.config import (
+    SourceConfig,
+    SourceType,
+    SitemapConfig,
     GithubIssuesConfig,
     GithubReadmeConfig,
+)
+from src.source.schemas import (
     SearchSourceInput,
-    SitemapConfig,
-    SourceConfig,
     CreateSourceRequest,
     SourceOverview,
     UpdateSourceRequest,
-    SourceType,
 )
 from src.source.decorators import lock_and_execute_source_task
 from src.source.utils import get_current_datetime

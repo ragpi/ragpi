@@ -1,52 +1,7 @@
-from enum import Enum
 from pydantic import BaseModel, Field, field_validator
-from typing import Union, Literal
 import re
 
-from src.config import settings
-
-
-class SourceType(str, Enum):
-    SITEMAP = "sitemap"
-    GITHUB_ISSUES = "github_issues"
-    GITHUB_README = "github_readme"
-
-
-# Configs
-class BaseSourceConfig(BaseModel):
-    chunk_size: int = settings.CHUNK_SIZE
-    chunk_overlap: int = settings.CHUNK_OVERLAP
-
-
-class SitemapConfig(BaseSourceConfig):
-    type: Literal[SourceType.SITEMAP]
-    sitemap_url: str
-    include_pattern: str | None = None
-    exclude_pattern: str | None = None
-    concurrent_requests: int = settings.CONCURRENT_REQUESTS
-
-
-class GithubIssuesConfig(BaseSourceConfig):
-    type: Literal[SourceType.GITHUB_ISSUES]
-    repo_owner: str
-    repo_name: str
-    state: Literal["open", "closed"] | None = None
-    include_labels: list[str] | None = None
-    exclude_labels: list[str] | None = None
-    max_age: int | None = None  # Days
-    concurrent_requests: int = settings.CONCURRENT_REQUESTS
-
-
-class GithubReadmeConfig(BaseSourceConfig):
-    type: Literal[SourceType.GITHUB_README]
-    repo_owner: str
-    repo_name: str
-    include_root: bool = True
-    sub_dirs: list[str] | None = None
-    ref: str | None = None
-
-
-SourceConfig = Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig]
+from src.source.config import SourceConfig
 
 
 # Inputs

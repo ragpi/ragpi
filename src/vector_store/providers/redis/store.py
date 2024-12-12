@@ -17,45 +17,16 @@ from src.exceptions import (
     ResourceType,
 )
 from src.redis import get_redis_client
+from src.source.config import SOURCE_CONFIG_CLASSES, SourceConfig
 from src.source.schemas import (
-    GithubReadmeConfig,
-    SourceConfig,
     SourceOverview,
-    SourceType,
-    SitemapConfig,
-    GithubIssuesConfig,
 )
 from src.vector_store.base import VectorStoreBase
+from src.vector_store.providers.redis.index_schema import (
+    DOCUMENT_FIELDS,
+    SOURCE_DOC_SCHEMA,
+)
 from src.vector_store.ranking import reciprocal_rank_fusion
-
-
-SOURCE_DOC_SCHEMA: dict[str, Any] = {
-    "fields": [
-        {"name": "id", "type": "tag"},
-        {"name": "content", "type": "text"},
-        {"name": "url", "type": "tag"},
-        {"name": "created_at", "type": "tag"},
-        {"name": "title", "type": "text"},
-        {
-            "name": "embedding",
-            "type": "vector",
-            "attrs": {
-                "dims": settings.EMBEDDING_DIMENSIONS,
-                "distance_metric": "cosine",
-                "algorithm": "flat",
-                "datatype": "float32",
-            },
-        },
-    ],
-}
-
-DOCUMENT_FIELDS = [
-    "id",
-    "content",
-    "url",
-    "title",
-    "created_at",
-]
 
 
 class RedisVectorStore(VectorStoreBase):
@@ -66,6 +37,8 @@ class RedisVectorStore(VectorStoreBase):
         self.embedding_client = OpenAI().embeddings
         self.schema: dict[str, Any] = SOURCE_DOC_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
+        self.source_config_classes = SOURCE_CONFIG_CLASSES
+        self.config_prefix = "config__"
 
     def _get_index_prefix(self, source_name: str) -> str:
         return f"{source_name}:documents"
@@ -124,7 +97,7 @@ class RedisVectorStore(VectorStoreBase):
                 value = int(value)  # 1 for True, 0 for False
             elif value is None:
                 value = ""
-            config_dict[f"config__{key}"] = value
+            config_dict[f"{self.config_prefix}{key}"] = value
 
         self.client.hset(
             metadata_key,
@@ -175,65 +148,22 @@ class RedisVectorStore(VectorStoreBase):
 
     def get_source(self, name: str) -> SourceOverview:
         index = self._get_index(name)
-
         index_info = index.info()
-
         metadata_key = self._get_metadata_key(name)
-
         metadata = self.client.hgetall(metadata_key)
 
-        source_type = metadata.get("config__type")
-
-        source_config: SourceConfig
-
-        # TODO: Generalize this
-        if source_type == SourceType.SITEMAP:
-            source_data: dict[str, Any] = {
-                "type": source_type,
-                "sitemap_url": metadata["config__sitemap_url"],
-                "include_pattern": metadata["config__include_pattern"] or None,
-                "exclude_pattern": metadata["config__exclude_pattern"] or None,
-                "chunk_size": int(metadata["config__chunk_size"]),
-                "chunk_overlap": int(metadata["config__chunk_overlap"]),
-            }
-            source_config = SitemapConfig(**source_data)
-        elif source_type == SourceType.GITHUB_ISSUES:
-            source_data = {
-                "type": source_type,
-                "repo_owner": metadata["config__repo_owner"],
-                "repo_name": metadata["config__repo_name"],
-                "state": metadata["config__state"] or None,
-                "include_labels": metadata["config__include_labels"] or None,
-                "exclude_labels": metadata["config__exclude_labels"] or None,
-                "max_age": metadata["config__max_age"] or None,
-            }
-            source_data["include_labels"] = (
-                json.loads(source_data["include_labels"])
-                if source_data["include_labels"]
-                else None
-            )
-            source_data["exclude_labels"] = (
-                json.loads(source_data["exclude_labels"])
-                if source_data["exclude_labels"]
-                else None
-            )
-            source_config = GithubIssuesConfig(**source_data)
-        elif source_type == SourceType.GITHUB_README:
-            source_data = {
-                "type": source_type,
-                "repo_owner": metadata["config__repo_owner"],
-                "repo_name": metadata["config__repo_name"],
-                "include_root": bool(int(metadata["config__include_root"])),
-                "sub_dirs": (
-                    json.loads(metadata["config__sub_dirs"])
-                    if metadata["config__sub_dirs"]
-                    else None
-                ),
-                "ref": metadata["config__ref"],
-            }
-            source_config = GithubReadmeConfig(**source_data)
-        else:
+        source_type = metadata.get(f"{self.config_prefix}type")
+        if source_type not in self.source_config_classes:
             raise ValueError(f"Unknown source type: {source_type}")
+
+        config_dict: dict[str, Any] = {}
+        for key, value in metadata.items():
+            if key.startswith(f"{self.config_prefix}"):
+                config_key = key.split(f"{self.config_prefix}")[1]
+                config_dict[config_key] = value
+
+        # The pydantic models defined in SOURCE_CONFIG_CLASSES should be able to parse the string inputs
+        source_config = self.source_config_classes[source_type](**config_dict)
 
         return SourceOverview(
             id=metadata["id"],
@@ -417,7 +347,7 @@ class RedisVectorStore(VectorStoreBase):
                     value = int(value)  # 1 for True, 0 for False
                 if value is None:
                     value = ""
-                config_dict[f"config__{key}"] = value
+                config_dict[f"{self.config_prefix}{key}"] = value
 
         self.client.hset(
             metadata_key,
