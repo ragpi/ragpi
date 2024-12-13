@@ -1,24 +1,14 @@
-import logging
-from typing import Any
-from traceloop.sdk.decorators import task  #  type: ignore
+from traceloop.sdk.decorators import task  # type: ignore
 
 from src.config import settings
-from src.celery import celery_app
-from src.document.exceptions import DocumentServiceException
-from src.document.schemas import Document
 from src.document.service import DocumentService
-from src.source.exceptions import SyncSourceException
-from src.source.config import (
-    SOURCE_CONFIG_REGISTRY,
-    SourceConfig,
-)
 from src.source.schemas import (
     SearchSourceInput,
     CreateSourceRequest,
     SourceOverview,
     UpdateSourceRequest,
 )
-from src.source.decorators import lock_and_execute_source_task
+from src.source.sync_documents import sync_source_documents_task
 from src.source.utils import get_current_datetime
 from src.vector_store.service import get_vector_store_service
 
@@ -101,7 +91,7 @@ class SourceService:
 
         return source, task.id if task else None
 
-    @task(name="search_source")  #  type: ignore
+    @task(name="search_source")  # type: ignore
     def search_source(self, source_input: SearchSourceInput):
         return self.vector_store_service.search_source(
             source_input.name, source_input.query, source_input.top_k
@@ -122,133 +112,3 @@ class SourceService:
 
     def delete_source(self, source_name: str):
         self.vector_store_service.delete_source(source_name)
-
-    async def sync_source_documents(
-        self,
-        source_name: str,
-        source_config: SourceConfig,
-        existing_doc_ids: set[str],
-    ) -> SourceOverview:
-        logging.info(f"Syncing documents for source {source_name}")
-
-        current_doc_ids: set[str] = set()
-
-        docs_to_add: list[Document] = []
-        added_doc_ids: set[str] = set()
-
-        batch_size = self.document_sync_batch_size
-
-        try:
-            async for doc in self.document_service.create_documents(
-                source_config,
-            ):
-                if doc.id in current_doc_ids:
-                    continue
-
-                current_doc_ids.add(doc.id)
-
-                if doc.id not in existing_doc_ids and doc.id not in added_doc_ids:
-                    docs_to_add.append(doc)
-                    added_doc_ids.add(doc.id)
-
-                    if len(docs_to_add) >= batch_size:
-                        try:
-                            self.vector_store_service.add_source_documents(
-                                source_name,
-                                docs_to_add,
-                            )
-                            docs_to_add = []
-                            logging.info(
-                                f"Added a batch of {batch_size} documents to source {source_name}"
-                            )
-                        except Exception as e:
-                            logging.error(
-                                f"Failed to add batch of documents to source {source_name}: {e}"
-                            )
-                            raise SyncSourceException(
-                                f"Failed to sync documents for source {source_name}"
-                            )
-
-            if docs_to_add:
-                try:
-                    self.vector_store_service.add_source_documents(
-                        source_name,
-                        docs_to_add,
-                    )
-                    logging.info(
-                        f"Added a batch of {len(docs_to_add)} documents to source {source_name}"
-                    )
-                except Exception as e:
-                    logging.error(
-                        f"Failed to add batch of documents to source {source_name}: {e}"
-                    )
-                    raise SyncSourceException(
-                        f"Failed to sync documents for source {source_name}"
-                    )
-
-            doc_ids_to_remove = existing_doc_ids - current_doc_ids
-            if doc_ids_to_remove:
-                try:
-                    self.vector_store_service.delete_source_documents(
-                        source_name, list(doc_ids_to_remove)
-                    )
-                    logging.info(
-                        f"Removed {len(doc_ids_to_remove)} documents from source {source_name}"
-                    )
-                except Exception as e:
-                    logging.error(
-                        f"Failed to remove documents from source {source_name}: {e}"
-                    )
-                    raise SyncSourceException(
-                        f"Failed to sync documents for source {source_name}"
-                    )
-
-            if not current_doc_ids - existing_doc_ids:
-                logging.info(f"No new documents added to source {source_name}")
-
-            # Update updated_at timestamp
-            updated_source = self.vector_store_service.update_source_metadata(
-                name=source_name,
-                description=None,
-                config=None,
-                timestamp=get_current_datetime(),
-            )
-
-            return updated_source
-        # SyncSourceException is handled in the lock_and_execute_source_task decorator to trigger SYNC_ERROR task state
-        except SyncSourceException as e:
-            raise e
-        except DocumentServiceException as e:
-            raise SyncSourceException(str(e))
-        except Exception as e:
-            raise e
-
-
-@celery_app.task
-@lock_and_execute_source_task()
-async def sync_source_documents_task(
-    source_name: str,
-    source_config_dict: dict[str, Any],
-    existing_doc_ids: list[str],
-):
-    source_service = SourceService()
-
-    source_type = source_config_dict.get("type")
-
-    source_config: SourceConfig
-
-    if source_type not in SOURCE_CONFIG_REGISTRY:
-        raise SyncSourceException(f"Unsupported source type: {source_type}")
-
-    try:
-        source_config = SOURCE_CONFIG_REGISTRY[source_type](**source_config_dict)
-    except ValueError as e:
-        raise SyncSourceException(f"Invalid config: {e}")
-
-    source_overview = await source_service.sync_source_documents(
-        source_name=source_name,
-        source_config=source_config,
-        existing_doc_ids=set(existing_doc_ids),
-    )
-
-    return source_overview.model_dump()
