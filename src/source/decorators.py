@@ -12,6 +12,7 @@ from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 
 
+# TODO: Simplify and integrate directly into sync_source_documents_task
 def lock_and_execute_source_task():
     def decorator(func: Callable[..., Awaitable[Any]]):
         @wraps(func)

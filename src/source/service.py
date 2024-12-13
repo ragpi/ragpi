@@ -8,15 +8,15 @@ from src.document.exceptions import DocumentServiceException
 from src.document.schemas import Document
 from src.document.service import DocumentService
 from src.source.exceptions import SyncSourceException
-from src.source.schemas import (
-    GithubIssuesConfig,
-    SearchSourceInput,
-    SitemapConfig,
+from src.source.config import (
+    SOURCE_CONFIG_REGISTRY,
     SourceConfig,
+)
+from src.source.schemas import (
+    SearchSourceInput,
     CreateSourceRequest,
     SourceOverview,
     UpdateSourceRequest,
-    SourceType,
 )
 from src.source.decorators import lock_and_execute_source_task
 from src.source.utils import get_current_datetime
@@ -237,18 +237,13 @@ async def sync_source_documents_task(
 
     source_config: SourceConfig
 
-    if source_type == SourceType.SITEMAP:
-        try:
-            source_config = SitemapConfig(**source_config_dict)
-        except ValueError as e:
-            raise SyncSourceException(f"Invalid sitemap config: {e}")
-    elif source_type == SourceType.GITHUB_ISSUES:
-        try:
-            source_config = GithubIssuesConfig(**source_config_dict)
-        except ValueError as e:
-            raise SyncSourceException(f"Invalid GitHub issues config: {e}")
-    else:
+    if source_type not in SOURCE_CONFIG_REGISTRY:
         raise SyncSourceException(f"Unsupported source type: {source_type}")
+
+    try:
+        source_config = SOURCE_CONFIG_REGISTRY[source_type](**source_config_dict)
+    except ValueError as e:
+        raise SyncSourceException(f"Invalid config: {e}")
 
     source_overview = await source_service.sync_source_documents(
         source_name=source_name,

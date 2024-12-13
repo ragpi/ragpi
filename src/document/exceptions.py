@@ -2,7 +2,7 @@ class SitemapClientException(Exception):
     pass
 
 
-class GitHubIssueClientException(Exception):
+class GitHubClientException(Exception):
     pass
 
 
