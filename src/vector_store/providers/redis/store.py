@@ -24,7 +24,7 @@ from src.source.schemas import (
 from src.vector_store.base import VectorStoreBase
 from src.vector_store.providers.redis.index_schema import (
     DOCUMENT_FIELDS,
-    SOURCE_DOC_SCHEMA,
+    DOCUMENT_SCHEMA,
 )
 from src.vector_store.ranking import reciprocal_rank_fusion
 
@@ -35,7 +35,7 @@ class RedisVectorStore(VectorStoreBase):
         self.embedding_model = settings.EMBEDDING_MODEL
         self.embedding_dimensions = settings.EMBEDDING_DIMENSIONS
         self.embedding_client = OpenAI().embeddings
-        self.schema: dict[str, Any] = SOURCE_DOC_SCHEMA
+        self.document_schema: dict[str, Any] = DOCUMENT_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
         self.source_config_classes = SOURCE_CONFIG_REGISTRY
         self.config_prefix = "config__"
@@ -52,7 +52,7 @@ class RedisVectorStore(VectorStoreBase):
         index_schema = IndexSchema.from_dict(
             {
                 "index": {"name": source_name, "prefix": prefix},
-                **self.schema,
+                **self.document_schema,
             }
         )
         index = SearchIndex(index_schema).set_client(self.client)  # type: ignore

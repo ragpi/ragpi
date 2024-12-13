@@ -2,7 +2,7 @@ from typing import Any
 
 from src.config import settings
 
-SOURCE_DOC_SCHEMA: dict[str, Any] = {
+DOCUMENT_SCHEMA: dict[str, Any] = {
     "fields": [
         {"name": "id", "type": "tag"},
         {"name": "content", "type": "text"},

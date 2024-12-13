@@ -1,4 +1,4 @@
-# The config classes need to be able to handle string inputs and convert them to the correct types.
+# The SourceConfig classes need to be able to handle string inputs coming from redis.
 
 from enum import Enum
 import json
