@@ -18,8 +18,10 @@ from src.source.config import (
     SOURCE_CONFIG_REGISTRY,
     SourceConfig,
 )
+from src.source.metadata import SourceMetadataService
 from src.source.schemas import (
     SourceOverview,
+    SourceStatus,
 )
 from src.source.utils import get_current_datetime
 from src.vector_store.service import get_vector_store_service
@@ -32,6 +34,7 @@ async def sync_source_documents(
 ) -> SourceOverview:
     logging.info(f"Syncing documents for source {source_name}")
 
+    metadata_service = SourceMetadataService()
     document_service = DocumentService()
     vector_store_service = get_vector_store_service(settings.VECTOR_STORE_PROVIDER)
 
@@ -41,7 +44,17 @@ async def sync_source_documents(
     docs_to_add: list[Document] = []
     added_doc_ids: set[str] = set()
 
+    exception_to_raise: Exception | None = None
+
     try:
+        metadata_service.update_metadata(
+            name=source_name,
+            description=None,
+            status=SourceStatus.SYNCING,
+            config=None,
+            timestamp=get_current_datetime(),
+        )
+
         async for doc in document_service.create_documents(source_config):
             if doc.id in current_doc_ids:
                 continue
@@ -107,10 +120,10 @@ async def sync_source_documents(
         if not current_doc_ids - existing_doc_ids:
             logging.info(f"No new documents added to source {source_name}")
 
-        # Update updated_at timestamp
-        updated_source = vector_store_service.update_source_metadata(
+        updated_source = metadata_service.update_metadata(
             name=source_name,
             description=None,
+            status=SourceStatus.COMPLETED,
             config=None,
             timestamp=get_current_datetime(),
         )
@@ -118,11 +131,23 @@ async def sync_source_documents(
         return updated_source
 
     except SyncSourceException as e:
-        raise e
+        exception_to_raise = e
     except DocumentServiceException as e:
-        raise SyncSourceException(str(e))
+        exception_to_raise = SyncSourceException(str(e))
     except Exception as e:
-        raise e
+        exception_to_raise = e
+
+    if exception_to_raise:
+        updated_source = metadata_service.update_metadata(
+            name=source_name,
+            description=None,
+            status=SourceStatus.FAILED,
+            config=None,
+            timestamp=get_current_datetime(),
+        )
+        raise exception_to_raise
+
+    raise SyncSourceException(f"Failed to sync documents for source {source_name}")
 
 
 @celery_app.task
@@ -138,7 +163,7 @@ def sync_source_documents_task(
     try:
         # Attempt to acquire the lock
         lock = lock_service.acquire_lock(source_name)
-        current_task.update_state(state="PROCESSING")
+        current_task.update_state(state="PROCESSING")  # TODO: Rename to "SYNCING"?
 
         # Create a new event loop
         loop = asyncio.new_event_loop()

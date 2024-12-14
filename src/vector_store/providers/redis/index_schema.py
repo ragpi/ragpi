@@ -5,6 +5,7 @@ from src.config import settings
 DOCUMENT_SCHEMA: dict[str, Any] = {
     "fields": [
         {"name": "id", "type": "tag"},
+        {"name": "source", "type": "tag"},
         {"name": "content", "type": "text"},
         {"name": "url", "type": "tag"},
         {"name": "created_at", "type": "tag"},
@@ -24,6 +25,7 @@ DOCUMENT_SCHEMA: dict[str, Any] = {
 
 DOCUMENT_FIELDS = [
     "id",
+    "source",
     "content",
     "url",
     "title",

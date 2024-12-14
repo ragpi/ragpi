@@ -1,3 +1,4 @@
+# TODO: Get rid of parses and handle in SourceMetadataService?
 # The SourceConfig classes need to be able to handle string inputs coming from redis.
 
 from enum import Enum

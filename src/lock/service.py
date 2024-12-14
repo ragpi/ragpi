@@ -11,13 +11,16 @@ class LockService:
     def __init__(self):
         self.redis_client = Redis.from_url(settings.REDIS_URL)
 
+    def lock_exists(self, lock_name: str) -> bool:
+        return self.redis_client.exists(f"lock:{lock_name}") == 1
+
     def acquire_lock(self, lock_name: str, timeout: int = 60) -> Lock:
         lock = self.redis_client.lock(f"lock:{lock_name}", timeout=timeout)
         acquired = lock.acquire(blocking=False)
         if acquired:
             return lock
         else:
-            raise ResourceLockedException(lock_name)
+            raise ResourceLockedException(None, lock_name)
 
     async def renew_lock(
         self, lock: Lock, extend_time: int = 60, renewal_interval: int = 30
