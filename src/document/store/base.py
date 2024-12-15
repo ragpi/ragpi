@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.document_extractor.schemas import Document
+from src.document.schemas import Document
 
 
 class DocumentStoreBase(ABC):

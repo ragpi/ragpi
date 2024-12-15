@@ -7,7 +7,7 @@ from aiohttp import ClientError, ClientSession
 from multidict import CIMultiDictProxy
 
 from src.config import settings
-from src.document_extractor.exceptions import GitHubClientException
+from src.document.extractor.exceptions import GitHubClientException
 
 
 class GitHubClient:

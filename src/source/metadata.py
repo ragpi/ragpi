@@ -9,7 +9,7 @@ from src.exceptions import (
     ResourceType,
 )
 from src.source.schemas import SourceOverview, SourceStatus
-from src.document_store.service import get_document_store
+from src.document.store.service import get_document_store
 
 
 # TODO: Rename create_metadata to create_source, etc?

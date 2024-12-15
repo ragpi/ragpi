@@ -1,6 +1,6 @@
-from src.document_store.base import DocumentStoreBase
+from src.document.store.base import DocumentStoreBase
 
-from src.document_store.providers.redis.store import RedisDocumentStore
+from src.document.store.providers.redis.store import RedisDocumentStore
 
 
 def get_document_store(provider: str) -> DocumentStoreBase:

@@ -2,7 +2,7 @@ from uuid import uuid4
 from traceloop.sdk.decorators import task  # type: ignore
 
 from src.config import settings
-from src.document_extractor.service import DocumentExtractor
+from src.document.extractor.service import DocumentExtractor
 from src.exceptions import (
     ResourceAlreadyExistsException,
     ResourceLockedException,
@@ -20,7 +20,7 @@ from src.source.schemas import (
 )
 from src.source.sync_documents import sync_source_documents_task
 from src.source.utils import get_current_datetime
-from src.document_store.service import get_document_store
+from src.document.store.service import get_document_store
 
 
 class SourceService:

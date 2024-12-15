@@ -6,13 +6,13 @@ from celery import current_task
 from celery.exceptions import Ignore
 
 from src.config import settings
-from src.document_extractor.service import DocumentExtractor
+from src.document.extractor.service import DocumentExtractor
 from src.exceptions import ResourceLockedException
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app
-from src.document_extractor.exceptions import DocumentExtractorException
-from src.document_extractor.schemas import Document
+from src.document.extractor.exceptions import DocumentExtractorException
+from src.document.schemas import Document
 from src.source.exceptions import SyncSourceException
 from src.source.config import (
     SOURCE_CONFIG_REGISTRY,
@@ -24,7 +24,7 @@ from src.source.schemas import (
     SourceStatus,
 )
 from src.source.utils import get_current_datetime
-from src.document_store.service import get_document_store
+from src.document.store.service import get_document_store
 
 
 async def sync_source_documents(

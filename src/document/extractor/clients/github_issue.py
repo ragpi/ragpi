@@ -4,8 +4,8 @@ import logging
 from typing import Any, AsyncGenerator
 
 from src.config import settings
-from src.document_extractor.clients.github import GitHubClient
-from src.document_extractor.schemas import GithubIssue, GithubIssueComment
+from src.document.extractor.clients.github import GitHubClient
+from src.document.extractor.schemas import GithubIssue, GithubIssueComment
 
 
 class GitHubIssueClient(GitHubClient):

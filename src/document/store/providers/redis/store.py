@@ -9,14 +9,14 @@ from redisvl.query.filter import Tag  # type: ignore
 from redis.commands.search.query import Query
 
 from src.config import settings
-from src.document_extractor.schemas import Document
+from src.document.schemas import Document
 from src.redis import get_redis_client
-from src.document_store.base import DocumentStoreBase
-from src.document_store.providers.redis.index_schema import (
+from src.document.store.base import DocumentStoreBase
+from src.document.store.providers.redis.index_schema import (
     DOCUMENT_FIELDS,
     DOCUMENT_SCHEMA,
 )
-from src.document_store.ranking import reciprocal_rank_fusion
+from src.document.store.ranking import reciprocal_rank_fusion
 
 
 class RedisDocumentStore(DocumentStoreBase):

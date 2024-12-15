@@ -3,8 +3,9 @@ from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
 )
 
-from src.document_extractor.id_generator import generate_stable_id
-from src.document_extractor.schemas import Document, GithubIssue, MarkdownPage
+from src.document.extractor.id_generator import generate_stable_id
+from src.document.extractor.schemas import GithubIssue, MarkdownPage
+from src.document.schemas import Document
 from src.source.utils import get_current_datetime
 
 
