@@ -19,7 +19,7 @@ from src.source.config import (
 )
 
 
-class DocumentExtractorService:
+class DocumentExtractor:
     async def extract_documents_from_sitemap(
         self, config: SitemapConfig
     ) -> AsyncGenerator[Document, None]:

@@ -6,7 +6,7 @@ from celery import current_task
 from celery.exceptions import Ignore
 
 from src.config import settings
-from src.document_extractor.service import DocumentExtractorService
+from src.document_extractor.service import DocumentExtractor
 from src.exceptions import ResourceLockedException
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
@@ -35,7 +35,7 @@ async def sync_source_documents(
     logging.info(f"Syncing documents for source {source_name}")
 
     metadata_service = SourceMetadataService()
-    document_extractor = DocumentExtractorService()
+    document_extractor = DocumentExtractor()
     vector_store_service = get_vector_store_service(settings.VECTOR_STORE_PROVIDER)
 
     batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE

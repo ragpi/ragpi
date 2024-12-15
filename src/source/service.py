@@ -2,7 +2,7 @@ from uuid import uuid4
 from traceloop.sdk.decorators import task  # type: ignore
 
 from src.config import settings
-from src.document_extractor.service import DocumentExtractorService
+from src.document_extractor.service import DocumentExtractor
 from src.exceptions import (
     ResourceAlreadyExistsException,
     ResourceLockedException,
@@ -28,7 +28,7 @@ class SourceService:
         self.vector_store_service = get_vector_store_service(
             settings.VECTOR_STORE_PROVIDER
         )
-        self.document_extractor = DocumentExtractorService()
+        self.document_extractor = DocumentExtractor()
         self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
         self.metadata_service = SourceMetadataService()
         self.lock_service = LockService()
