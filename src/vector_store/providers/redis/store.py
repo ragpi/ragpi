@@ -9,7 +9,7 @@ from redisvl.query.filter import Tag  # type: ignore
 from redis.commands.search.query import Query
 
 from src.config import settings
-from src.document.schemas import Document
+from src.document_extractor.schemas import Document
 from src.redis import get_redis_client
 from src.vector_store.base import VectorStoreBase
 from src.vector_store.providers.redis.index_schema import (

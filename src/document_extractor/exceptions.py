@@ -6,5 +6,5 @@ class GitHubClientException(Exception):
     pass
 
 
-class DocumentServiceException(Exception):
+class DocumentExtractorException(Exception):
     pass

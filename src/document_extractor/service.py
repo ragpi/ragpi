@@ -1,15 +1,15 @@
 import logging
 from typing import AsyncGenerator
-from src.document.chunker import chunk_github_issue, chunk_markdown_page
-from src.document.clients.github_issue import GitHubIssueClient
-from src.document.clients.github_readme import GitHubReadmeClient
-from src.document.exceptions import (
-    DocumentServiceException,
+from src.document_extractor.chunker import chunk_github_issue, chunk_markdown_page
+from src.document_extractor.clients.github_issue import GitHubIssueClient
+from src.document_extractor.clients.github_readme import GitHubReadmeClient
+from src.document_extractor.exceptions import (
+    DocumentExtractorException,
     GitHubClientException,
     SitemapClientException,
 )
-from src.document.schemas import Document
-from src.document.clients.sitemap import SitemapClient
+from src.document_extractor.schemas import Document
+from src.document_extractor.clients.sitemap import SitemapClient
 from src.source.config import (
     GithubIssuesConfig,
     GithubReadmeConfig,
@@ -19,8 +19,8 @@ from src.source.config import (
 )
 
 
-class DocumentService:
-    async def create_documents_from_sitemap(
+class DocumentExtractorService:
+    async def extract_documents_from_sitemap(
         self, config: SitemapConfig
     ) -> AsyncGenerator[Document, None]:
         try:
@@ -36,12 +36,12 @@ class DocumentService:
                     for chunk in chunks:
                         yield chunk
         except SitemapClientException as e:
-            raise DocumentServiceException(str(e))
+            raise DocumentExtractorException(str(e))
         except Exception as e:
             logging.exception("Unexpected error while processing sitemap source.")
-            raise DocumentServiceException("Failed to create documents from sitemap")
+            raise DocumentExtractorException("Failed to create documents from sitemap")
 
-    async def create_documents_from_github_issues(
+    async def extract_documents_from_github_issues(
         self,
         config: GithubIssuesConfig,
     ) -> AsyncGenerator[Document, None]:
@@ -61,14 +61,14 @@ class DocumentService:
                     for chunk in chunks:
                         yield chunk
         except GitHubClientException as e:
-            raise DocumentServiceException(str(e))
+            raise DocumentExtractorException(str(e))
         except Exception as e:
             logging.exception("Unexpected error while processing GitHub issues source.")
-            raise DocumentServiceException(
+            raise DocumentExtractorException(
                 "Failed to create documents from GitHub issues"
             )
 
-    async def create_documents_from_github_readme(
+    async def extract_documents_from_github_readme(
         self,
         config: GithubReadmeConfig,
     ) -> AsyncGenerator[Document, None]:
@@ -86,25 +86,25 @@ class DocumentService:
                     for chunk in chunks:
                         yield chunk
         except GitHubClientException as e:
-            raise DocumentServiceException(str(e))
+            raise DocumentExtractorException(str(e))
         except Exception as e:
             logging.exception("Unexpected error while processing GitHub readme source.")
-            raise DocumentServiceException(
+            raise DocumentExtractorException(
                 "Failed to create documents from GitHub readme"
             )
 
-    async def create_documents(
+    async def extract_documents(
         self,
         source_config: SourceConfig,
     ) -> AsyncGenerator[Document, None]:
         if source_config.type == SourceType.SITEMAP:
-            async for doc in self.create_documents_from_sitemap(source_config):
+            async for doc in self.extract_documents_from_sitemap(source_config):
                 yield doc
         elif source_config.type == SourceType.GITHUB_ISSUES:
-            async for doc in self.create_documents_from_github_issues(source_config):
+            async for doc in self.extract_documents_from_github_issues(source_config):
                 yield doc
         elif source_config.type == SourceType.GITHUB_README:
-            async for doc in self.create_documents_from_github_readme(source_config):
+            async for doc in self.extract_documents_from_github_readme(source_config):
                 yield doc
         else:
-            raise DocumentServiceException("Unsupported source type.")
+            raise DocumentExtractorException("Unsupported source type.")

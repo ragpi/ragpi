@@ -6,13 +6,13 @@ from celery import current_task
 from celery.exceptions import Ignore
 
 from src.config import settings
-from src.document.service import DocumentService
+from src.document_extractor.service import DocumentExtractorService
 from src.exceptions import ResourceLockedException
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app
-from src.document.exceptions import DocumentServiceException
-from src.document.schemas import Document
+from src.document_extractor.exceptions import DocumentExtractorException
+from src.document_extractor.schemas import Document
 from src.source.exceptions import SyncSourceException
 from src.source.config import (
     SOURCE_CONFIG_REGISTRY,
@@ -35,7 +35,7 @@ async def sync_source_documents(
     logging.info(f"Syncing documents for source {source_name}")
 
     metadata_service = SourceMetadataService()
-    document_service = DocumentService()
+    document_extractor = DocumentExtractorService()
     vector_store_service = get_vector_store_service(settings.VECTOR_STORE_PROVIDER)
 
     batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
@@ -55,7 +55,7 @@ async def sync_source_documents(
             timestamp=get_current_datetime(),
         )
 
-        async for doc in document_service.create_documents(source_config):
+        async for doc in document_extractor.extract_documents(source_config):
             if doc.id in current_doc_ids:
                 continue
 
@@ -132,7 +132,7 @@ async def sync_source_documents(
 
     except SyncSourceException as e:
         exception_to_raise = e
-    except DocumentServiceException as e:
+    except DocumentExtractorException as e:
         exception_to_raise = SyncSourceException(str(e))
     except Exception as e:
         exception_to_raise = e
