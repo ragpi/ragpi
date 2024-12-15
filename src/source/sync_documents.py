@@ -18,7 +18,7 @@ from src.source.config import (
     SOURCE_CONFIG_REGISTRY,
     SourceConfig,
 )
-from src.source.metadata import SourceMetadataService
+from src.source.metadata import SourceMetadataManager
 from src.source.schemas import (
     SourceOverview,
     SourceStatus,
@@ -34,7 +34,7 @@ async def sync_source_documents(
 ) -> SourceOverview:
     logging.info(f"Syncing documents for source {source_name}")
 
-    metadata_service = SourceMetadataService()
+    metadata_manager = SourceMetadataManager()
     document_extractor = DocumentExtractor()
     document_store = get_document_store(settings.VECTOR_STORE_PROVIDER)
 
@@ -47,7 +47,7 @@ async def sync_source_documents(
     exception_to_raise: Exception | None = None
 
     try:
-        metadata_service.update_metadata(
+        metadata_manager.update_metadata(
             name=source_name,
             description=None,
             status=SourceStatus.SYNCING,
@@ -118,7 +118,7 @@ async def sync_source_documents(
         if not current_doc_ids - existing_doc_ids:
             logging.info(f"No new documents added to source {source_name}")
 
-        updated_source = metadata_service.update_metadata(
+        updated_source = metadata_manager.update_metadata(
             name=source_name,
             description=None,
             status=SourceStatus.COMPLETED,
@@ -136,7 +136,7 @@ async def sync_source_documents(
         exception_to_raise = e
 
     if exception_to_raise:
-        updated_source = metadata_service.update_metadata(
+        updated_source = metadata_manager.update_metadata(
             name=source_name,
             description=None,
             status=SourceStatus.FAILED,

@@ -12,8 +12,7 @@ from src.source.schemas import SourceOverview, SourceStatus
 from src.document.store.service import get_document_store
 
 
-# TODO: Rename create_metadata to create_source, etc?
-class SourceMetadataService:
+class SourceMetadataManager:
     def __init__(self):
         self.client = get_redis_client()
         self.document_store = get_document_store(settings.VECTOR_STORE_PROVIDER)
@@ -31,6 +30,7 @@ class SourceMetadataService:
 
         return key_name
 
+    # TODO: Rename to serialize and deserialize?
     def _create_config_dict(self, config: SourceConfig) -> dict[str, Any]:
         config_dict: dict[str, Any] = {}
         for key, value in config.model_dump().items():
