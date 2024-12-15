@@ -67,7 +67,7 @@ async def sync_source_documents(
 
                 if len(docs_to_add) >= batch_size:
                     try:
-                        vector_store_service.add_source_documents(
+                        vector_store_service.add_documents(
                             source_name,
                             docs_to_add,
                         )
@@ -85,7 +85,7 @@ async def sync_source_documents(
 
         if docs_to_add:
             try:
-                vector_store_service.add_source_documents(
+                vector_store_service.add_documents(
                     source_name,
                     docs_to_add,
                 )
@@ -103,7 +103,7 @@ async def sync_source_documents(
         doc_ids_to_remove = existing_doc_ids - current_doc_ids
         if doc_ids_to_remove:
             try:
-                vector_store_service.delete_source_documents(
+                vector_store_service.delete_documents(
                     source_name, list(doc_ids_to_remove)
                 )
                 logging.info(
