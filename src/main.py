@@ -7,9 +7,11 @@ from traceloop.sdk import Traceloop  #  type: ignore
 from src.dependencies import create_rate_limiter, get_api_key
 from src.exceptions import (
     ResourceAlreadyExistsException,
+    ResourceLockedException,
     ResourceNotFoundException,
     rate_limit_exception_handler,
     resource_already_exists_handler,
+    resource_locked_handler,
     resource_not_found_handler,
     unexpected_exception_handler,
 )
@@ -35,6 +37,7 @@ app.state.limiter = limiter
 app.exception_handler(RateLimitExceeded)(rate_limit_exception_handler)
 app.exception_handler(ResourceNotFoundException)(resource_not_found_handler)
 app.exception_handler(ResourceAlreadyExistsException)(resource_already_exists_handler)
+app.exception_handler(ResourceLockedException)(resource_locked_handler)
 app.exception_handler(Exception)(unexpected_exception_handler)
 
 app.add_middleware(SlowAPIMiddleware)

@@ -1,7 +1,15 @@
+from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 import re
 
 from src.source.config import SourceConfig
+
+
+class SourceStatus(str, Enum):
+    PENDING = "pending"
+    SYNCING = "syncing"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 # Inputs
@@ -12,10 +20,11 @@ class SearchSourceInput(BaseModel):
 
 
 # Outputs
-class SourceOverview(BaseModel):
+class SourceOverview(BaseModel):  # TODO: Rename to SourceMetadata?
     id: str
     name: str
     description: str
+    status: SourceStatus
     num_docs: int
     created_at: str
     updated_at: str

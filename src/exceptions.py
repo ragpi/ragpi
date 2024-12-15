@@ -6,28 +6,33 @@ from slowapi.errors import RateLimitExceeded
 
 
 class ResourceType(str, Enum):
-    SOURCE = "source"
-    TASK = "task"
+    SOURCE = "Source"
+    TASK = "Task"
 
 
 class ResourceNotFoundException(Exception):
     def __init__(self, resource_type: ResourceType, identifier: str):
-        self.resource_type = resource_type
+        self.resource_type = resource_type.value
         self.identifier = identifier
-        super().__init__(f"{resource_type.capitalize()} '{identifier}' not found")
+        super().__init__(f"{self.resource_type} '{identifier}' not found")
 
 
 class ResourceAlreadyExistsException(Exception):
     def __init__(self, resource_type: ResourceType, identifier: str):
-        self.resource_type = resource_type
+        self.resource_type = resource_type.value
         self.identifier = identifier
-        super().__init__(f"{resource_type.capitalize()} '{identifier}' already exists")
+        super().__init__(f"{self.resource_type} '{identifier}' already exists")
 
 
 class ResourceLockedException(Exception):
-    def __init__(self, resource_name: str):
-        self.resource_name = resource_name
-        super().__init__(f"Resource '{resource_name}' is locked")
+    def __init__(self, resource_type: ResourceType | None, identifier: str):
+        self.resource_type = resource_type.value if resource_type else "Resource"
+        self.identifier = identifier
+        if resource_type == ResourceType.SOURCE:
+            message = f"There is already a task running for source '{identifier}'"
+        else:
+            message = f"{self.resource_type} '{identifier}' is locked"
+        super().__init__(message)
 
 
 def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
@@ -44,6 +49,14 @@ def resource_already_exists_handler(
     logging.error(exc)
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+def resource_locked_handler(request: Request, exc: ResourceLockedException):
+    logging.error(exc)
+    return JSONResponse(
+        status_code=status.HTTP_423_LOCKED,
         content={"detail": str(exc)},
     )
 
