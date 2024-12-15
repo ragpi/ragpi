@@ -24,7 +24,7 @@ from src.source.schemas import (
     SourceStatus,
 )
 from src.source.utils import get_current_datetime
-from src.vector_store.service import get_vector_store_service
+from src.document_store.service import get_document_store
 
 
 async def sync_source_documents(
@@ -36,7 +36,7 @@ async def sync_source_documents(
 
     metadata_service = SourceMetadataService()
     document_extractor = DocumentExtractor()
-    vector_store_service = get_vector_store_service(settings.VECTOR_STORE_PROVIDER)
+    document_store = get_document_store(settings.VECTOR_STORE_PROVIDER)
 
     batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
 
@@ -67,7 +67,7 @@ async def sync_source_documents(
 
                 if len(docs_to_add) >= batch_size:
                     try:
-                        vector_store_service.add_documents(
+                        document_store.add_documents(
                             source_name,
                             docs_to_add,
                         )
@@ -85,7 +85,7 @@ async def sync_source_documents(
 
         if docs_to_add:
             try:
-                vector_store_service.add_documents(
+                document_store.add_documents(
                     source_name,
                     docs_to_add,
                 )
@@ -103,9 +103,7 @@ async def sync_source_documents(
         doc_ids_to_remove = existing_doc_ids - current_doc_ids
         if doc_ids_to_remove:
             try:
-                vector_store_service.delete_documents(
-                    source_name, list(doc_ids_to_remove)
-                )
+                document_store.delete_documents(source_name, list(doc_ids_to_remove))
                 logging.info(
                     f"Removed {len(doc_ids_to_remove)} documents from source {source_name}"
                 )

@@ -9,16 +9,14 @@ from src.exceptions import (
     ResourceType,
 )
 from src.source.schemas import SourceOverview, SourceStatus
-from src.vector_store.service import get_vector_store_service
+from src.document_store.service import get_document_store
 
 
 # TODO: Rename create_metadata to create_source, etc?
 class SourceMetadataService:
     def __init__(self):
         self.client = get_redis_client()
-        self.vector_store_service = get_vector_store_service(
-            settings.VECTOR_STORE_PROVIDER
-        )
+        self.document_store = get_document_store(settings.VECTOR_STORE_PROVIDER)
         self.config_prefix = "config__"
         self.source_config_classes = SOURCE_CONFIG_REGISTRY
 
@@ -106,7 +104,7 @@ class SourceMetadataService:
     def get_metadata(self, source_name: str) -> SourceOverview:
         metadata_key = self._get_metadata_key(source_name)
         metadata = self.client.hgetall(metadata_key)
-        num_docs = self.vector_store_service.get_document_count(source_name)
+        num_docs = self.document_store.get_document_count(source_name)
         source_config = self._parse_config_from_metadata(metadata)
         status = SourceStatus(metadata["status"])
 

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from src.document_extractor.schemas import Document
 
 
-class VectorStoreBase(ABC):
+class DocumentStoreBase(ABC):
     @abstractmethod
     def add_documents(self, source_name: str, documents: list[Document]) -> list[str]:
         pass

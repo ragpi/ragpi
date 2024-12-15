@@ -11,15 +11,15 @@ from redis.commands.search.query import Query
 from src.config import settings
 from src.document_extractor.schemas import Document
 from src.redis import get_redis_client
-from src.vector_store.base import VectorStoreBase
-from src.vector_store.providers.redis.index_schema import (
+from src.document_store.base import DocumentStoreBase
+from src.document_store.providers.redis.index_schema import (
     DOCUMENT_FIELDS,
     DOCUMENT_SCHEMA,
 )
-from src.vector_store.ranking import reciprocal_rank_fusion
+from src.document_store.ranking import reciprocal_rank_fusion
 
 
-class RedisVectorStore(VectorStoreBase):
+class RedisDocumentStore(DocumentStoreBase):
     def __init__(self) -> None:
         self.client = get_redis_client()
         self.embedding_model = settings.EMBEDDING_MODEL
@@ -27,7 +27,7 @@ class RedisVectorStore(VectorStoreBase):
         self.embedding_client = OpenAI().embeddings
         self.document_schema: dict[str, Any] = DOCUMENT_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
-        self.namespace = "vector_store"
+        self.namespace = "store"
         self.index_prefix = f"{self.namespace}:documents"
         index_schema = IndexSchema.from_dict(
             {

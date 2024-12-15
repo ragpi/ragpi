@@ -20,14 +20,12 @@ from src.source.schemas import (
 )
 from src.source.sync_documents import sync_source_documents_task
 from src.source.utils import get_current_datetime
-from src.vector_store.service import get_vector_store_service
+from src.document_store.service import get_document_store
 
 
 class SourceService:
     def __init__(self):
-        self.vector_store_service = get_vector_store_service(
-            settings.VECTOR_STORE_PROVIDER
-        )
+        self.document_store = get_document_store(settings.VECTOR_STORE_PROVIDER)
         self.document_extractor = DocumentExtractor()
         self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
         self.metadata_service = SourceMetadataService()
@@ -78,7 +76,7 @@ class SourceService:
         if self.lock_service.lock_exists(source_name):
             raise ResourceLockedException(ResourceType.SOURCE, source_name)
 
-        existing_doc_ids = self.vector_store_service.get_document_ids(source_name)
+        existing_doc_ids = self.document_store.get_document_ids(source_name)
 
         # If description or config is None in update_metadata, it will not be updated
         description = (
@@ -114,7 +112,7 @@ class SourceService:
         if not self.metadata_service.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
-        return self.vector_store_service.get_documents(source_name, limit, offset)
+        return self.document_store.get_documents(source_name, limit, offset)
 
     def get_all_sources(self):
         return self.metadata_service.get_all_metadata()
@@ -123,7 +121,7 @@ class SourceService:
         if not self.metadata_service.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
-        self.vector_store_service.delete_all_documents(source_name)
+        self.document_store.delete_all_documents(source_name)
         self.metadata_service.delete_metadata(source_name)
 
     @task(name="search_source")  # type: ignore
@@ -131,6 +129,6 @@ class SourceService:
         if not self.metadata_service.metadata_exists(source_input.name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_input.name)
 
-        return self.vector_store_service.search_documents(
+        return self.document_store.search_documents(
             source_input.name, source_input.query, source_input.top_k
         )
