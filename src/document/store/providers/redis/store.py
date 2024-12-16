@@ -27,11 +27,11 @@ class RedisDocumentStore(DocumentStoreBase):
         self.embedding_client = OpenAI().embeddings
         self.document_schema: dict[str, Any] = DOCUMENT_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
-        self.namespace = "store"
-        self.index_prefix = f"{self.namespace}:documents"
+        self.index_name = settings.DOCUMENT_STORE_NAMESPACE
+        self.index_prefix = f"{self.index_name}:sources"
         index_schema = IndexSchema.from_dict(
             {
-                "index": {"name": self.namespace, "prefix": self.index_prefix},
+                "index": {"name": self.index_name, "prefix": self.index_prefix},
                 **self.document_schema,
             }
         )
@@ -65,38 +65,29 @@ class RedisDocumentStore(DocumentStoreBase):
             for doc in search_results
         ]
 
-    def add_documents(self, source_name: str, documents: list[Document]) -> list[str]:
-        embeddings_data = self.embedding_client.create(
+    def add_documents(self, source_name: str, documents: list[Document]) -> None:
+        embeddings_result = self.embedding_client.create(
             input=[doc.content for doc in documents],
             model=self.embedding_model,
             dimensions=self.embedding_dimensions,
-        ).data
+        )
 
-        doc_embeddings = [embedding.embedding for embedding in embeddings_data]
-
-        def create_doc_dict(doc: Document, embedding: list[float]) -> dict[str, Any]:
-            internal_id = self._create_internal_doc_id(source_name, doc.id)
-            doc_dict: dict[str, Any] = {
-                "id": internal_id,
+        data: list[dict[str, Any]] = [
+            {
+                "id": self._create_internal_doc_id(source_name, doc.id),
                 "source": source_name,
                 "content": doc.content,
                 "title": doc.title,
                 "url": doc.url,
                 "created_at": doc.created_at,
-                "embedding": np.array(embedding, dtype=np.float32).tobytes(),
+                "embedding": np.array(
+                    embedding_data.embedding, dtype=np.float32
+                ).tobytes(),
             }
-            return doc_dict
-
-        data = [
-            create_doc_dict(doc, embedding)
-            for doc, embedding in zip(documents, doc_embeddings)
+            for doc, embedding_data in zip(documents, embeddings_result.data)
         ]
 
-        keys = self.index.load(id_field="id", data=data)  # type: ignore
-
-        ids = [self._extract_real_doc_id(source_name, key) for key in keys]
-
-        return ids
+        self.index.load(id_field="id", data=data)  # type: ignore
 
     def get_documents(
         self, source_name: str, limit: int | None, offset: int | None
@@ -196,7 +187,7 @@ class RedisDocumentStore(DocumentStoreBase):
             .return_fields(*self.document_fields)
         )
 
-        ft = self.client.ft(f"{self.namespace}")
+        ft = self.client.ft(f"{self.index_name}")
         search_results = ft.search(query_obj)  # type: ignore
         return self._map_search_results_to_documents(source_name, search_results.docs)
 

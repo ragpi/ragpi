@@ -5,7 +5,7 @@ from src.document.schemas import Document
 
 class DocumentStoreBase(ABC):
     @abstractmethod
-    def add_documents(self, source_name: str, documents: list[Document]) -> list[str]:
+    def add_documents(self, source_name: str, documents: list[Document]) -> None:
         pass
 
     @abstractmethod

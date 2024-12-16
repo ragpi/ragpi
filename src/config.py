@@ -17,6 +17,8 @@ class Settings(BaseSettings):
 
     VECTOR_STORE_PROVIDER: Literal["redis"] = "redis"
 
+    DOCUMENT_STORE_NAMESPACE: str = "document_store"
+
     DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"
 
     OPENAI_API_KEY: str
