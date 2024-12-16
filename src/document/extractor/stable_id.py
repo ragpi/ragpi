@@ -1,7 +1,9 @@
 from uuid import UUID, uuid5
 
+from src.config import settings
+
 
 def generate_stable_id(url: str, content: str) -> str:
-    namespace = UUID("ee747eb2-fd0f-4650-9785-a2e9ae036ff2")
+    namespace = UUID(settings.DOCUMENT_UUID_NAMESPACE)
 
     return str(uuid5(namespace, f"{url}:{content}"))
