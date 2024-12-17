@@ -1,11 +1,6 @@
 from typing import Literal
-from pydantic import Field, model_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings
-
-
-EMBEDDING_MODELS = Literal[
-    "text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"
-]
 
 
 class Settings(BaseSettings):
@@ -15,33 +10,35 @@ class Settings(BaseSettings):
 
     API_KEY: str | None = None
 
+    REDIS_URL: str = "redis://localhost:6379"
+
+    OLLAMA_BASE_URL: str = "http://localhost:11434/v1"
+
     VECTOR_STORE_PROVIDER: Literal["redis"] = "redis"
 
-    DOCUMENT_STORE_NAMESPACE: str = "document_store"
+    CHAT_PROVIDER: Literal["openai", "ollama"] = "openai"
 
-    DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"
+    EMBEDDING_PROVIDER: Literal["openai", "ollama"] = "openai"
+
+    CHAT_MODEL: str = "gpt-4o-mini"
+
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+
+    EMBEDDING_DIMENSIONS: int = 1536
 
     OPENAI_API_KEY: str
 
     GITHUB_TOKEN: str
 
-    TRACELOOP_API_KEY: str | None = None
-
-    TRACELOOP_BASE_URL: str | None = None
-
-    TRACELOOP_HEADERS: str | None = None
-
     GITHUB_API_VERSION: str = "2022-11-28"
 
-    REDIS_URL: str = "redis://localhost:6379"
-
-    CHAT_MODEL: str = "gpt-4o-mini"
+    CHAT_HISTORY_LIMIT: int = 20
 
     CHAT_MAX_ATTEMPTS: int = 5
 
-    EMBEDDING_MODEL: EMBEDDING_MODELS = "text-embedding-3-small"
+    DOCUMENT_STORE_NAMESPACE: str = "document_store"
 
-    EMBEDDING_DIMENSIONS: int = 1536
+    DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"
 
     CHUNK_SIZE: int = 512
 
@@ -57,11 +54,11 @@ class Settings(BaseSettings):
         pattern=r"^\d+/(second|minute|hour|day|month|year)$", default="60/minute"
     )
 
-    @model_validator(mode="after")
-    def set_embedding_dimensions(self):
-        if self.EMBEDDING_MODEL == "text-embedding-3-large":
-            self.EMBEDDING_DIMENSIONS = 3072  # type: ignore
-        return self
+    TRACELOOP_API_KEY: str | None = None
+
+    TRACELOOP_BASE_URL: str | None = None
+
+    TRACELOOP_HEADERS: str | None = None
 
 
 settings = Settings()  # type: ignore

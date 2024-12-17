@@ -7,7 +7,7 @@ from celery.exceptions import Ignore
 
 from src.config import settings
 from src.document.extractor.service import DocumentExtractor
-from src.exceptions import ResourceLockedException
+from src.common.exceptions import ResourceLockedException
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app

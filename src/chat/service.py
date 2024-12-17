@@ -1,5 +1,5 @@
 import json
-from openai import OpenAI, pydantic_function_tool
+from openai import pydantic_function_tool
 from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
@@ -10,6 +10,7 @@ from openai.types.chat import (
 
 from src.chat.schemas import ChatResponse, CreateChatInput
 from src.chat.tools import FUNCTION_TOOLS
+from src.common.openai import get_openai_client
 from src.config import settings
 from src.source.schemas import SearchSourceInput
 from src.source.service import SourceService
@@ -17,8 +18,8 @@ from src.source.service import SourceService
 
 class ChatService:
     def __init__(self):
-        self.openai_client = OpenAI()
-        self.default_chat_model = settings.CHAT_MODEL
+        self.chat_provider = settings.CHAT_PROVIDER
+        self.chat_client = get_openai_client(self.chat_provider)
         self.base_system_prompt = settings.BASE_SYSTEM_PROMPT
         self.tools = [
             pydantic_function_tool(
@@ -28,10 +29,16 @@ class ChatService:
             )
             for tool in FUNCTION_TOOLS
         ]
+        self.chat_history_limit = settings.CHAT_HISTORY_LIMIT
         self.source_service = SourceService()
 
     def _create_system_prompt(self, chat_input: CreateChatInput) -> str:
-        sources = [self.source_service.get_source(name) for name in chat_input.sources]
+        if not chat_input.sources:
+            sources = self.source_service.get_all_sources()
+        else:
+            sources = [
+                self.source_service.get_source(name) for name in chat_input.sources
+            ]
 
         sources_info = [
             {
@@ -57,14 +64,16 @@ Utilize the `search_source` tool to find relevant information from the available
 3. **Attempts:**
     - You have {chat_input.max_attempts} attempts to answer the user's question.
 4. **Providing Information:**
+    - Respond as if the user cannot see the source documents.
     - When relevant information is found, include links to the source documents in your response.
+    - Only answer the question if the provided information is able to answer the user's query.
     - If unable to find an answer after exhausting all attempts, respond with: "I'm sorry, but I don't have the information you're looking for."
 """
 
     def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
         system_prompt = self._create_system_prompt(chat_input)
 
-        chat_history = chat_input.messages[:-1]
+        chat_history = chat_input.messages[-self.chat_history_limit :]
 
         previous_messages = [
             (
@@ -87,8 +96,8 @@ Utilize the `search_source` tool to find relevant information from the available
 
         attempts = 0
         while attempts < chat_input.max_attempts:
-            response = self.openai_client.chat.completions.create(
-                model=chat_input.chat_model or self.default_chat_model,
+            response = self.chat_client.chat.completions.create(
+                model=chat_input.chat_model,
                 messages=messages,
                 tools=self.tools,
             )

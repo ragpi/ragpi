@@ -5,7 +5,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from traceloop.sdk import Traceloop  #  type: ignore
 
 from src.dependencies import create_rate_limiter, get_api_key
-from src.exceptions import (
+from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceLockedException,
     ResourceNotFoundException,

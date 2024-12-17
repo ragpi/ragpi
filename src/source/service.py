@@ -3,7 +3,7 @@ from traceloop.sdk.decorators import task  # type: ignore
 
 from src.config import settings
 from src.document.extractor.service import DocumentExtractor
-from src.exceptions import (
+from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceLockedException,
     ResourceNotFoundException,

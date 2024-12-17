@@ -1,9 +1,9 @@
 import json
 from typing import Any
 from src.config import settings
-from src.redis import get_redis_client
+from src.common.redis import get_redis_client
 from src.source.config import SOURCE_CONFIG_REGISTRY, SourceConfig
-from src.exceptions import (
+from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceAlreadyExistsException,
     ResourceType,

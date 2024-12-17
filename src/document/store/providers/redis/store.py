@@ -1,16 +1,16 @@
 import re
 import numpy as np
 from typing import Any
-from openai import OpenAI
 from redisvl.index import SearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
 from redisvl.query.filter import Tag  # type: ignore
 from redis.commands.search.query import Query
 
+from src.common.redis import get_redis_client
+from src.common.openai import get_openai_client
 from src.config import settings
 from src.document.schemas import Document
-from src.redis import get_redis_client
 from src.document.store.base import DocumentStoreBase
 from src.document.store.providers.redis.index_schema import (
     DOCUMENT_FIELDS,
@@ -22,9 +22,10 @@ from src.document.store.ranking import reciprocal_rank_fusion
 class RedisDocumentStore(DocumentStoreBase):
     def __init__(self) -> None:
         self.client = get_redis_client()
+        self.embedding_provider = settings.EMBEDDING_PROVIDER
+        self.embedding_client = get_openai_client(self.embedding_provider).embeddings
         self.embedding_model = settings.EMBEDDING_MODEL
         self.embedding_dimensions = settings.EMBEDDING_DIMENSIONS
-        self.embedding_client = OpenAI().embeddings
         self.document_schema: dict[str, Any] = DOCUMENT_SCHEMA
         self.document_fields = DOCUMENT_FIELDS
         self.index_name = settings.DOCUMENT_STORE_NAMESPACE

@@ -10,8 +10,8 @@ class ChatMessage(BaseModel):
 
 
 class CreateChatInput(BaseModel):
-    sources: list[str]
-    chat_model: str | None = None
+    sources: list[str] | None = None
+    chat_model: str = settings.CHAT_MODEL
     system: str | None = None
     messages: list[ChatMessage]
     max_attempts: int = settings.CHAT_MAX_ATTEMPTS

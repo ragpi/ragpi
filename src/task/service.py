@@ -1,7 +1,7 @@
 from src.config import settings
 from src.celery import celery_app
-from src.exceptions import ResourceNotFoundException, ResourceType
-from src.redis import get_redis_client
+from src.common.exceptions import ResourceNotFoundException, ResourceType
+from src.common.redis import get_redis_client
 from src.task.schemas import TaskStatus
 
 

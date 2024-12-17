@@ -4,7 +4,7 @@ from redis import Redis
 from redis.lock import Lock
 from redis.exceptions import LockError
 from src.config import settings
-from src.exceptions import ResourceLockedException
+from src.common.exceptions import ResourceLockedException
 
 
 class LockService:
