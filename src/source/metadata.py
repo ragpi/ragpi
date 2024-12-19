@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any
 from src.config import settings
 from src.common.redis import get_redis_client
@@ -30,8 +31,7 @@ class SourceMetadataManager:
 
         return key_name
 
-    # TODO: Rename to serialize and deserialize?
-    def _create_config_dict(self, config: SourceConfig) -> dict[str, Any]:
+    def _serialize_config(self, config: SourceConfig) -> dict[str, Any]:
         config_dict: dict[str, Any] = {}
         for key, value in config.model_dump().items():
             if isinstance(value, list):
@@ -43,7 +43,7 @@ class SourceMetadataManager:
             config_dict[f"{self.config_prefix}{key}"] = value
         return config_dict
 
-    def _parse_config_from_metadata(self, metadata: dict[str, Any]) -> SourceConfig:
+    def _deserialize_config(self, metadata: dict[str, Any]) -> SourceConfig:
         source_type = metadata.get(f"{self.config_prefix}type")
         if source_type not in self.source_config_classes:
             raise ValueError(f"Unknown source type: {source_type}")
@@ -56,7 +56,8 @@ class SourceMetadataManager:
                     try:
                         value = json.loads(value)
                     except json.JSONDecodeError:
-                        pass
+                        logging.error(f"Failed to parse config value: {value}")
+                        value = None
                 if value in ("0", "1"):
                     value = bool(int(value))
                 if value == "":
@@ -84,7 +85,7 @@ class SourceMetadataManager:
     ) -> SourceOverview:
         metadata_key = self._get_metadata_key(source_name, should_exist=False)
 
-        config_dict = self._create_config_dict(config)
+        config_dict = self._serialize_config(config)
 
         self.client.hset(
             metadata_key,
@@ -105,7 +106,7 @@ class SourceMetadataManager:
         metadata_key = self._get_metadata_key(source_name)
         metadata = self.client.hgetall(metadata_key)
         num_docs = self.document_store.get_document_count(source_name)
-        source_config = self._parse_config_from_metadata(metadata)
+        source_config = self._deserialize_config(metadata)
         status = SourceStatus(metadata["status"])
 
         return SourceOverview(
@@ -147,7 +148,7 @@ class SourceMetadataManager:
         config_dict: dict[str, Any] = {}
 
         if config is not None:
-            config_dict = self._create_config_dict(config)
+            config_dict = self._serialize_config(config)
 
         self.client.hset(
             metadata_key,

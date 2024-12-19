@@ -161,7 +161,7 @@ def sync_source_documents_task(
     try:
         # Attempt to acquire the lock
         lock = lock_service.acquire_lock(source_name)
-        current_task.update_state(state="PROCESSING")  # TODO: Rename to "SYNCING"?
+        current_task.update_state(state="SYNCING")
 
         # Create a new event loop
         loop = asyncio.new_event_loop()
