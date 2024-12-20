@@ -17,7 +17,7 @@ from src.source.service import SourceService
 
 
 class ChatService:
-    def __init__(self):
+    def __init__(self, source_service: SourceService):
         self.chat_provider = settings.CHAT_PROVIDER
         self.chat_client = get_openai_client(self.chat_provider)
         self.base_system_prompt = settings.BASE_SYSTEM_PROMPT
@@ -30,7 +30,7 @@ class ChatService:
             for tool in FUNCTION_TOOLS
         ]
         self.chat_history_limit = settings.CHAT_HISTORY_LIMIT
-        self.source_service = SourceService()
+        self.source_service = source_service
 
     def _create_system_prompt(self, chat_input: CreateChatInput) -> str:
         if not chat_input.sources:

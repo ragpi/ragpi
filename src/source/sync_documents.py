@@ -5,14 +5,16 @@ from typing import Any
 from celery import current_task
 from celery.exceptions import Ignore
 
+from src.common.redis import get_redis_client, RedisClient
 from src.config import settings
-from src.document.extractor.service import DocumentExtractor
+from src.document_extractor.service import DocumentExtractor
 from src.common.exceptions import ResourceLockedException
+from src.document_store.providers.redis.store import RedisDocumentStore
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app
-from src.document.extractor.exceptions import DocumentExtractorException
-from src.document.schemas import Document
+from src.document_extractor.exceptions import DocumentExtractorException
+from src.common.schemas import Document
 from src.source.exceptions import SyncSourceException
 from src.source.config import (
     SOURCE_CONFIG_REGISTRY,
@@ -24,19 +26,21 @@ from src.source.schemas import (
     SourceStatus,
 )
 from src.source.utils import get_current_datetime
-from src.document.store.service import get_document_store
 
 
 async def sync_source_documents(
+    redis_client: RedisClient,
     source_name: str,
     source_config: SourceConfig,
     existing_doc_ids: set[str],
 ) -> SourceOverview:
     logging.info(f"Syncing documents for source {source_name}")
 
-    metadata_manager = SourceMetadataManager()
+    document_store = RedisDocumentStore(redis_client)
+    metadata_manager = SourceMetadataManager(
+        redis_client=redis_client, document_store=document_store
+    )
     document_extractor = DocumentExtractor()
-    document_store = get_document_store(settings.VECTOR_STORE_PROVIDER)
 
     batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
 
@@ -154,7 +158,8 @@ def sync_source_documents_task(
     source_config_dict: dict[str, Any],
     existing_doc_ids: list[str],
 ):
-    lock_service = LockService()
+    redis_client = get_redis_client()
+    lock_service = LockService(redis_client)
     lock: Lock | None = None
     loop: asyncio.AbstractEventLoop | None = None
 
@@ -183,6 +188,7 @@ def sync_source_documents_task(
                     raise SyncSourceException(f"Invalid config: {e}")
 
                 source_overview = await sync_source_documents(
+                    redis_client=redis_client,
                     source_name=source_name,
                     source_config=source_config,
                     existing_doc_ids=set(existing_doc_ids),

@@ -1,15 +1,15 @@
 import asyncio
 import logging
-from redis import Redis
 from redis.lock import Lock
 from redis.exceptions import LockError
-from src.config import settings
+
+from src.common.redis import RedisClient
 from src.common.exceptions import ResourceLockedException
 
 
 class LockService:
-    def __init__(self):
-        self.redis_client = Redis.from_url(settings.REDIS_URL)
+    def __init__(self, redis_client: RedisClient) -> None:
+        self.redis_client = redis_client
 
     def lock_exists(self, lock_name: str) -> bool:
         return self.redis_client.exists(f"lock:{lock_name}") == 1

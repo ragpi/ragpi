@@ -1,22 +1,22 @@
 import json
 import logging
 from typing import Any
-from src.config import settings
-from src.common.redis import get_redis_client
+
+from src.document_store.base import DocumentStoreBase
 from src.source.config import SOURCE_CONFIG_REGISTRY, SourceConfig
+from src.common.redis import RedisClient
 from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceAlreadyExistsException,
     ResourceType,
 )
 from src.source.schemas import SourceOverview, SourceStatus
-from src.document.store.service import get_document_store
 
 
 class SourceMetadataManager:
-    def __init__(self):
-        self.client = get_redis_client()
-        self.document_store = get_document_store(settings.VECTOR_STORE_PROVIDER)
+    def __init__(self, redis_client: RedisClient, document_store: DocumentStoreBase):
+        self.client = redis_client
+        self.document_store = document_store
         self.config_prefix = "config__"
         self.source_config_classes = SOURCE_CONFIG_REGISTRY
 
@@ -94,7 +94,7 @@ class SourceMetadataManager:
                 "name": source_name,
                 "description": description,
                 "status": status,
-                **config_dict,
+                **config_dict,  # type: ignore
                 "created_at": created_at,
                 "updated_at": updated_at,
             },
@@ -153,7 +153,7 @@ class SourceMetadataManager:
         self.client.hset(
             metadata_key,
             mapping={
-                **config_dict,
+                **config_dict,  # type: ignore
                 "status": status,
                 "updated_at": timestamp,
             },

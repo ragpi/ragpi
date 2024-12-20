@@ -7,21 +7,21 @@ from redisvl.query import VectorQuery  # type: ignore
 from redisvl.query.filter import Tag  # type: ignore
 from redis.commands.search.query import Query
 
-from src.common.redis import get_redis_client
+from src.common.redis import RedisClient
 from src.common.openai import get_openai_client
 from src.config import settings
-from src.document.schemas import Document
-from src.document.store.base import DocumentStoreBase
-from src.document.store.providers.redis.index_schema import (
+from src.common.schemas import Document
+from src.document_store.base import DocumentStoreBase
+from src.document_store.providers.redis.index_schema import (
     DOCUMENT_FIELDS,
     DOCUMENT_SCHEMA,
 )
-from src.document.store.ranking import reciprocal_rank_fusion
+from src.document_store.ranking import reciprocal_rank_fusion
 
 
 class RedisDocumentStore(DocumentStoreBase):
-    def __init__(self) -> None:
-        self.client = get_redis_client()
+    def __init__(self, redis_client: RedisClient) -> None:
+        self.client = redis_client
         self.embedding_provider = settings.EMBEDDING_PROVIDER
         self.embedding_client = get_openai_client(self.embedding_provider).embeddings
         self.embedding_model = settings.EMBEDDING_MODEL

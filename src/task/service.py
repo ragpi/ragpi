@@ -1,13 +1,12 @@
-from src.config import settings
 from src.celery import celery_app
 from src.common.exceptions import ResourceNotFoundException, ResourceType
-from src.common.redis import get_redis_client
+from src.common.redis import RedisClient
 from src.task.schemas import TaskStatus
 
 
 class TaskService:
-    def __init__(self, redis_url: str = settings.REDIS_URL):
-        self.redis_client = get_redis_client()
+    def __init__(self, redis_client: RedisClient):
+        self.redis_client = redis_client
         self.celery_app = celery_app
 
     def task_exists(self, task_id: str) -> bool:
