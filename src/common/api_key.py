@@ -1,7 +1,5 @@
 from fastapi import HTTPException, Security, status
 from fastapi.security.api_key import APIKeyHeader
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from src.config import settings
 
@@ -24,11 +22,3 @@ def get_api_key(api_key: str = Security(api_key_header)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="API key is invalid",
         )
-
-
-def create_rate_limiter() -> Limiter:
-    return Limiter(
-        key_func=get_remote_address,
-        application_limits=[settings.RATE_LIMIT],
-        storage_uri=settings.REDIS_URL,
-    )

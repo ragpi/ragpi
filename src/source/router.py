@@ -1,5 +1,6 @@
 from fastapi import APIRouter, status, Depends
 
+from src.source.dependencies import get_source_service
 from src.source.schemas import (
     SearchSourceInput,
     CreateSourceRequest,
@@ -17,7 +18,7 @@ router = APIRouter(
 
 
 @router.get("/")
-def get_all_sources(source_service: SourceService = Depends()):
+def get_all_sources(source_service: SourceService = Depends(get_source_service)):
     sources = source_service.get_all_sources()
     return sources
 
@@ -25,7 +26,7 @@ def get_all_sources(source_service: SourceService = Depends()):
 @router.post("/", status_code=status.HTTP_202_ACCEPTED)
 def create_source(
     source_input: CreateSourceRequest,
-    source_service: SourceService = Depends(),
+    source_service: SourceService = Depends(get_source_service),
 ):
     source, task_id = source_service.create_source(source_input)
 
@@ -37,13 +38,17 @@ def create_source(
 
 
 @router.get("/{source_name}")
-def get_source(source_name: str, source_service: SourceService = Depends()):
+def get_source(
+    source_name: str, source_service: SourceService = Depends(get_source_service)
+):
     results = source_service.get_source(source_name)
     return results
 
 
 @router.delete("/{source_name}")
-def delete_source(source_name: str, source_service: SourceService = Depends()):
+def delete_source(
+    source_name: str, source_service: SourceService = Depends(get_source_service)
+):
     source_service.delete_source(source_name)
     return {"message": f"Source '{source_name}' deleted"}
 
@@ -52,7 +57,7 @@ def delete_source(source_name: str, source_service: SourceService = Depends()):
 def update_source(
     source_name: str,
     source_input: UpdateSourceRequest,
-    source_service: SourceService = Depends(),
+    source_service: SourceService = Depends(get_source_service),
 ):
     source, task_id = source_service.update_source(source_name, source_input)
 
@@ -75,7 +80,7 @@ def get_source_documents(
     source_name: str,
     limit: int | None = None,
     offset: int | None = None,
-    source_service: SourceService = Depends(),
+    source_service: SourceService = Depends(get_source_service),
 ):
     results = source_service.get_source_documents(source_name, limit, offset)
     return results
@@ -85,7 +90,7 @@ def get_source_documents(
 def search_source(
     source_name: str,
     query_input: SearchSourceRequest,
-    source_service: SourceService = Depends(),
+    source_service: SourceService = Depends(get_source_service),
 ):
     results = source_service.search_source(
         SearchSourceInput(

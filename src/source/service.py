@@ -2,13 +2,13 @@ from uuid import uuid4
 from traceloop.sdk.decorators import task  # type: ignore
 
 from src.config import settings
-from src.document.extractor.service import DocumentExtractor
 from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceLockedException,
     ResourceNotFoundException,
     ResourceType,
 )
+from src.document_store.base import DocumentStoreBase
 from src.lock.service import LockService
 from src.source.metadata import SourceMetadataManager
 from src.source.schemas import (
@@ -20,16 +20,19 @@ from src.source.schemas import (
 )
 from src.source.sync_documents import sync_source_documents_task
 from src.source.utils import get_current_datetime
-from src.document.store.service import get_document_store
 
 
 class SourceService:
-    def __init__(self):
-        self.document_store = get_document_store(settings.VECTOR_STORE_PROVIDER)
-        self.document_extractor = DocumentExtractor()
+    def __init__(
+        self,
+        metadata_manager: SourceMetadataManager,
+        document_store: DocumentStoreBase,
+        lock_service: LockService,
+    ):
+        self.document_store = document_store
         self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
-        self.metadata_manager = SourceMetadataManager()
-        self.lock_service = LockService()
+        self.metadata_manager = metadata_manager
+        self.lock_service = lock_service
 
     def create_source(
         self, source_input: CreateSourceRequest
