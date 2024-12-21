@@ -2,7 +2,9 @@ import logging
 from typing import Any
 from celery import Celery, signals
 
-from src.config import settings
+from src.config import get_settings
+
+settings = get_settings()
 
 redis_url = settings.REDIS_URL
 

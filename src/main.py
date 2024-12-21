@@ -16,9 +16,12 @@ from src.common.exceptions import (
     unexpected_exception_handler,
 )
 from src.common.rate_limiter import create_rate_limiter
+from src.config import get_settings
 from src.source.router import router as source_router
 from src.chat.router import router as chat_router
 from src.task.router import router as task_router
+
+settings = get_settings()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,7 +32,7 @@ Traceloop.init(  #  type: ignore
     app_name="rag-api",
 )
 
-limiter = create_rate_limiter()
+limiter = create_rate_limiter(settings.RATE_LIMIT, settings.REDIS_URL)
 
 app = FastAPI(dependencies=[Depends(get_api_key)])
 

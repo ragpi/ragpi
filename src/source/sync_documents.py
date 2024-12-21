@@ -1,12 +1,14 @@
 import asyncio
 import logging
+from redis import Redis
 from redis.lock import Lock
 from typing import Any
 from celery import current_task
 from celery.exceptions import Ignore
 
-from src.common.redis import get_redis_client, RedisClient
-from src.config import settings
+from src.common.openai import get_openai_client
+from src.common.redis import RedisClient
+from src.config import Settings, get_settings
 from src.document_extractor.service import DocumentExtractor
 from src.common.exceptions import ResourceLockedException
 from src.document_store.providers.redis.store import RedisDocumentStore
@@ -22,25 +24,38 @@ from src.source.config import (
 )
 from src.source.metadata import SourceMetadataManager
 from src.source.schemas import (
-    SourceOverview,
+    SourceMetadata,
     SourceStatus,
 )
 from src.source.utils import get_current_datetime
 
 
+# TODO: Refactor into a class
 async def sync_source_documents(
+    *,
     redis_client: RedisClient,
     source_name: str,
     source_config: SourceConfig,
     existing_doc_ids: set[str],
-) -> SourceOverview:
+    settings: Settings,
+) -> SourceMetadata:
     logging.info(f"Syncing documents for source {source_name}")
 
-    document_store = RedisDocumentStore(redis_client)
+    openai_client = get_openai_client(
+        provider=settings.EMBEDDING_PROVIDER,
+        ollama_url=settings.OLLAMA_BASE_URL,
+    )
+    document_store = RedisDocumentStore(
+        index_name=settings.DOCUMENT_STORE_NAMESPACE,
+        redis_client=redis_client,
+        openai_client=openai_client,
+        embedding_model=settings.EMBEDDING_MODEL,
+        embedding_dimensions=settings.EMBEDDING_DIMENSIONS,
+    )
     metadata_manager = SourceMetadataManager(
         redis_client=redis_client, document_store=document_store
     )
-    document_extractor = DocumentExtractor()
+    document_extractor = DocumentExtractor(settings)
 
     batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
 
@@ -158,7 +173,8 @@ def sync_source_documents_task(
     source_config_dict: dict[str, Any],
     existing_doc_ids: list[str],
 ):
-    redis_client = get_redis_client()
+    settings = get_settings()
+    redis_client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
     lock_service = LockService(redis_client)
     lock: Lock | None = None
     loop: asyncio.AbstractEventLoop | None = None
@@ -192,6 +208,7 @@ def sync_source_documents_task(
                     source_name=source_name,
                     source_config=source_config,
                     existing_doc_ids=set(existing_doc_ids),
+                    settings=settings,
                 )
 
                 return source_overview.model_dump()

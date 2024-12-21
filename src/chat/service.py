@@ -1,5 +1,5 @@
 import json
-from openai import pydantic_function_tool
+from openai import OpenAI, pydantic_function_tool
 from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
@@ -8,19 +8,24 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
 )
 
+from src.chat.exceptions import ChatException
 from src.chat.schemas import ChatResponse, CreateChatInput
 from src.chat.tools import FUNCTION_TOOLS
-from src.common.openai import get_openai_client
-from src.config import settings
 from src.source.schemas import SearchSourceInput
 from src.source.service import SourceService
 
 
 class ChatService:
-    def __init__(self, source_service: SourceService):
-        self.chat_provider = settings.CHAT_PROVIDER
-        self.chat_client = get_openai_client(self.chat_provider)
-        self.base_system_prompt = settings.BASE_SYSTEM_PROMPT
+    def __init__(
+        self,
+        *,
+        source_service: SourceService,
+        openai_client: OpenAI,
+        base_system_prompt: str,
+        chat_history_limit: int,
+    ):
+        self.chat_client = openai_client
+        self.base_system_prompt = base_system_prompt
         self.tools = [
             pydantic_function_tool(
                 model=tool.model,
@@ -29,7 +34,7 @@ class ChatService:
             )
             for tool in FUNCTION_TOOLS
         ]
-        self.chat_history_limit = settings.CHAT_HISTORY_LIMIT
+        self.chat_history_limit = chat_history_limit
         self.source_service = source_service
 
     def _create_system_prompt(self, chat_input: CreateChatInput) -> str:
@@ -39,6 +44,9 @@ class ChatService:
             sources = [
                 self.source_service.get_source(name) for name in chat_input.sources
             ]
+
+        if not sources:
+            raise ChatException("No sources found.")
 
         sources_info = [
             {
@@ -75,7 +83,7 @@ Utilize the `search_source` tool to find relevant information from the available
 
         chat_history = chat_input.messages[-self.chat_history_limit :]
 
-        previous_messages = [
+        previous_messages: list[ChatCompletionMessageParam] = [
             (
                 ChatCompletionUserMessageParam(role="user", content=message.content)
                 if message.role == "user"

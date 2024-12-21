@@ -1,12 +1,10 @@
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from src.config import settings
 
-
-def create_rate_limiter() -> Limiter:
+def create_rate_limiter(rate_limit: str, storage_uri: str) -> Limiter:
     return Limiter(
         key_func=get_remote_address,
-        application_limits=[settings.RATE_LIMIT],
-        storage_uri=settings.REDIS_URL,
+        application_limits=[rate_limit],
+        storage_uri=storage_uri,
     )

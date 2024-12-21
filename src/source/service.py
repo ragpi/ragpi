@@ -1,7 +1,6 @@
 from uuid import uuid4
 from traceloop.sdk.decorators import task  # type: ignore
 
-from src.config import settings
 from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceLockedException,
@@ -14,7 +13,7 @@ from src.source.metadata import SourceMetadataManager
 from src.source.schemas import (
     CreateSourceRequest,
     SearchSourceInput,
-    SourceOverview,
+    SourceMetadata,
     SourceStatus,
     UpdateSourceRequest,
 )
@@ -30,13 +29,12 @@ class SourceService:
         lock_service: LockService,
     ):
         self.document_store = document_store
-        self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
         self.metadata_manager = metadata_manager
         self.lock_service = lock_service
 
     def create_source(
         self, source_input: CreateSourceRequest
-    ) -> tuple[SourceOverview, str]:
+    ) -> tuple[SourceMetadata, str]:
         if self.metadata_manager.metadata_exists(source_input.name):
             raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_input.name)
 
@@ -62,7 +60,7 @@ class SourceService:
 
         return created_source, task.id
 
-    def get_source(self, source_name: str) -> SourceOverview:
+    def get_source(self, source_name: str) -> SourceMetadata:
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
@@ -72,7 +70,7 @@ class SourceService:
         self,
         source_name: str,
         source_input: UpdateSourceRequest | None = None,
-    ) -> tuple[SourceOverview, str | None]:
+    ) -> tuple[SourceMetadata, str | None]:
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 

@@ -9,7 +9,6 @@ import html2text
 from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
-from src.config import settings
 from src.document_extractor.exceptions import SitemapClientException
 from src.document_extractor.schemas import MarkdownPage
 
@@ -51,8 +50,8 @@ def extract_markdown_page(url: str, content: bytes) -> MarkdownPage:
 
 
 class SitemapClient:
-    def __init__(self, concurrent_requests: int = settings.CONCURRENT_REQUESTS) -> None:
-        self.user_agent = settings.USER_AGENT
+    def __init__(self, *, concurrent_requests: int, user_agent: str):
+        self.user_agent = user_agent
         self.session: ClientSession = ClientSession(
             headers={"User-Agent": self.user_agent}
         )

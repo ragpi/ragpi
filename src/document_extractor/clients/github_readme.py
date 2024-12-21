@@ -6,8 +6,13 @@ from src.document_extractor.schemas import MarkdownPage
 
 
 class GitHubReadmeClient(GitHubClient):
-    def __init__(self) -> None:
-        super().__init__(concurrent_requests=1)
+    def __init__(self, *, user_agent: str, github_api_version: str, github_token: str):
+        super().__init__(
+            concurrent_requests=1,
+            user_agent=user_agent,
+            github_api_version=github_api_version,
+            github_token=github_token,
+        )
 
     async def fetch_readmes(
         self,

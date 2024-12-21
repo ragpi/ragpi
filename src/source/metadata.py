@@ -10,7 +10,7 @@ from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceType,
 )
-from src.source.schemas import SourceOverview, SourceStatus
+from src.source.schemas import SourceMetadata, SourceStatus
 
 
 class SourceMetadataManager:
@@ -82,7 +82,7 @@ class SourceMetadataManager:
         id: str,
         created_at: str,
         updated_at: str,
-    ) -> SourceOverview:
+    ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name, should_exist=False)
 
         config_dict = self._serialize_config(config)
@@ -102,14 +102,14 @@ class SourceMetadataManager:
 
         return self.get_metadata(source_name)
 
-    def get_metadata(self, source_name: str) -> SourceOverview:
+    def get_metadata(self, source_name: str) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name)
         metadata = self.client.hgetall(metadata_key)
         num_docs = self.document_store.get_document_count(source_name)
         source_config = self._deserialize_config(metadata)
         status = SourceStatus(metadata["status"])
 
-        return SourceOverview(
+        return SourceMetadata(
             id=metadata["id"],
             name=metadata["name"],
             description=metadata["description"],
@@ -124,9 +124,9 @@ class SourceMetadataManager:
         metadata_key = self._get_metadata_key(source_name)
         self.client.delete(metadata_key)
 
-    def get_all_metadata(self) -> list[SourceOverview]:
+    def get_all_metadata(self) -> list[SourceMetadata]:
         metadata_keys = self.client.keys("metadata:*")
-        metadata: list[SourceOverview] = []
+        metadata: list[SourceMetadata] = []
         for key in metadata_keys:
             source_name = key.split(":")[1]
             metadata.append(self.get_metadata(source_name))
@@ -139,7 +139,7 @@ class SourceMetadataManager:
         status: SourceStatus,
         config: SourceConfig | None,
         timestamp: str,
-    ) -> SourceOverview:
+    ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(name)
 
         if description is not None:

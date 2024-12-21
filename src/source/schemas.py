@@ -20,7 +20,7 @@ class SearchSourceInput(BaseModel):
 
 
 # Outputs
-class SourceOverview(BaseModel):  # TODO: Rename to SourceMetadata?
+class SourceMetadata(BaseModel):
     id: str
     name: str
     description: str
@@ -60,5 +60,5 @@ class SearchSourceRequest(BaseModel):
 # Responses
 class SourceTaskResponse(BaseModel):
     task_id: str | None
-    source: SourceOverview
+    source: SourceMetadata
     message: str | None = None

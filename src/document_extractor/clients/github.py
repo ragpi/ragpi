@@ -6,21 +6,27 @@ from typing import Any, Type
 from aiohttp import ClientError, ClientSession
 from multidict import CIMultiDictProxy
 
-from src.config import settings
 from src.document_extractor.exceptions import GitHubClientException
 
 
 class GitHubClient:
-    def __init__(self, concurrent_requests: int = settings.CONCURRENT_REQUESTS) -> None:
-        if not settings.GITHUB_TOKEN:
-            raise GitHubClientException("GITHUB_TOKEN is not set in environment")
+    def __init__(
+        self,
+        *,
+        concurrent_requests: int,
+        user_agent: str,
+        github_api_version: str,
+        github_token: str,
+    ):
+        if not github_token:
+            raise GitHubClientException("GITHUB_TOKEN is required to access GitHub API")
 
         self.session: ClientSession = ClientSession(
             headers={
                 "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": settings.GITHUB_API_VERSION,
-                "User-Agent": settings.USER_AGENT,
-                "Authorization": f"Bearer {settings.GITHUB_TOKEN}",
+                "X-GitHub-Api-Version": github_api_version,
+                "User-Agent": user_agent,
+                "Authorization": f"Bearer {github_token}",
             }
         )
         self.semaphore = asyncio.Semaphore(concurrent_requests)
