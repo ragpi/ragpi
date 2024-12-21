@@ -14,8 +14,8 @@ class SourceType(str, Enum):
 
 
 class BaseSourceConfig(BaseModel):
-    chunk_size: int = settings.CHUNK_SIZE
-    chunk_overlap: int = settings.CHUNK_OVERLAP
+    chunk_size: int = settings.DEFAULT_CHUNK_SIZE
+    chunk_overlap: int = settings.DEFAULT_CHUNK_OVERLAP
 
 
 class SitemapConfig(BaseSourceConfig):

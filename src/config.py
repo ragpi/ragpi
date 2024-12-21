@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     EMBEDDING_PROVIDER: Literal["openai", "ollama"] = "openai"
 
-    CHAT_MODEL: str = "gpt-4o-mini"
+    DEFAULT_CHAT_MODEL: str = "gpt-4o-mini"
 
     EMBEDDING_MODEL: str = "text-embedding-3-small"
 
@@ -35,17 +35,17 @@ class Settings(BaseSettings):
 
     CHAT_HISTORY_LIMIT: int = 20
 
-    CHAT_MAX_ATTEMPTS: int = 5
+    MAX_CHAT_ATTEMPTS: int = 5
 
     DOCUMENT_STORE_NAMESPACE: str = "document_store"
 
     DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"
 
-    CHUNK_SIZE: int = 512
+    DEFAULT_CHUNK_SIZE: int = 512
 
-    CHUNK_OVERLAP: int = 50
+    DEFAULT_CHUNK_OVERLAP: int = 50
 
-    CONCURRENT_REQUESTS: int = 10
+    MAX_CONCURRENT_REQUESTS: int = 10
 
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
 

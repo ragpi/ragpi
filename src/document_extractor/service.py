@@ -29,7 +29,7 @@ class DocumentExtractor:
     ) -> AsyncGenerator[Document, None]:
         try:
             async with SitemapClient(
-                concurrent_requests=self.settings.CONCURRENT_REQUESTS,
+                concurrent_requests=self.settings.MAX_CONCURRENT_REQUESTS,
                 user_agent=self.settings.USER_AGENT,
             ) as client:
                 chunker = Chunker(
@@ -58,7 +58,7 @@ class DocumentExtractor:
     ) -> AsyncGenerator[Document, None]:
         try:
             async with GitHubIssueClient(
-                concurrent_requests=self.settings.CONCURRENT_REQUESTS,
+                concurrent_requests=self.settings.MAX_CONCURRENT_REQUESTS,
                 user_agent=self.settings.USER_AGENT,
                 github_api_version=self.settings.GITHUB_API_VERSION,
                 github_token=self.settings.GITHUB_TOKEN,
