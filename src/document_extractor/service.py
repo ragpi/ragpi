@@ -1,7 +1,7 @@
 import logging
 from typing import AsyncGenerator
 from src.config import Settings
-from src.document_extractor.chunker import chunk_github_issue, chunk_markdown_page
+from src.document_extractor.chunker import Chunker
 from src.document_extractor.clients.github_issue import GitHubIssueClient
 from src.document_extractor.clients.github_readme import GitHubReadmeClient
 from src.document_extractor.exceptions import (
@@ -32,14 +32,18 @@ class DocumentExtractor:
                 concurrent_requests=self.settings.CONCURRENT_REQUESTS,
                 user_agent=self.settings.USER_AGENT,
             ) as client:
+                chunker = Chunker(
+                    chunk_size=config.chunk_size,
+                    chunk_overlap=config.chunk_overlap,
+                    uuid_namespace=self.settings.DOCUMENT_UUID_NAMESPACE,
+                )
+
                 async for page in client.fetch_sitemap_pages(
                     sitemap_url=config.sitemap_url,
                     include_pattern=config.include_pattern,
                     exclude_pattern=config.exclude_pattern,
                 ):
-                    chunks = chunk_markdown_page(
-                        page, config.chunk_size, config.chunk_overlap
-                    )
+                    chunks = chunker.chunk_markdown_page(page)
                     for chunk in chunks:
                         yield chunk
         except SitemapClientException as e:
@@ -59,6 +63,11 @@ class DocumentExtractor:
                 github_api_version=self.settings.GITHUB_API_VERSION,
                 github_token=self.settings.GITHUB_TOKEN,
             ) as client:
+                chunker = Chunker(
+                    chunk_size=config.chunk_size,
+                    chunk_overlap=config.chunk_overlap,
+                    uuid_namespace=self.settings.DOCUMENT_UUID_NAMESPACE,
+                )
                 async for issue in client.fetch_issues(
                     repo_owner=config.repo_owner,
                     repo_name=config.repo_name,
@@ -67,9 +76,7 @@ class DocumentExtractor:
                     exclude_labels=config.exclude_labels,
                     max_age=config.max_age,
                 ):
-                    chunks = chunk_github_issue(
-                        issue, config.chunk_size, config.chunk_overlap
-                    )
+                    chunks = chunker.chunk_github_issue(issue)
                     for chunk in chunks:
                         yield chunk
         except GitHubClientException as e:
@@ -90,15 +97,19 @@ class DocumentExtractor:
                 github_api_version=self.settings.GITHUB_API_VERSION,
                 github_token=self.settings.GITHUB_TOKEN,
             ) as client:
+                chunker = Chunker(
+                    chunk_size=config.chunk_size,
+                    chunk_overlap=config.chunk_overlap,
+                    uuid_namespace=self.settings.DOCUMENT_UUID_NAMESPACE,
+                )
+
                 async for page in client.fetch_readmes(
                     repo_owner=config.repo_owner,
                     repo_name=config.repo_name,
                     include_root=config.include_root,
                     sub_dirs=config.sub_dirs,
                 ):
-                    chunks = chunk_markdown_page(
-                        page, config.chunk_size, config.chunk_overlap
-                    )
+                    chunks = chunker.chunk_markdown_page(page)
                     for chunk in chunks:
                         yield chunk
         except GitHubClientException as e:

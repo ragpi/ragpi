@@ -30,6 +30,7 @@ from src.source.schemas import (
 from src.source.utils import get_current_datetime
 
 
+# TODO: Refactor into a class
 async def sync_source_documents(
     *,
     redis_client: RedisClient,

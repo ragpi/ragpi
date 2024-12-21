@@ -14,7 +14,6 @@ class SourceType(str, Enum):
 
 
 class BaseSourceConfig(BaseModel):
-    # TODO: Can the default be added at the route level?
     chunk_size: int = settings.CHUNK_SIZE
     chunk_overlap: int = settings.CHUNK_OVERLAP
 
