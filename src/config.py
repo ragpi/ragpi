@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -61,4 +62,6 @@ class Settings(BaseSettings):
     TRACELOOP_HEADERS: str | None = None
 
 
-settings = Settings()  # type: ignore
+@lru_cache
+def get_settings():
+    return Settings()  # type: ignore

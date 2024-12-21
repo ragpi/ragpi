@@ -3,14 +3,25 @@ from datetime import datetime, timedelta, timezone
 import logging
 from typing import Any, AsyncGenerator
 
-from src.config import settings
 from src.document_extractor.clients.github import GitHubClient
 from src.document_extractor.schemas import GithubIssue, GithubIssueComment
 
 
 class GitHubIssueClient(GitHubClient):
-    def __init__(self, concurrent_requests: int = settings.CONCURRENT_REQUESTS) -> None:
-        super().__init__(concurrent_requests)
+    def __init__(
+        self,
+        *,
+        concurrent_requests: int,
+        user_agent: str,
+        github_api_version: str,
+        github_token: str,
+    ):
+        super().__init__(
+            concurrent_requests=concurrent_requests,
+            user_agent=user_agent,
+            github_api_version=github_api_version,
+            github_token=github_token,
+        )
 
     async def fetch_comments(self, comments_url: str) -> list[GithubIssueComment]:
         comments: list[GithubIssueComment] = []

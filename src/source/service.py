@@ -1,7 +1,6 @@
 from uuid import uuid4
 from traceloop.sdk.decorators import task  # type: ignore
 
-from src.config import settings
 from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceLockedException,
@@ -30,7 +29,6 @@ class SourceService:
         lock_service: LockService,
     ):
         self.document_store = document_store
-        self.document_sync_batch_size = settings.DOCUMENT_SYNC_BATCH_SIZE
         self.metadata_manager = metadata_manager
         self.lock_service = lock_service
 

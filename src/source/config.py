@@ -2,7 +2,9 @@ from enum import Enum
 from pydantic import BaseModel
 from typing import Union, Literal
 
-from src.config import settings
+from src.config import get_settings
+
+settings = get_settings()
 
 
 class SourceType(str, Enum):
@@ -12,6 +14,7 @@ class SourceType(str, Enum):
 
 
 class BaseSourceConfig(BaseModel):
+    # TODO: Can the default be added at the route level?
     chunk_size: int = settings.CHUNK_SIZE
     chunk_overlap: int = settings.CHUNK_OVERLAP
 
@@ -21,7 +24,6 @@ class SitemapConfig(BaseSourceConfig):
     sitemap_url: str
     include_pattern: str | None = None  # TODO: Validate?
     exclude_pattern: str | None = None
-    concurrent_requests: int = settings.CONCURRENT_REQUESTS
 
 
 class GithubIssuesConfig(BaseSourceConfig):
@@ -32,7 +34,6 @@ class GithubIssuesConfig(BaseSourceConfig):
     include_labels: list[str] | None = None
     exclude_labels: list[str] | None = None
     max_age: int | None = None  # Days
-    concurrent_requests: int = settings.CONCURRENT_REQUESTS
 
 
 class GithubReadmeConfig(BaseSourceConfig):

@@ -1,6 +1,7 @@
 import re
 import numpy as np
 from typing import Any
+from openai import OpenAI
 from redisvl.index import SearchIndex  # type: ignore
 from redisvl.schema import IndexSchema  # type: ignore
 from redisvl.query import VectorQuery  # type: ignore
@@ -8,32 +9,39 @@ from redisvl.query.filter import Tag  # type: ignore
 from redis.commands.search.query import Query
 
 from src.common.redis import RedisClient
-from src.common.openai import get_openai_client
-from src.config import settings
 from src.common.schemas import Document
 from src.document_store.base import DocumentStoreBase
-from src.document_store.providers.redis.index_schema import (
+from src.document_store.providers.redis.fields import (
     DOCUMENT_FIELDS,
-    DOCUMENT_SCHEMA,
+    get_index_schema_fields,
 )
 from src.document_store.ranking import reciprocal_rank_fusion
 
 
 class RedisDocumentStore(DocumentStoreBase):
-    def __init__(self, redis_client: RedisClient) -> None:
+    def __init__(
+        self,
+        *,
+        index_name: str,
+        redis_client: RedisClient,
+        openai_client: OpenAI,
+        embedding_model: str,
+        embedding_dimensions: int,
+    ) -> None:
         self.client = redis_client
-        self.embedding_provider = settings.EMBEDDING_PROVIDER
-        self.embedding_client = get_openai_client(self.embedding_provider).embeddings
-        self.embedding_model = settings.EMBEDDING_MODEL
-        self.embedding_dimensions = settings.EMBEDDING_DIMENSIONS
-        self.document_schema: dict[str, Any] = DOCUMENT_SCHEMA
+        self.embedding_client = openai_client.embeddings
+        self.embedding_model = embedding_model
+        self.embedding_dimensions = embedding_dimensions
+        self.index_schema_fields: dict[str, Any] = get_index_schema_fields(
+            self.embedding_dimensions
+        )
         self.document_fields = DOCUMENT_FIELDS
-        self.index_name = settings.DOCUMENT_STORE_NAMESPACE
+        self.index_name = index_name
         self.index_prefix = f"{self.index_name}:sources"
         index_schema = IndexSchema.from_dict(
             {
                 "index": {"name": self.index_name, "prefix": self.index_prefix},
-                **self.document_schema,
+                **self.index_schema_fields,
             }
         )
         self.index = SearchIndex(index_schema).set_client(self.client)  # type: ignore

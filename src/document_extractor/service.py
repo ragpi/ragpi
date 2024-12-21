@@ -1,5 +1,6 @@
 import logging
 from typing import AsyncGenerator
+from src.config import Settings
 from src.document_extractor.chunker import chunk_github_issue, chunk_markdown_page
 from src.document_extractor.clients.github_issue import GitHubIssueClient
 from src.document_extractor.clients.github_readme import GitHubReadmeClient
@@ -20,11 +21,17 @@ from src.source.config import (
 
 
 class DocumentExtractor:
+    def __init__(self, settings: Settings):
+        self.settings = settings
+
     async def extract_documents_from_sitemap(
         self, config: SitemapConfig
     ) -> AsyncGenerator[Document, None]:
         try:
-            async with SitemapClient(config.concurrent_requests) as client:
+            async with SitemapClient(
+                concurrent_requests=self.settings.CONCURRENT_REQUESTS,
+                user_agent=self.settings.USER_AGENT,
+            ) as client:
                 async for page in client.fetch_sitemap_pages(
                     sitemap_url=config.sitemap_url,
                     include_pattern=config.include_pattern,
@@ -46,7 +53,12 @@ class DocumentExtractor:
         config: GithubIssuesConfig,
     ) -> AsyncGenerator[Document, None]:
         try:
-            async with GitHubIssueClient(config.concurrent_requests) as client:
+            async with GitHubIssueClient(
+                concurrent_requests=self.settings.CONCURRENT_REQUESTS,
+                user_agent=self.settings.USER_AGENT,
+                github_api_version=self.settings.GITHUB_API_VERSION,
+                github_token=self.settings.GITHUB_TOKEN,
+            ) as client:
                 async for issue in client.fetch_issues(
                     repo_owner=config.repo_owner,
                     repo_name=config.repo_name,
@@ -73,7 +85,11 @@ class DocumentExtractor:
         config: GithubReadmeConfig,
     ) -> AsyncGenerator[Document, None]:
         try:
-            async with GitHubReadmeClient() as client:
+            async with GitHubReadmeClient(
+                user_agent=self.settings.USER_AGENT,
+                github_api_version=self.settings.GITHUB_API_VERSION,
+                github_token=self.settings.GITHUB_TOKEN,
+            ) as client:
                 async for page in client.fetch_readmes(
                     repo_owner=config.repo_owner,
                     repo_name=config.repo_name,
