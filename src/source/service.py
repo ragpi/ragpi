@@ -13,7 +13,7 @@ from src.source.metadata import SourceMetadataManager
 from src.source.schemas import (
     CreateSourceRequest,
     SearchSourceInput,
-    SourceOverview,
+    SourceMetadata,
     SourceStatus,
     UpdateSourceRequest,
 )
@@ -34,7 +34,7 @@ class SourceService:
 
     def create_source(
         self, source_input: CreateSourceRequest
-    ) -> tuple[SourceOverview, str]:
+    ) -> tuple[SourceMetadata, str]:
         if self.metadata_manager.metadata_exists(source_input.name):
             raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_input.name)
 
@@ -60,7 +60,7 @@ class SourceService:
 
         return created_source, task.id
 
-    def get_source(self, source_name: str) -> SourceOverview:
+    def get_source(self, source_name: str) -> SourceMetadata:
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
@@ -70,7 +70,7 @@ class SourceService:
         self,
         source_name: str,
         source_input: UpdateSourceRequest | None = None,
-    ) -> tuple[SourceOverview, str | None]:
+    ) -> tuple[SourceMetadata, str | None]:
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 

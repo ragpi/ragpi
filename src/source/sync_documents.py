@@ -24,7 +24,7 @@ from src.source.config import (
 )
 from src.source.metadata import SourceMetadataManager
 from src.source.schemas import (
-    SourceOverview,
+    SourceMetadata,
     SourceStatus,
 )
 from src.source.utils import get_current_datetime
@@ -38,7 +38,7 @@ async def sync_source_documents(
     source_config: SourceConfig,
     existing_doc_ids: set[str],
     settings: Settings,
-) -> SourceOverview:
+) -> SourceMetadata:
     logging.info(f"Syncing documents for source {source_name}")
 
     openai_client = get_openai_client(
