@@ -17,7 +17,7 @@ from src.source.schemas import (
     SourceStatus,
     UpdateSourceRequest,
 )
-from src.source.sync_documents import sync_source_documents_task
+from src.source.sync.task import sync_source_documents_task
 from src.source.utils import get_current_datetime
 
 

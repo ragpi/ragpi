@@ -12,7 +12,7 @@ celery_app = Celery(
     __name__,
     broker=redis_url,
     backend=redis_url,
-    include=["src.source.sync_documents"],
+    include=["src.source.sync.task"],
 )
 
 
