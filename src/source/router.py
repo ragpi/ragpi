@@ -5,7 +5,6 @@ from src.source.schemas import (
     SearchSourceInput,
     CreateSourceRequest,
     SearchSourceRequest,
-    SourceTaskResponse,
     UpdateSourceRequest,
 )
 from src.source.service import SourceService
@@ -28,13 +27,7 @@ def create_source(
     source_input: CreateSourceRequest,
     source_service: SourceService = Depends(get_source_service),
 ):
-    source, task_id = source_service.create_source(source_input)
-
-    return SourceTaskResponse(
-        source=source,
-        task_id=task_id,
-        message="Source has been created and documents are being synced. Check the task status for updates.",
-    )
+    return source_service.create_source(source_input)
 
 
 @router.get("/{source_name}")
@@ -59,20 +52,7 @@ def update_source(
     source_input: UpdateSourceRequest,
     source_service: SourceService = Depends(get_source_service),
 ):
-    source, task_id = source_service.update_source(source_name, source_input)
-
-    if not task_id:
-        return SourceTaskResponse(
-            source=source,
-            task_id=task_id,
-            message="Source configuration has been updated. If you want to sync the documents, set 'sync' to true in the request body.",
-        )
-
-    return SourceTaskResponse(
-        source=source,
-        task_id=task_id,
-        message="A task has been created to sync the source documents. Check the task status for updates.",
-    )
+    return source_service.update_source(source_name, source_input)
 
 
 @router.get("/{source_name}/documents")

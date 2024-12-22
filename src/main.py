@@ -21,7 +21,6 @@ from src.common.redis import create_redis_client
 from src.config import get_settings
 from src.source.router import router as source_router
 from src.chat.router import router as chat_router
-from src.task.router import router as task_router
 
 settings = get_settings()
 
@@ -60,4 +59,3 @@ app.add_middleware(SlowAPIMiddleware)
 
 app.include_router(source_router)
 app.include_router(chat_router)
-app.include_router(task_router)

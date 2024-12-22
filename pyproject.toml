@@ -31,6 +31,7 @@ types-redis = "^4.6.0.20241004"
 mypy = "^1.13.0"
 types-beautifulsoup4 = "^4.12.0.20241020"
 pre-commit = "^4.0.1"
+flower = "^2.0.1"
 
 [tool.mypy]
 plugins = ['pydantic.mypy']

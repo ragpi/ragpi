@@ -1,23 +1,18 @@
 import asyncio
-import logging
 from redis import Redis
 from redis.lock import Lock
 from typing import Any
 from celery import current_task
-from celery.exceptions import Ignore
 
 from src.config import get_settings
-from src.common.exceptions import ResourceLockedException
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app
-from src.source.config import (
-    SOURCE_CONFIG_REGISTRY,
-)
+from src.source.config import SOURCE_CONFIG_REGISTRY
 from src.source.sync.service import SourceSyncService
 
 
-@celery_app.task
+@celery_app.task(name="Sync Source Documents")
 def sync_source_documents_task(
     source_name: str,
     source_config_dict: dict[str, Any],
@@ -68,31 +63,7 @@ def sync_source_documents_task(
 
         result = loop.run_until_complete(task_with_lock_renewal())
         return result
-
-    except ResourceLockedException as e:
-        logging.error(e)
-        current_task.update_state(
-            state="LOCKED",
-            meta={
-                "exc_type": "ResourceLockedException",
-                "message": f"Source '{source_name}' already has a task in progress",
-            },
-        )
-        raise Ignore()
-
-    except SyncSourceException as e:
-        logging.error(e)
-        current_task.update_state(
-            state="SYNC_ERROR",
-            meta={
-                "exc_type": "SyncSourceException",
-                "message": str(e),
-            },
-        )
-        raise Ignore()
-
     except Exception as e:
-        logging.error(e)
         current_task.update_state(state="FAILURE")
         raise e
 

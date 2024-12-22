@@ -32,9 +32,7 @@ class SourceService:
         self.metadata_manager = metadata_manager
         self.lock_service = lock_service
 
-    def create_source(
-        self, source_input: CreateSourceRequest
-    ) -> tuple[SourceMetadata, str]:
+    def create_source(self, source_input: CreateSourceRequest) -> SourceMetadata:
         if self.metadata_manager.metadata_exists(source_input.name):
             raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_input.name)
 
@@ -52,13 +50,13 @@ class SourceService:
 
         source_config_dict = source_input.config.model_dump()
 
-        task = sync_source_documents_task.delay(
+        sync_source_documents_task.delay(
             source_name=source_input.name,
             source_config_dict=source_config_dict,
             existing_doc_ids=[],
         )
 
-        return created_source, task.id
+        return created_source
 
     def get_source(self, source_name: str) -> SourceMetadata:
         if not self.metadata_manager.metadata_exists(source_name):
@@ -70,7 +68,7 @@ class SourceService:
         self,
         source_name: str,
         source_input: UpdateSourceRequest | None = None,
-    ) -> tuple[SourceMetadata, str | None]:
+    ) -> SourceMetadata:
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
@@ -79,7 +77,7 @@ class SourceService:
 
         existing_doc_ids = self.document_store.get_document_ids(source_name)
 
-        # If description or config is None in update_metadata, it will not be updated
+        status = SourceStatus.PENDING if source_input and source_input.sync else None
         description = (
             source_input.description
             if source_input and source_input.description
@@ -90,22 +88,20 @@ class SourceService:
         updated_source = self.metadata_manager.update_metadata(
             name=source_name,
             description=description,
-            status=SourceStatus.PENDING,
+            status=status,
             config=config,
             timestamp=get_current_datetime(),
         )
 
-        task = None
         if source_input and source_input.sync:
             source_config_dict = updated_source.config.model_dump()
-
-            task = sync_source_documents_task.delay(
+            sync_source_documents_task.delay(
                 source_name=source_name,
                 source_config_dict=source_config_dict,
                 existing_doc_ids=existing_doc_ids,
             )
 
-        return updated_source, task.id if task else None
+        return updated_source
 
     def get_source_documents(
         self, source_name: str, limit: int | None, offset: int | None

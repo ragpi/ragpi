@@ -136,27 +136,24 @@ class SourceMetadataManager:
         self,
         name: str,
         description: str | None,
-        status: SourceStatus,
+        status: SourceStatus | None,
         config: SourceConfig | None,
         timestamp: str,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(name)
 
-        if description is not None:
-            self.client.hset(metadata_key, "description", description)
+        update_mapping: dict[str, Any] = {"updated_at": timestamp}
 
-        config_dict: dict[str, Any] = {}
+        if status is not None:
+            update_mapping["status"] = status
+
+        if description is not None:
+            update_mapping["description"] = description
 
         if config is not None:
             config_dict = self._serialize_config(config)
+            update_mapping.update(config_dict)
 
-        self.client.hset(
-            metadata_key,
-            mapping={
-                **config_dict,  # type: ignore
-                "status": status,
-                "updated_at": timestamp,
-            },
-        )
+        self.client.hset(metadata_key, mapping=update_mapping)  # type: ignore
 
         return self.get_metadata(name)

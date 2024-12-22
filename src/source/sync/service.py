@@ -123,7 +123,6 @@ class SourceSyncService:
         except Exception as e:
             exception_to_raise = e
 
-        # If we caught an error, update source status and re-raise
         if exception_to_raise:
             self.metadata_manager.update_metadata(
                 name=self.source_name,
