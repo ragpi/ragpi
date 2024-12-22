@@ -251,3 +251,4 @@ def sync_source_documents_task(
             loop.close()
         if lock:
             lock_service.release_lock(lock)
+        redis_client.close()
