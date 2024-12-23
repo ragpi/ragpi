@@ -16,13 +16,13 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 def get_all_sources(source_service: SourceService = Depends(get_source_service)):
     sources = source_service.get_all_sources()
     return sources
 
 
-@router.post("/", status_code=status.HTTP_202_ACCEPTED)
+@router.post("", status_code=status.HTTP_202_ACCEPTED)
 def create_source(
     source_input: CreateSourceRequest,
     source_service: SourceService = Depends(get_source_service),

@@ -9,7 +9,7 @@ services:
     volumes:
       - redis-data:/data
     environment:
-      - REDIS_ARGS=--appendonly yes
+      - REDIS_ARGS=--appendonly yes --requirepass ${API_KEY}
 
   api:
     container_name: api
@@ -21,33 +21,20 @@ services:
     environment:
       - API_KEY=${API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:${API_KEY}@redis:6379/0
       - GITHUB_TOKEN=${GITHUB_TOKEN}
 
   task-worker:
     container_name: task-worker
     image: ghcr.io/gladwindos/rag-api-dev:${API_VERSION:-latest}
-    command: celery --app=src.celery.celery_app worker --concurrency=1 --max-tasks-per-child=1 --loglevel=INFO
+    command: celery --app=src.celery.celery_app worker --concurrency=2 --max-tasks-per-child=1 --loglevel=INFO
     depends_on:
       - redis
     environment:
       - API_KEY=${API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:${API_KEY}@redis:6379/0
       - GITHUB_TOKEN=${GITHUB_TOKEN}
-
-  task-monitor:
-    container_name: task-monitor
-    image: mher/flower:latest
-    command: celery --broker=redis://redis:6379/0 flower
-    ports:
-      - "127.0.0.1:5555:5555"
-    volumes:
-      - .:/app
-    depends_on:
-      - redis
-    environment:
-      - FLOWER_BASIC_AUTH=${API_KEY}:${API_KEY}
 
 volumes:
   redis-data:

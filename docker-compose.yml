@@ -52,7 +52,7 @@ services:
     depends_on:
       - redis
     environment:
-      - FLOWER_BASIC_AUTH=${API_KEY}:${API_KEY}
+      - FLOWER_UNAUTHENTICATED_API=true
 
 volumes:
   redis-data:
