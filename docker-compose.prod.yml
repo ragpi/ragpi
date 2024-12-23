@@ -22,6 +22,7 @@ services:
       - API_KEY=${API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - REDIS_URL=redis://redis:6379/0
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
 
   task-worker:
     container_name: task-worker
@@ -33,6 +34,7 @@ services:
       - API_KEY=${API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - REDIS_URL=redis://redis:6379/0
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
 
   task-monitor:
     container_name: task-monitor
