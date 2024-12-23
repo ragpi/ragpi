@@ -13,33 +13,26 @@ services:
 
   api:
     container_name: api
-    build: .
-    volumes:
-      - .:/app
-    command: fastapi dev src/main.py --host 0.0.0.0 --port 8000
+    image: ghcr.io/gladwindos/rag-api-dev:${API_VERSION:-latest}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
       - redis
     environment:
-      - REDIS_URL=redis://redis:6379/0
       - API_KEY=${API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
-    
+      - REDIS_URL=redis://redis:6379/0
+
   task-worker:
     container_name: task-worker
-    build: .
-    command: watchfiles --filter python "celery --app=src.celery.celery_app worker --concurrency=2 --loglevel=INFO" src
-    volumes:
-      - .:/app
+    image: ghcr.io/gladwindos/rag-api-dev:${API_VERSION:-latest}
+    command: celery --app=src.celery.celery_app worker --concurrency=1 --max-tasks-per-child=1 --loglevel=INFO
     depends_on:
       - redis
     environment:
-      - REDIS_URL=redis://redis:6379/0
       - API_KEY=${API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379/0
 
   task-monitor:
     container_name: task-monitor

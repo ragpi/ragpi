@@ -23,6 +23,7 @@ aiohttp = "^3.11.9"
 langchain-text-splitters = "^0.3.2"
 tiktoken = "^0.8.0"
 traceloop-sdk = "^0.33.12"
+watchfiles = "^1.0.3"
 
 
 [tool.poetry.group.dev.dependencies]
