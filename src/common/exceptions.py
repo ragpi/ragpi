@@ -2,7 +2,6 @@ from enum import Enum
 import logging
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-from slowapi.errors import RateLimitExceeded
 
 
 class ResourceType(str, Enum):
@@ -66,11 +65,4 @@ def unexpected_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "An unexpected error occurred"},
-    )
-
-
-def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        content={"detail": "Too many requests. Please try again later."},
     )
