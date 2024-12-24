@@ -46,7 +46,7 @@ def sync_source_documents_task(
                         **source_config_dict
                     )
                 except ValueError as e:
-                    raise SyncSourceException(f"Invalid config: {e}")
+                    raise SyncSourceException(f"Invalid source config: {e}")
 
                 sync_service = SourceSyncService(
                     redis_client=redis_client,

@@ -4,9 +4,11 @@ from fastapi import FastAPI, Depends
 
 from src.common.api_key import get_api_key
 from src.common.exceptions import (
+    KnownException,
     ResourceAlreadyExistsException,
     ResourceLockedException,
     ResourceNotFoundException,
+    known_exception_handler,
     resource_already_exists_handler,
     resource_locked_handler,
     resource_not_found_handler,
@@ -44,6 +46,7 @@ if settings.ENABLE_OTEL:
 app.exception_handler(ResourceNotFoundException)(resource_not_found_handler)
 app.exception_handler(ResourceAlreadyExistsException)(resource_already_exists_handler)
 app.exception_handler(ResourceLockedException)(resource_locked_handler)
+app.exception_handler(KnownException)(known_exception_handler)
 app.exception_handler(Exception)(unexpected_exception_handler)
 
 app.include_router(source_router)

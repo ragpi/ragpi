@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 class ResourceType(str, Enum):
     SOURCE = "Source"
     TASK = "Task"
+    MODEL = "Model"
 
 
 class ResourceNotFoundException(Exception):
@@ -34,6 +35,11 @@ class ResourceLockedException(Exception):
         super().__init__(message)
 
 
+class KnownException(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
     logging.error(exc)
     return JSONResponse(
@@ -56,6 +62,14 @@ def resource_locked_handler(request: Request, exc: ResourceLockedException):
     logging.error(exc)
     return JSONResponse(
         status_code=status.HTTP_423_LOCKED,
+        content={"detail": str(exc)},
+    )
+
+
+def known_exception_handler(request: Request, exc: KnownException):
+    logging.error(exc)
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
         content={"detail": str(exc)},
     )
 

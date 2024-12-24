@@ -1,5 +1,5 @@
 import json
-from openai import OpenAI, pydantic_function_tool
+from openai import APIError, OpenAI, pydantic_function_tool
 from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
@@ -11,6 +11,11 @@ from openai.types.chat import (
 from src.chat.exceptions import ChatException
 from src.chat.schemas import ChatResponse, CreateChatInput
 from src.chat.tools import FUNCTION_TOOLS
+from src.common.exceptions import (
+    KnownException,
+    ResourceNotFoundException,
+    ResourceType,
+)
 from src.source.schemas import SearchSourceInput
 from src.source.service import SourceService
 
@@ -79,77 +84,87 @@ Utilize the `search_source` tool to find relevant information from the available
 """
 
     def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
-        system_prompt = self._create_system_prompt(chat_input)
+        try:
+            system_prompt = self._create_system_prompt(chat_input)
 
-        chat_history = chat_input.messages[-self.chat_history_limit :]
+            chat_history = chat_input.messages[-self.chat_history_limit :]
 
-        previous_messages: list[ChatCompletionMessageParam] = [
-            (
-                ChatCompletionUserMessageParam(role="user", content=message.content)
-                if message.role == "user"
-                else ChatCompletionAssistantMessageParam(
-                    role="assistant", content=message.content
+            previous_messages: list[ChatCompletionMessageParam] = [
+                (
+                    ChatCompletionUserMessageParam(role="user", content=message.content)
+                    if message.role == "user"
+                    else ChatCompletionAssistantMessageParam(
+                        role="assistant", content=message.content
+                    )
                 )
-            )
-            for message in chat_history
-        ]
+                for message in chat_history
+            ]
 
-        messages: list[ChatCompletionMessageParam] = [
-            ChatCompletionSystemMessageParam(role="system", content=system_prompt),
-            *previous_messages,
-            ChatCompletionUserMessageParam(
-                role="user", content=chat_input.messages[-1].content
-            ),
-        ]
+            messages: list[ChatCompletionMessageParam] = [
+                ChatCompletionSystemMessageParam(role="system", content=system_prompt),
+                *previous_messages,
+                ChatCompletionUserMessageParam(
+                    role="user", content=chat_input.messages[-1].content
+                ),
+            ]
 
-        attempts = 0
-        while attempts < chat_input.max_attempts:
-            response = self.chat_client.chat.completions.create(
-                model=chat_input.chat_model,
-                messages=messages,
-                tools=self.tools,
-            )
+            attempts = 0
+            while attempts < chat_input.max_attempts:
+                response = self.chat_client.chat.completions.create(
+                    model=chat_input.chat_model,
+                    messages=messages,
+                    tools=self.tools,
+                )
 
-            message = response.choices[0].message
+                message = response.choices[0].message
 
-            messages.append(message)  # type: ignore
+                messages.append(message)  # type: ignore
 
-            if message.tool_calls:
-                for tool_call in message.tool_calls:
-                    if tool_call.function.name == "search_source":
-                        args = json.loads(tool_call.function.arguments)
-                        documents = self.source_service.search_source(
-                            SearchSourceInput(**args)
-                        )
-                        content = json.dumps(
-                            [
-                                {
-                                    "url": doc.url,
-                                    "content": doc.content,
-                                }
-                                for doc in documents
-                            ]
-                        )
-                        messages.append(
-                            ChatCompletionToolMessageParam(
-                                tool_call_id=tool_call.id,
-                                content=content,
-                                role="tool",
+                if message.tool_calls:
+                    for tool_call in message.tool_calls:
+                        if tool_call.function.name == "search_source":
+                            args = json.loads(tool_call.function.arguments)
+                            documents = self.source_service.search_source(
+                                SearchSourceInput(**args)
                             )
-                        )
-                    else:
-                        raise ValueError(
-                            f"Unknown tool call: {tool_call.function.name}"
-                        )
-            elif message.content:
-                return ChatResponse(message=message.content)
-            else:
-                raise ValueError(
-                    "No response content or tool call found in completion."
+                            content = json.dumps(
+                                [
+                                    {
+                                        "url": doc.url,
+                                        "content": doc.content,
+                                    }
+                                    for doc in documents
+                                ]
+                            )
+                            messages.append(
+                                ChatCompletionToolMessageParam(
+                                    tool_call_id=tool_call.id,
+                                    content=content,
+                                    role="tool",
+                                )
+                            )
+                        else:
+                            raise ValueError(
+                                f"Unknown tool call: {tool_call.function.name}"
+                            )
+                elif message.content:
+                    return ChatResponse(message=message.content)
+                else:
+                    raise ValueError(
+                        "No response content or tool call found in completion."
+                    )
+
+                attempts += 1
+
+            return ChatResponse(
+                message="I'm sorry, but I don't have the information you're looking for.",
+            )
+        except ChatException as e:
+            raise KnownException(str(e))
+        except APIError as e:
+            if e.code == "model_not_found":
+                raise ResourceNotFoundException(
+                    ResourceType.MODEL, chat_input.chat_model
                 )
-
-            attempts += 1
-
-        return ChatResponse(
-            message="I'm sorry, but I don't have the information you're looking for.",
-        )
+            else:
+                raise e
