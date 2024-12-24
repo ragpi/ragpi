@@ -31,12 +31,12 @@ class LockService:
             await asyncio.sleep(renewal_interval)
             try:
                 lock.extend(extend_time)
-            except LockError as e:
-                logger.error(f"Failed to renew lock: {e}")
+            except LockError:
+                logger.exception(f"Failed to renew lock")
                 break
 
     def release_lock(self, lock: Lock):
         try:
             lock.release()
-        except LockError as e:
-            logger.error(f"Error releasing lock: {e}")
+        except LockError:
+            logger.exception(f"Error releasing lock")

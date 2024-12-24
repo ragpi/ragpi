@@ -57,7 +57,6 @@ def sync_source_documents_task(
                 )
                 source_overview = await sync_service.sync_documents()
                 return source_overview.model_dump()
-
             finally:
                 lock_renewal_task.cancel()
 

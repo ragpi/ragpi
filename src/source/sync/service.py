@@ -6,7 +6,6 @@ from src.config import Settings
 from src.document_extractor.service import DocumentExtractor
 from src.document_store.providers.redis.store import RedisDocumentStore
 from src.source.exceptions import SyncSourceException
-from src.document_extractor.exceptions import DocumentExtractorException
 from src.common.schemas import Document
 from src.source.config import (
     SourceConfig,
@@ -63,7 +62,6 @@ class SourceSyncService:
         current_doc_ids: set[str] = set()
         docs_to_add: list[Document] = []
         added_doc_ids: set[str] = set()
-        exception_to_raise: Exception | None = None
 
         try:
             # Mark source as SYNCING
@@ -118,14 +116,7 @@ class SourceSyncService:
 
             return updated_source
 
-        except SyncSourceException as e:
-            exception_to_raise = e
-        except DocumentExtractorException as e:
-            exception_to_raise = SyncSourceException(str(e))
         except Exception as e:
-            exception_to_raise = e
-
-        if exception_to_raise:
             self.metadata_manager.update_metadata(
                 name=self.source_name,
                 description=None,
@@ -133,11 +124,7 @@ class SourceSyncService:
                 config=None,
                 timestamp=get_current_datetime(),
             )
-            raise exception_to_raise
-
-        raise SyncSourceException(
-            f"Failed to sync documents for source {self.source_name}"
-        )
+            raise e
 
     def _add_documents_batch(self, docs: list[Document]) -> None:
         """Helper method to add a batch of documents to the document store."""
@@ -146,9 +133,9 @@ class SourceSyncService:
             logger.info(
                 f"Added a batch of {len(docs)} documents to source {self.source_name}"
             )
-        except Exception as e:
-            logger.error(
-                f"Failed to add batch of documents to source {self.source_name}: {e}"
+        except Exception:
+            logger.exception(
+                f"Failed to add batch of documents to source {self.source_name}"
             )
             raise SyncSourceException(
                 f"Failed to sync documents for source {self.source_name}"
@@ -163,9 +150,9 @@ class SourceSyncService:
             logger.info(
                 f"Removed {len(doc_ids_to_remove)} documents from source {self.source_name}"
             )
-        except Exception as e:
-            logger.error(
-                f"Failed to remove documents from source {self.source_name}: {e}"
+        except Exception:
+            logger.exception(
+                f"Failed to remove documents from source {self.source_name}"
             )
             raise SyncSourceException(
                 f"Failed to sync documents for source {self.source_name}"

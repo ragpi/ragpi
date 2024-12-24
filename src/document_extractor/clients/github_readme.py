@@ -1,7 +1,7 @@
 import base64
 from typing import AsyncGenerator
 from src.document_extractor.clients.github import GitHubClient
-from src.document_extractor.exceptions import GitHubClientException
+from src.document_extractor.exceptions import DocumentExtractorException
 from src.document_extractor.schemas import MarkdownPage
 
 
@@ -33,7 +33,9 @@ class GitHubReadmeClient(GitHubClient):
             dirs.extend(sub_dirs)
 
         if not dirs:
-            raise GitHubClientException("No directories specified to fetch READMEs")
+            raise DocumentExtractorException(
+                "No directories specified to fetch READMEs"
+            )
 
         for dir in dirs:
             url = base_url + (f"/{dir}" if dir else "")
@@ -43,7 +45,9 @@ class GitHubReadmeClient(GitHubClient):
 
             data, _ = await self.request("GET", url, params=params)
             if not data:
-                raise GitHubClientException(f"Failed to fetch README content at {url}")
+                raise DocumentExtractorException(
+                    f"Failed to fetch README content at {url}"
+                )
 
             content_b64 = data["content"]
             encoding = data["encoding"]
@@ -53,11 +57,11 @@ class GitHubReadmeClient(GitHubClient):
                     decoded_bytes = base64.b64decode(content_b64)
                     decoded_str = decoded_bytes.decode("utf-8", errors="replace")
                 except Exception as e:
-                    raise GitHubClientException(
+                    raise DocumentExtractorException(
                         f"Failed to decode README content at {url}: {e}"
                     )
             else:
-                raise GitHubClientException(
+                raise DocumentExtractorException(
                     f"Unexpected encoding '{encoding}' for README content at {url}"
                 )
 

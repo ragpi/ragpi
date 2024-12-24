@@ -6,7 +6,7 @@ from typing import Any, Type
 from aiohttp import ClientError, ClientSession
 from multidict import CIMultiDictProxy
 
-from src.document_extractor.exceptions import GitHubClientException
+from src.document_extractor.exceptions import DocumentExtractorException
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,9 @@ class GitHubClient:
         github_token: str,
     ):
         if not github_token:
-            raise GitHubClientException("GITHUB_TOKEN is required to access GitHub API")
+            raise DocumentExtractorException(
+                "GITHUB_TOKEN is required to access GitHub API"
+            )
 
         self.session: ClientSession = ClientSession(
             headers={
@@ -84,12 +86,12 @@ class GitHubClient:
                                 current_time = int(time.time())
                                 reset_time = int(rate_limit_reset)
                                 wait_time = reset_time - current_time
+                                # Reset time has passed
                                 if wait_time < 0:
-                                    wait_time = 0  # Reset time has passed
+                                    wait_time = 0
                             else:
-                                wait_time = backoff * (
-                                    2**retry_count
-                                )  # Exponential backoff
+                                # Exponential backoff
+                                wait_time = backoff * (2**retry_count)
 
                             logger.warning(
                                 f"Rate limit exceeded. Waiting for {wait_time} seconds."
@@ -99,25 +101,29 @@ class GitHubClient:
                             retry_count += 1
                             continue
                         elif response.status == 404:
-                            raise GitHubClientException(f"Resource not found at {url}")
+                            raise DocumentExtractorException(
+                                f"Resource not found at {url}"
+                            )
                         elif response.status == 401:
-                            raise GitHubClientException(
+                            raise DocumentExtractorException(
                                 f"GITHUB_TOKEN is not authorized to access {url}"
                             )
                         response.raise_for_status()
                         data = await response.json()
                         return data, response.headers
-                except GitHubClientException as e:
+                except DocumentExtractorException as e:
                     raise e
                 except ClientError as e:
-                    logger.error(f"HTTP request failed: {e}")
+                    logger.exception(f"HTTP request failed")
                     logger.warning(f"Retrying in {backoff} seconds...")
                     retry_count += 1
                     wait_time = backoff * (2**retry_count)
                     await asyncio.sleep(wait_time)
                 except Exception as e:
-                    logger.error(f"Unexpected error: {e}")
-                    raise GitHubClientException(f"Unexpected error when fetching {url}")
+                    logger.exception(f"Unexpected error")
+                    raise DocumentExtractorException(
+                        f"Unexpected error when fetching {url}"
+                    )
 
         logger.error(f"Failed to make request to {url} after {max_retries} retries.")
         return None, None

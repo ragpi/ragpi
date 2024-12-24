@@ -9,7 +9,7 @@ import html2text
 from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
-from src.document_extractor.exceptions import SitemapClientException
+from src.document_extractor.exceptions import DocumentExtractorException
 from src.document_extractor.schemas import MarkdownPage
 
 logger = logging.getLogger(__name__)
@@ -85,9 +85,9 @@ class SitemapClient:
                         f"Failed to fetch robots.txt from {robots_url}: {response.status}. Allowing all URLs."
                     )
                     return ""
-        except Exception as e:
-            logger.error(
-                f"Error fetching robots.txt from {robots_url}: {e}. Allowing all URLs."
+        except Exception:
+            logger.exception(
+                f"Error fetching robots.txt from {robots_url}. Allowing all URLs."
             )
             return ""
 
@@ -103,7 +103,7 @@ class SitemapClient:
     async def parse_sitemap(self, sitemap_url: str) -> list[str]:
         async with self.session.get(sitemap_url) as response:
             if response.status == 404:
-                raise SitemapClientException(f"Sitemap not found at {sitemap_url}")
+                raise DocumentExtractorException(f"Sitemap not found at {sitemap_url}")
 
             response.raise_for_status()
 
@@ -141,9 +141,9 @@ class SitemapClient:
                         retry_count += 1
                     else:
                         response.raise_for_status()
-            except Exception as e:
-                logger.error(
-                    f"Error fetching {url}: {e}. Retrying in {backoff} seconds..."
+            except Exception:
+                logger.exception(
+                    f"Error fetching {url}. Retrying in {backoff} seconds..."
                 )
                 await asyncio.sleep(backoff)
                 backoff *= 2
@@ -162,7 +162,7 @@ class SitemapClient:
         urls = await self.parse_sitemap(sitemap_url)
 
         if not urls:
-            raise SitemapClientException(
+            raise DocumentExtractorException(
                 f"No URLs found in the sitemap at {sitemap_url}"
             )
 
@@ -171,7 +171,7 @@ class SitemapClient:
             urls = [url for url in urls if include_regex.search(url)]
 
             if not urls:
-                raise SitemapClientException(
+                raise DocumentExtractorException(
                     f"No URLs from the sitemap matched the include pattern {include_pattern}"
                 )
 
@@ -180,7 +180,7 @@ class SitemapClient:
             urls = [url for url in urls if not exclude_regex.search(url)]
 
             if not urls:
-                raise SitemapClientException(
+                raise DocumentExtractorException(
                     f"All URLs from the sitemap matched the exclude pattern {exclude_pattern}"
                 )
 

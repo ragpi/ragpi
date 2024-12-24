@@ -58,7 +58,7 @@ class SourceMetadataManager:
                     try:
                         value = json.loads(value)
                     except json.JSONDecodeError:
-                        logger.error(f"Failed to parse config value: {value}")
+                        logger.exception(f"Failed to parse config value: {value}")
                         value = None
                 if value in ("0", "1"):
                     value = bool(int(value))
