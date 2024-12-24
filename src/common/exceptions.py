@@ -3,6 +3,8 @@ import logging
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
+logger = logging.getLogger(__name__)  # TODO: Where does this appear?
+
 
 class ResourceType(str, Enum):
     SOURCE = "Source"
@@ -41,7 +43,7 @@ class KnownException(Exception):
 
 
 def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
-    logging.error(exc)
+    logger.error(exc)
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content={"detail": str(exc)},
@@ -51,7 +53,7 @@ def resource_not_found_handler(request: Request, exc: ResourceNotFoundException)
 def resource_already_exists_handler(
     request: Request, exc: ResourceAlreadyExistsException
 ):
-    logging.error(exc)
+    logger.error(exc)
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},
@@ -59,7 +61,7 @@ def resource_already_exists_handler(
 
 
 def resource_locked_handler(request: Request, exc: ResourceLockedException):
-    logging.error(exc)
+    logger.error(exc)
     return JSONResponse(
         status_code=status.HTTP_423_LOCKED,
         content={"detail": str(exc)},
@@ -67,7 +69,7 @@ def resource_locked_handler(request: Request, exc: ResourceLockedException):
 
 
 def known_exception_handler(request: Request, exc: KnownException):
-    logging.error(exc)
+    logger.error(exc)
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"detail": str(exc)},
@@ -75,7 +77,7 @@ def known_exception_handler(request: Request, exc: KnownException):
 
 
 def unexpected_exception_handler(request: Request, exc: Exception):
-    logging.error(exc)
+    logger.error(exc)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "An unexpected error occurred"},

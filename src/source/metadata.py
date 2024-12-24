@@ -12,6 +12,8 @@ from src.common.exceptions import (
 )
 from src.source.schemas import SourceMetadata, SourceStatus
 
+logger = logging.getLogger(__name__)
+
 
 class SourceMetadataManager:
     def __init__(self, redis_client: RedisClient, document_store: DocumentStoreBase):
@@ -56,7 +58,7 @@ class SourceMetadataManager:
                     try:
                         value = json.loads(value)
                     except json.JSONDecodeError:
-                        logging.error(f"Failed to parse config value: {value}")
+                        logger.error(f"Failed to parse config value: {value}")
                         value = None
                 if value in ("0", "1"):
                     value = bool(int(value))

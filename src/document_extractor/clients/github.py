@@ -8,6 +8,8 @@ from multidict import CIMultiDictProxy
 
 from src.document_extractor.exceptions import GitHubClientException
 
+logger = logging.getLogger(__name__)
+
 
 class GitHubClient:
     def __init__(
@@ -89,7 +91,7 @@ class GitHubClient:
                                     2**retry_count
                                 )  # Exponential backoff
 
-                            logging.warning(
+                            logger.warning(
                                 f"Rate limit exceeded. Waiting for {wait_time} seconds."
                             )
                             await asyncio.sleep(wait_time)
@@ -108,14 +110,14 @@ class GitHubClient:
                 except GitHubClientException as e:
                     raise e
                 except ClientError as e:
-                    logging.error(f"HTTP request failed: {e}")
-                    logging.warning(f"Retrying in {backoff} seconds...")
+                    logger.error(f"HTTP request failed: {e}")
+                    logger.warning(f"Retrying in {backoff} seconds...")
                     retry_count += 1
                     wait_time = backoff * (2**retry_count)
                     await asyncio.sleep(wait_time)
                 except Exception as e:
-                    logging.error(f"Unexpected error: {e}")
+                    logger.error(f"Unexpected error: {e}")
                     raise GitHubClientException(f"Unexpected error when fetching {url}")
 
-        logging.error(f"Failed to make request to {url} after {max_retries} retries.")
+        logger.error(f"Failed to make request to {url} after {max_retries} retries.")
         return None, None

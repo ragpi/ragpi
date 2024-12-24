@@ -18,4 +18,4 @@ celery_app = Celery(
 
 @signals.setup_logging.connect
 def setup_celery_logging(**kwargs: Any) -> None:
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=settings.LOG_LEVEL)

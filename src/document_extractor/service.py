@@ -19,6 +19,8 @@ from src.source.config import (
     SourceType,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class DocumentExtractor:
     def __init__(self, settings: Settings):
@@ -49,7 +51,7 @@ class DocumentExtractor:
         except SitemapClientException as e:
             raise DocumentExtractorException(str(e))
         except Exception as e:
-            logging.exception("Unexpected error while processing sitemap source.")
+            logger.exception("Unexpected error while processing sitemap source.")
             raise DocumentExtractorException("Failed to create documents from sitemap")
 
     async def extract_documents_from_github_issues(
@@ -82,7 +84,7 @@ class DocumentExtractor:
         except GitHubClientException as e:
             raise DocumentExtractorException(str(e))
         except Exception as e:
-            logging.exception("Unexpected error while processing GitHub issues source.")
+            logger.exception("Unexpected error while processing GitHub issues source.")
             raise DocumentExtractorException(
                 "Failed to create documents from GitHub issues"
             )
@@ -115,7 +117,7 @@ class DocumentExtractor:
         except GitHubClientException as e:
             raise DocumentExtractorException(str(e))
         except Exception as e:
-            logging.exception("Unexpected error while processing GitHub readme source.")
+            logger.exception("Unexpected error while processing GitHub readme source.")
             raise DocumentExtractorException(
                 "Failed to create documents from GitHub readme"
             )

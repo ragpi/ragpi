@@ -59,6 +59,8 @@ class Settings(BaseSettings):
 
     OTEL_SERVICE_NAME: str = "rag-api"
 
+    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+
 
 @lru_cache
 def get_settings():

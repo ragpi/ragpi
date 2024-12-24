@@ -6,6 +6,8 @@ from typing import Any, AsyncGenerator
 from src.document_extractor.clients.github import GitHubClient
 from src.document_extractor.schemas import GithubIssue, GithubIssueComment
 
+logger = logging.getLogger(__name__)
+
 
 class GitHubIssueClient(GitHubClient):
     def __init__(
@@ -71,7 +73,7 @@ class GitHubIssueClient(GitHubClient):
         exclude_labels: list[str] | None = None,
         max_age: int | None = None,
     ) -> AsyncGenerator[GithubIssue, None]:
-        logging.info(f"Fetching issues from repo: {repo_owner}/{repo_name}")
+        logger.info(f"Fetching issues from repo: {repo_owner}/{repo_name}")
 
         url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
 

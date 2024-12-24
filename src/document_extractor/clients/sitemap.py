@@ -12,6 +12,8 @@ from urllib.robotparser import RobotFileParser
 from src.document_extractor.exceptions import SitemapClientException
 from src.document_extractor.schemas import MarkdownPage
 
+logger = logging.getLogger(__name__)
+
 UNWANTED_TAGS = [
     "nav",
     "header",
@@ -74,17 +76,17 @@ class SitemapClient:
                 if response.status == 200:
                     return await response.text()
                 elif response.status == 404:
-                    logging.info(
+                    logger.info(
                         f"No robots.txt found at {robots_url}. Allowing all URLs."
                     )
                     return ""
                 else:
-                    logging.warning(
+                    logger.warning(
                         f"Failed to fetch robots.txt from {robots_url}: {response.status}. Allowing all URLs."
                     )
                     return ""
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Error fetching robots.txt from {robots_url}: {e}. Allowing all URLs."
             )
             return ""
@@ -114,7 +116,7 @@ class SitemapClient:
         self, url: str, robots_parser: RobotFileParser
     ) -> MarkdownPage | None:
         if not robots_parser.can_fetch(self.user_agent, url):
-            logging.warning(f"URL {url} is disallowed by robots.txt")
+            logger.warning(f"URL {url} is disallowed by robots.txt")
             return None
 
         max_retries = 5
@@ -128,10 +130,10 @@ class SitemapClient:
                         content = await response.read()
                         return extract_markdown_page(url, content)
                     elif response.status == 404:
-                        logging.error(f"Page not found at {url}")
+                        logger.error(f"Page not found at {url}")
                         return None
                     elif response.status == 429:
-                        logging.warning(
+                        logger.warning(
                             f"Rate limit exceeded when fetching {url}. Retrying in {backoff} seconds..."
                         )
                         await asyncio.sleep(backoff)
@@ -140,13 +142,13 @@ class SitemapClient:
                     else:
                         response.raise_for_status()
             except Exception as e:
-                logging.error(
+                logger.error(
                     f"Error fetching {url}: {e}. Retrying in {backoff} seconds..."
                 )
                 await asyncio.sleep(backoff)
                 backoff *= 2
                 retry_count += 1
-        logging.error(f"Failed to fetch {url} after {max_retries} retries.")
+        logger.error(f"Failed to fetch {url} after {max_retries} retries.")
         return None
 
     async def fetch_sitemap_pages(
@@ -155,7 +157,7 @@ class SitemapClient:
         include_pattern: str | None = None,
         exclude_pattern: str | None = None,
     ) -> AsyncGenerator[MarkdownPage, None]:
-        logging.info(f"Fetching pages from sitemap: {sitemap_url}")
+        logger.info(f"Fetching pages from sitemap: {sitemap_url}")
 
         urls = await self.parse_sitemap(sitemap_url)
 

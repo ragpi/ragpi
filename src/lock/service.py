@@ -6,6 +6,8 @@ from redis.exceptions import LockError
 from src.common.redis import RedisClient
 from src.common.exceptions import ResourceLockedException
 
+logger = logging.getLogger(__name__)
+
 
 class LockService:
     def __init__(self, redis_client: RedisClient) -> None:
@@ -30,11 +32,11 @@ class LockService:
             try:
                 lock.extend(extend_time)
             except LockError as e:
-                logging.error(f"Failed to renew lock: {e}")
+                logger.error(f"Failed to renew lock: {e}")
                 break
 
     def release_lock(self, lock: Lock):
         try:
             lock.release()
         except LockError as e:
-            logging.error(f"Error releasing lock: {e}")
+            logger.error(f"Error releasing lock: {e}")

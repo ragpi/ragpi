@@ -23,19 +23,21 @@ from src.chat.router import router as chat_router
 settings = get_settings()
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=settings.LOG_LEVEL,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.redis_client = create_redis_client(settings.REDIS_URL)
-    logging.info("Redis connection established.")
+    logger.info("Redis connection established.")
 
     yield
 
     app.state.redis_client.close()
-    logging.info("Redis connection closed.")
+    logger.info("Redis connection closed.")
 
 
 app = FastAPI(dependencies=[Depends(get_api_key)], lifespan=lifespan)

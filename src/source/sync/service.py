@@ -18,6 +18,8 @@ from src.source.schemas import (
 )
 from src.source.utils import get_current_datetime
 
+logger = logging.getLogger(__name__)
+
 
 class SourceSyncService:
     """Class to handle the syncing of documents for a particular source."""
@@ -56,7 +58,7 @@ class SourceSyncService:
 
     async def sync_documents(self) -> SourceMetadata:
         """Main entry point for syncing documents for a source."""
-        logging.info(f"Syncing documents for source {self.source_name}")
+        logger.info(f"Syncing documents for source {self.source_name}")
 
         current_doc_ids: set[str] = set()
         docs_to_add: list[Document] = []
@@ -103,7 +105,7 @@ class SourceSyncService:
 
             # If no documents were added in the entire sync
             if not current_doc_ids - self.existing_doc_ids:
-                logging.info(f"No new documents added to source {self.source_name}")
+                logger.info(f"No new documents added to source {self.source_name}")
 
             # Mark source as COMPLETED
             updated_source = self.metadata_manager.update_metadata(
@@ -141,11 +143,11 @@ class SourceSyncService:
         """Helper method to add a batch of documents to the document store."""
         try:
             self.document_store.add_documents(self.source_name, docs)
-            logging.info(
+            logger.info(
                 f"Added a batch of {len(docs)} documents to source {self.source_name}"
             )
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Failed to add batch of documents to source {self.source_name}: {e}"
             )
             raise SyncSourceException(
@@ -158,11 +160,11 @@ class SourceSyncService:
             self.document_store.delete_documents(
                 self.source_name, list(doc_ids_to_remove)
             )
-            logging.info(
+            logger.info(
                 f"Removed {len(doc_ids_to_remove)} documents from source {self.source_name}"
             )
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Failed to remove documents from source {self.source_name}: {e}"
             )
             raise SyncSourceException(
