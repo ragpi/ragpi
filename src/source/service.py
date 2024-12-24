@@ -1,5 +1,4 @@
 from uuid import uuid4
-from traceloop.sdk.decorators import task  # type: ignore
 
 from src.common.exceptions import (
     ResourceAlreadyExistsException,
@@ -121,7 +120,6 @@ class SourceService:
         self.document_store.delete_all_documents(source_name)
         self.metadata_manager.delete_metadata(source_name)
 
-    @task(name="search_source")  # type: ignore
     def search_source(self, source_input: SearchSourceInput):
         if not self.metadata_manager.metadata_exists(source_input.name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_input.name)

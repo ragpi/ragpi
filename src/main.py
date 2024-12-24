@@ -1,7 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
-from traceloop.sdk import Traceloop  #  type: ignore
 
 from src.common.api_key import get_api_key
 from src.common.exceptions import (
@@ -13,6 +12,7 @@ from src.common.exceptions import (
     resource_not_found_handler,
     unexpected_exception_handler,
 )
+from src.common.opentelemetry import setup_opentelemetry
 from src.common.redis import create_redis_client
 from src.config import get_settings
 from src.source.router import router as source_router
@@ -22,11 +22,6 @@ settings = get_settings()
 
 logging.basicConfig(
     level=logging.INFO,
-)
-
-Traceloop.init(  #  type: ignore
-    disable_batch=True,  # TODO: Disable for prod
-    app_name="rag-api",
 )
 
 
@@ -42,6 +37,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(dependencies=[Depends(get_api_key)], lifespan=lifespan)
+
+if settings.ENABLE_OTEL:
+    setup_opentelemetry(settings.OTEL_SERVICE_NAME, app)
 
 app.exception_handler(ResourceNotFoundException)(resource_not_found_handler)
 app.exception_handler(ResourceAlreadyExistsException)(resource_already_exists_handler)

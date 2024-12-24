@@ -55,11 +55,9 @@ class Settings(BaseSettings):
         pattern=r"^\d+/(second|minute|hour|day|month|year)$", default="60/minute"
     )
 
-    TRACELOOP_API_KEY: str | None = None
+    ENABLE_OTEL: bool = False
 
-    TRACELOOP_BASE_URL: str | None = None
-
-    TRACELOOP_HEADERS: str | None = None
+    OTEL_SERVICE_NAME: str = "rag-api"
 
 
 @lru_cache
