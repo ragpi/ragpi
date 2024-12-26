@@ -3,7 +3,7 @@ import logging
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
-logger = logging.getLogger(__name__)  # TODO: Where does this appear?
+logger = logging.getLogger(__name__)
 
 
 class ResourceType(str, Enum):

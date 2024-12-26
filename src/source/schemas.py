@@ -31,6 +31,12 @@ class SourceMetadata(BaseModel):
     config: SourceConfig
 
 
+class SourceTask(BaseModel):
+    task_id: str | None
+    source: SourceMetadata
+    message: str
+
+
 # Requests
 class CreateSourceRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)

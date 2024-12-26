@@ -14,9 +14,10 @@ from src.source.schemas import (
     SearchSourceInput,
     SourceMetadata,
     SourceStatus,
+    SourceTask,
     UpdateSourceRequest,
 )
-from src.source.sync.task import sync_source_documents_task
+from src.task.sync_source import sync_source_documents_task
 from src.source.utils import get_current_datetime
 
 
@@ -31,7 +32,7 @@ class SourceService:
         self.metadata_manager = metadata_manager
         self.lock_service = lock_service
 
-    def create_source(self, source_input: CreateSourceRequest) -> SourceMetadata:
+    def create_source(self, source_input: CreateSourceRequest) -> SourceTask:
         if self.metadata_manager.metadata_exists(source_input.name):
             raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_input.name)
 
@@ -49,13 +50,17 @@ class SourceService:
 
         source_config_dict = source_input.config.model_dump()
 
-        sync_source_documents_task.delay(
+        task = sync_source_documents_task.delay(
             source_name=source_input.name,
             source_config_dict=source_config_dict,
             existing_doc_ids=[],
         )
 
-        return created_source
+        return SourceTask(
+            task_id=task.id,
+            source=created_source,
+            message="Source created. Syncing documents...",
+        )
 
     def get_source(self, source_name: str) -> SourceMetadata:
         if not self.metadata_manager.metadata_exists(source_name):
@@ -67,7 +72,7 @@ class SourceService:
         self,
         source_name: str,
         source_input: UpdateSourceRequest | None = None,
-    ) -> SourceMetadata:
+    ) -> SourceTask:
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
@@ -94,13 +99,21 @@ class SourceService:
 
         if source_input and source_input.sync:
             source_config_dict = updated_source.config.model_dump()
-            sync_source_documents_task.delay(
+            task_id = sync_source_documents_task.delay(
                 source_name=source_name,
                 source_config_dict=source_config_dict,
                 existing_doc_ids=existing_doc_ids,
             )
 
-        return updated_source
+            return SourceTask(
+                task_id=task_id.id,
+                source=updated_source,
+                message="Source updated. Syncing documents...",
+            )
+
+        return SourceTask(
+            task_id=None, source=updated_source, message="Source updated."
+        )
 
     def get_source_documents(
         self, source_name: str, limit: int | None, offset: int | None

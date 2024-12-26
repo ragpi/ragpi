@@ -3,13 +3,14 @@ from redis import Redis
 from redis.lock import Lock
 from typing import Any
 from celery import current_task
+from celery.exceptions import Ignore
 
 from src.config import get_settings
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
-from src.celery import celery_app
+from src.task.celery import celery_app
 from src.source.config import SOURCE_CONFIG_REGISTRY
-from src.source.sync.service import SourceSyncService
+from src.source.sync import SourceSyncService
 
 
 @celery_app.task(name="Sync Source Documents")
@@ -17,7 +18,7 @@ def sync_source_documents_task(
     source_name: str,
     source_config_dict: dict[str, Any],
     existing_doc_ids: list[str],
-):
+) -> dict[str, Any]:
     """Celery task to sync documents for a given source."""
     settings = get_settings()
     redis_client = Redis.from_url(settings.REDIS_URL, decode_responses=True)
@@ -28,13 +29,19 @@ def sync_source_documents_task(
     try:
         # Attempt to acquire the lock
         lock = lock_service.acquire_lock(source_name)
-        current_task.update_state(state="SYNCING")
+        current_task.update_state(
+            state="SYNCING",
+            meta={
+                "source": source_name,
+                "message": "Syncing documents...",
+            },
+        )
 
         # Create a new event loop
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-        async def task_with_lock_renewal():
+        async def task_with_lock_renewal() -> dict[str, Any]:
             lock_renewal_task = asyncio.create_task(lock_service.renew_lock(lock))
             try:
                 source_type = source_config_dict.get("type")
@@ -55,16 +62,28 @@ def sync_source_documents_task(
                     existing_doc_ids=set(existing_doc_ids),
                     settings=settings,
                 )
-                source_overview = await sync_service.sync_documents()
-                return source_overview.model_dump()
+                await sync_service.sync_documents()
+                result: dict[str, Any] = {
+                    "source": source_name,
+                    "message": "Documents synced successfully.",
+                }
+                return result
             finally:
                 lock_renewal_task.cancel()
 
         result = loop.run_until_complete(task_with_lock_renewal())
         return result
     except Exception as e:
-        current_task.update_state(state="FAILURE")
-        raise e
+        current_task.update_state(
+            state="FAILURE",
+            meta={
+                "source": source_name,
+                "message": "Failed to sync documents.",
+                "error": str(e),
+                "exc_type": type(e).__name__,
+            },
+        )
+        raise Ignore()
 
     finally:
         if loop:
