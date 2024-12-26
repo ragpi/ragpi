@@ -5,16 +5,24 @@ from src.document_store.base import DocumentStoreService
 from src.document_store.dependencies import get_document_store
 from src.lock.dependencies import get_lock_service
 from src.lock.service import LockService
+from src.source.config import SOURCE_CONFIG_MAP, SourceConfig
 from src.source.metadata import SourceMetadataManager
 from src.source.service import SourceService
+
+
+def get_config_map() -> dict[str, type[SourceConfig]]:
+    return SOURCE_CONFIG_MAP
 
 
 def get_metadata_manager(
     redis_client: RedisClient = Depends(get_redis_client),
     document_store: DocumentStoreService = Depends(get_document_store),
+    config_map: dict[str, type[SourceConfig]] = Depends(get_config_map),
 ) -> SourceMetadataManager:
     return SourceMetadataManager(
-        redis_client=redis_client, document_store=document_store
+        redis_client=redis_client,
+        document_store=document_store,
+        config_map=config_map,
     )
 
 

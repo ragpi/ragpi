@@ -31,6 +31,12 @@ class SourceMetadata(BaseModel):
     config: SourceConfig
 
 
+class SyncSourceOutput(BaseModel):
+    source: SourceMetadata
+    docs_added: int
+    docs_removed: int
+
+
 class SourceTask(BaseModel):
     task_id: str | None
     source: SourceMetadata

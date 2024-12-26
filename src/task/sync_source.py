@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from redis import Redis
 from redis.lock import Lock
 from typing import Any
@@ -9,7 +10,7 @@ from src.config import get_settings
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.task.celery import celery_app
-from src.source.config import SOURCE_CONFIG_REGISTRY
+from src.source.config import SOURCE_CONFIG_MAP
 from src.source.sync import SourceSyncService
 
 
@@ -45,27 +46,28 @@ def sync_source_documents_task(
             lock_renewal_task = asyncio.create_task(lock_service.renew_lock(lock))
             try:
                 source_type = source_config_dict.get("type")
-                if source_type not in SOURCE_CONFIG_REGISTRY:
+                if source_type not in SOURCE_CONFIG_MAP:
                     raise SyncSourceException(f"Unsupported source type: {source_type}")
 
                 try:
-                    source_config = SOURCE_CONFIG_REGISTRY[source_type](
-                        **source_config_dict
-                    )
+                    source_config = SOURCE_CONFIG_MAP[source_type](**source_config_dict)
                 except ValueError as e:
                     raise SyncSourceException(f"Invalid source config: {e}")
 
                 sync_service = SourceSyncService(
                     redis_client=redis_client,
                     source_name=source_name,
+                    config_map=SOURCE_CONFIG_MAP,
                     source_config=source_config,
                     existing_doc_ids=set(existing_doc_ids),
                     settings=settings,
                 )
-                await sync_service.sync_documents()
+                synced_source = await sync_service.sync_documents()
                 result: dict[str, Any] = {
                     "source": source_name,
                     "message": "Documents synced successfully.",
+                    "docs_added": synced_source.docs_added,
+                    "docs_removed": synced_source.docs_removed,
                 }
                 return result
             finally:
@@ -74,6 +76,7 @@ def sync_source_documents_task(
         result = loop.run_until_complete(task_with_lock_renewal())
         return result
     except Exception as e:
+        logging.exception(f"Failed to sync documents for source {source_name}.")
         current_task.update_state(
             state="FAILURE",
             meta={

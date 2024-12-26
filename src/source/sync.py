@@ -11,10 +11,7 @@ from src.source.config import (
     SourceConfig,
 )
 from src.source.metadata import SourceMetadataManager
-from src.source.schemas import (
-    SourceMetadata,
-    SourceStatus,
-)
+from src.source.schemas import SourceStatus, SyncSourceOutput
 from src.source.utils import get_current_datetime
 
 logger = logging.getLogger(__name__)
@@ -25,14 +22,17 @@ class SourceSyncService:
 
     def __init__(
         self,
+        *,
         redis_client: RedisClient,
         source_name: str,
+        config_map: dict[str, type[SourceConfig]],
         source_config: SourceConfig,
         existing_doc_ids: set[str],
         settings: Settings,
     ):
         self.redis_client = redis_client
         self.source_name = source_name
+        self.config_map = config_map
         self.source_config = source_config
         self.existing_doc_ids = existing_doc_ids
         self.settings = settings
@@ -51,11 +51,12 @@ class SourceSyncService:
         self.metadata_manager = SourceMetadataManager(
             redis_client=self.redis_client,
             document_store=self.document_store,
+            config_map=self.config_map,
         )
         self.document_extractor = DocumentExtractor(self.settings)
         self.batch_size = self.settings.DOCUMENT_SYNC_BATCH_SIZE
 
-    async def sync_documents(self) -> SourceMetadata:
+    async def sync_documents(self) -> SyncSourceOutput:
         """Main entry point for syncing documents for a source."""
         logger.info(f"Syncing documents for source {self.source_name}")
 
@@ -102,7 +103,7 @@ class SourceSyncService:
                 self._remove_stale_documents(doc_ids_to_remove)
 
             # If no documents were added in the entire sync
-            if not current_doc_ids - self.existing_doc_ids:
+            if not added_doc_ids:
                 logger.info(f"No new documents added to source {self.source_name}")
 
             # Mark source as COMPLETED
@@ -114,7 +115,11 @@ class SourceSyncService:
                 timestamp=get_current_datetime(),
             )
 
-            return updated_source
+            return SyncSourceOutput(
+                source=updated_source,
+                docs_added=len(added_doc_ids),
+                docs_removed=len(doc_ids_to_remove),
+            )
 
         except Exception as e:
             self.metadata_manager.update_metadata(

@@ -1,10 +1,21 @@
 from enum import Enum
-from pydantic import BaseModel
+import re
+from pydantic import BaseModel, field_validator
 from typing import Union, Literal
 
 from src.config import get_settings
 
 settings = get_settings()
+
+
+def validate_regex(pattern: str | None) -> str | None:
+    if pattern is None:
+        return None
+    try:
+        re.compile(pattern)
+    except re.error as e:
+        raise ValueError(f"Invalid regex pattern: {e}")
+    return pattern
 
 
 class SourceType(str, Enum):
@@ -14,6 +25,7 @@ class SourceType(str, Enum):
 
 
 class BaseSourceConfig(BaseModel):
+    type: str
     chunk_size: int = settings.DEFAULT_CHUNK_SIZE
     chunk_overlap: int = settings.DEFAULT_CHUNK_OVERLAP
 
@@ -21,8 +33,12 @@ class BaseSourceConfig(BaseModel):
 class SitemapConfig(BaseSourceConfig):
     type: Literal[SourceType.SITEMAP]
     sitemap_url: str
-    include_pattern: str | None = None  # TODO: Validate?
+    include_pattern: str | None = None
     exclude_pattern: str | None = None
+
+    _validate_regex = field_validator("include_pattern", "exclude_pattern")(
+        validate_regex
+    )
 
 
 class GithubIssuesConfig(BaseSourceConfig):
@@ -46,9 +62,7 @@ class GithubReadmeConfig(BaseSourceConfig):
 
 SourceConfig = Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig]
 
-SOURCE_CONFIG_REGISTRY: dict[
-    str, type[SitemapConfig] | type[GithubIssuesConfig] | type[GithubReadmeConfig]
-] = {
+SOURCE_CONFIG_MAP: dict[str, type[SourceConfig]] = {
     SourceType.SITEMAP: SitemapConfig,
     SourceType.GITHUB_ISSUES: GithubIssuesConfig,
     SourceType.GITHUB_README: GithubReadmeConfig,
