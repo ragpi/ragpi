@@ -6,7 +6,7 @@ from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceType,
 )
-from src.document_store.base import DocumentStoreBase
+from src.document_store.base import DocumentStoreService
 from src.lock.service import LockService
 from src.source.metadata import SourceMetadataManager
 from src.source.schemas import (
@@ -25,7 +25,7 @@ class SourceService:
     def __init__(
         self,
         metadata_manager: SourceMetadataManager,
-        document_store: DocumentStoreBase,
+        document_store: DocumentStoreService,
         lock_service: LockService,
     ):
         self.document_store = document_store

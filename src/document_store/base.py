@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from src.common.schemas import Document
 
 
-class DocumentStoreBase(ABC):
+class DocumentStoreService(ABC):
     @abstractmethod
     def add_documents(self, source_name: str, documents: list[Document]) -> None:
         pass

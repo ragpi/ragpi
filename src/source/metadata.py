@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Any
 
-from src.document_store.base import DocumentStoreBase
+from src.document_store.base import DocumentStoreService
 from src.source.config import SOURCE_CONFIG_REGISTRY, SourceConfig
 from src.common.redis import RedisClient
 from src.common.exceptions import (
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class SourceMetadataManager:
-    def __init__(self, redis_client: RedisClient, document_store: DocumentStoreBase):
+    def __init__(self, redis_client: RedisClient, document_store: DocumentStoreService):
         self.client = redis_client
         self.document_store = document_store
         self.config_prefix = "config__"

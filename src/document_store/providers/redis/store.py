@@ -10,7 +10,7 @@ from redis.commands.search.query import Query
 
 from src.common.redis import RedisClient
 from src.common.schemas import Document
-from src.document_store.base import DocumentStoreBase
+from src.document_store.base import DocumentStoreService
 from src.document_store.providers.redis.fields import (
     DOCUMENT_FIELDS,
     get_index_schema_fields,
@@ -18,7 +18,7 @@ from src.document_store.providers.redis.fields import (
 from src.document_store.ranking import reciprocal_rank_fusion
 
 
-class RedisDocumentStore(DocumentStoreBase):
+class RedisDocumentStore(DocumentStoreService):
     def __init__(
         self,
         *,
