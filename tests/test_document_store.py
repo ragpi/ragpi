@@ -13,7 +13,9 @@ def redis_client() -> Redis:
 
 @pytest.fixture
 def openai_client() -> OpenAI:
-    return MagicMock(spec=OpenAI)
+    client = MagicMock(spec=OpenAI)
+    client.embeddings = MagicMock()
+    return client
 
 
 @pytest.fixture
@@ -74,6 +76,56 @@ def test_search_documents(document_store: RedisDocumentStore, redis_client: Redi
     ])
 
     documents = document_store.search_documents("test_source", "test query", top_k=2)
+
+    assert len(documents) == 2
+    assert documents[0].id == "1"
+    assert documents[1].id == "2"
+
+
+def test_get_document_ids(document_store: RedisDocumentStore, redis_client: Redis) -> None:
+    redis_client.scan_iter.return_value = [f"test_index:sources:test_source:{i}" for i in range(3)]
+
+    document_ids = document_store.get_document_ids("test_source")
+
+    assert len(document_ids) == 3
+    assert document_ids == ["0", "1", "2"]
+
+
+def test_get_document_count(document_store: RedisDocumentStore, redis_client: Redis) -> None:
+    redis_client.scan_iter.return_value = [f"test_index:sources:test_source:{i}" for i in range(3)]
+
+    document_count = document_store.get_document_count("test_source")
+
+    assert document_count == 3
+
+
+def test_delete_documents(document_store: RedisDocumentStore, redis_client: Redis) -> None:
+    document_store.delete_documents("test_source", ["1", "2"])
+
+    assert redis_client.delete.called
+
+
+def test_vector_based_search(document_store: RedisDocumentStore, redis_client: Redis, openai_client: OpenAI) -> None:
+    openai_client.embeddings.create.return_value = MagicMock(data=[MagicMock(embedding=[0.1] * 1536)])
+    redis_client.ft().search.return_value = MagicMock(docs=[
+        {"id": "1", "content": "test content 1", "title": "title 1", "url": "url 1", "created_at": "2023-01-01"},
+        {"id": "2", "content": "test content 2", "title": "title 2", "url": "url 2", "created_at": "2023-01-02"},
+    ])
+
+    documents = document_store.vector_based_search("test_source", "test query", top_k=2)
+
+    assert len(documents) == 2
+    assert documents[0].id == "1"
+    assert documents[1].id == "2"
+
+
+def test_full_text_search(document_store: RedisDocumentStore, redis_client: Redis) -> None:
+    redis_client.ft().search.return_value = MagicMock(docs=[
+        {"id": "1", "content": "test content 1", "title": "title 1", "url": "url 1", "created_at": "2023-01-01"},
+        {"id": "2", "content": "test content 2", "title": "title 2", "url": "url 2", "created_at": "2023-01-02"},
+    ])
+
+    documents = document_store.full_text_search("test_source", "test query", top_k=2)
 
     assert len(documents) == 2
     assert documents[0].id == "1"
