@@ -37,9 +37,14 @@ mypy = "^1.13.0"
 types-beautifulsoup4 = "^4.12.0.20241020"
 pre-commit = "^4.0.1"
 flower = "^2.0.1"
+pytest = "^8.3.4"
+pytest-mock = "^3.14.0"
 
 [tool.mypy]
 plugins = ['pydantic.mypy']
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src"]
 
 [build-system]
 requires = ["poetry-core"]
