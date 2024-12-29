@@ -79,7 +79,7 @@ class GitHubIssueClient(GitHubClient):
 
         params: dict[str, str] | None = {
             "per_page": "100",
-            "state": "all",
+            "state": state,
             "sort": "updated",
             "direction": "desc",
         }

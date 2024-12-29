@@ -119,11 +119,11 @@ class SitemapClient:
             logger.warning(f"URL {url} is disallowed by robots.txt")
             return None
 
-        max_retries = 5
+        max_attempts = 5
         retry_count = 0
         backoff = 1  # 1 second
 
-        while retry_count <= max_retries:
+        while retry_count < max_attempts:
             try:
                 async with self.session.get(url) as response:
                     if response.status == 200:
@@ -148,7 +148,7 @@ class SitemapClient:
                 await asyncio.sleep(backoff)
                 backoff *= 2
                 retry_count += 1
-        logger.error(f"Failed to fetch {url} after {max_retries} retries.")
+        logger.error(f"Failed to fetch {url} after {max_attempts} attempts.")
         return None
 
     async def fetch_sitemap_pages(

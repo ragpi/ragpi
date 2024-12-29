@@ -39,7 +39,7 @@ class GitHubReadmeClient(GitHubClient):
 
         for dir in dirs:
             url = base_url + (f"/{dir}" if dir else "")
-            params = {}
+            params: dict[str, str] = {}
             if ref:
                 params["ref"] = ref
 
