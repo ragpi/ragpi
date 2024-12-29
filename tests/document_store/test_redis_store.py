@@ -1,10 +1,10 @@
 import pytest
-from datetime import datetime
 from pytest_mock import MockerFixture
+from unittest.mock import Mock
+from datetime import datetime
 from openai.types.embedding import Embedding
 from openai.types.create_embedding_response import Usage, CreateEmbeddingResponse
 from redis.commands.search.document import Document as RedisDocument
-from unittest.mock import Mock
 
 from src.document_store.providers.redis.store import RedisDocumentStore
 from src.common.schemas import Document
