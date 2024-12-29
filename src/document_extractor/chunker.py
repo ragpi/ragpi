@@ -6,7 +6,7 @@ from langchain_text_splitters import (
 from src.document_extractor.stable_id import generate_stable_id
 from src.document_extractor.schemas import GithubIssue, MarkdownPage
 from src.common.schemas import Document
-from src.source.utils import get_current_datetime
+from src.common.current_datetime import get_current_datetime
 
 
 class Chunker:

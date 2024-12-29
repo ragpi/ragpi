@@ -2,7 +2,6 @@ import datetime
 import pytest
 from aiohttp import ClientError, ClientResponse, ClientSession
 from typing import AsyncGenerator
-
 from pytest_mock import MockerFixture
 
 from src.document_extractor.clients.github import GitHubClient

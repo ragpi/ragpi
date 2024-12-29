@@ -122,10 +122,10 @@ class RedisDocumentStore(DocumentStoreService):
         return [
             Document(
                 id=self._extract_real_doc_id(source_name, doc[0]),
-                content=doc[1],
-                title=doc[3],
-                url=doc[2],
-                created_at=doc[4],
+                content=doc[2],
+                title=doc[4],
+                url=doc[3],
+                created_at=doc[5],
             )
             for doc in docs
         ]

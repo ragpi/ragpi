@@ -12,7 +12,7 @@ from src.source.config import (
 )
 from src.source.metadata import SourceMetadataManager
 from src.source.schemas import SourceStatus, SyncSourceOutput
-from src.source.utils import get_current_datetime
+from src.common.current_datetime import get_current_datetime
 
 logger = logging.getLogger(__name__)
 

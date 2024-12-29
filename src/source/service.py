@@ -18,7 +18,7 @@ from src.source.schemas import (
     UpdateSourceRequest,
 )
 from src.task.sync_source import sync_source_documents_task
-from src.source.utils import get_current_datetime
+from src.common.current_datetime import get_current_datetime
 
 
 class SourceService:
