@@ -4,7 +4,6 @@ import time
 from types import TracebackType
 from typing import Any, Type
 from aiohttp import ClientError, ClientSession
-from multidict import CIMultiDictProxy
 
 from src.document_extractor.exceptions import DocumentExtractorException
 
@@ -60,12 +59,15 @@ class GitHubClient:
         return link_dict
 
     async def request(
-        self, method: str, url: str, params: dict[str, str] | None = None
-    ) -> tuple[Any | None, CIMultiDictProxy[str] | None]:
+        self,
+        method: str,
+        url: str,
+        params: dict[str, str] | None = None,
+        max_attempts: int = 5,
+        retry_backoff: float = 60,
+    ) -> tuple[Any | None, dict[str, str] | None]:
         retry_count = 0
-        max_retries = 5
-        backoff = 60  # Start backoff at 60 seconds
-        while retry_count < max_retries:
+        while retry_count < max_attempts:
             await self.rate_limit_event.wait()  # Wait until rate limit is lifted
             async with self.semaphore:
                 try:
@@ -91,7 +93,7 @@ class GitHubClient:
                                     wait_time = 0
                             else:
                                 # Exponential backoff
-                                wait_time = backoff * (2**retry_count)
+                                wait_time = retry_backoff * (2**retry_count)
 
                             logger.warning(
                                 f"Rate limit exceeded. Waiting for {wait_time} seconds."
@@ -110,14 +112,14 @@ class GitHubClient:
                             )
                         response.raise_for_status()
                         data = await response.json()
-                        return data, response.headers
+                        return data, dict(response.headers)
                 except DocumentExtractorException as e:
                     raise e
                 except ClientError as e:
                     logger.exception(f"HTTP request failed")
-                    logger.warning(f"Retrying in {backoff} seconds...")
+                    logger.warning(f"Retrying in {retry_backoff} seconds...")
                     retry_count += 1
-                    wait_time = backoff * (2**retry_count)
+                    wait_time = retry_backoff * (2**retry_count)
                     await asyncio.sleep(wait_time)
                 except Exception as e:
                     logger.exception(f"Unexpected error")
@@ -125,5 +127,5 @@ class GitHubClient:
                         f"Unexpected error when fetching {url}"
                     )
 
-        logger.error(f"Failed to make request to {url} after {max_retries} retries.")
+        logger.error(f"Failed to make request to {url} after {max_attempts} attempts.")
         return None, None

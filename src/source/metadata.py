@@ -29,10 +29,12 @@ class SourceMetadataManager:
     def _get_metadata_key(self, source_name: str, should_exist: bool = True) -> str:
         key_name = f"metadata:{source_name}"
 
-        if not self.client.exists(key_name) and should_exist:
+        source_exists = self.client.exists(key_name)
+
+        if should_exist and not source_exists:
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
-        if self.client.exists(key_name) and not should_exist:
+        if not should_exist and source_exists:
             raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_name)
 
         return key_name

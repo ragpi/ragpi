@@ -2,12 +2,10 @@ import logging
 from typing import AsyncGenerator
 from src.config import Settings
 from src.document_extractor.chunker import Chunker
+from src.document_extractor.clients.sitemap import SitemapClient
 from src.document_extractor.clients.github_issue import GitHubIssueClient
 from src.document_extractor.clients.github_readme import GitHubReadmeClient
-from src.document_extractor.exceptions import (
-    DocumentExtractorException,
-)
-from src.document_extractor.clients.sitemap import SitemapClient
+from src.document_extractor.exceptions import DocumentExtractorException
 from src.common.schemas import Document
 from src.source.config import (
     GithubIssuesConfig,
