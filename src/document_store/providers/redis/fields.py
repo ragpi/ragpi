@@ -25,8 +25,8 @@ def get_index_schema_fields(embedding_dimensions: int) -> dict[str, Any]:
 
 
 DOCUMENT_FIELDS = [
-    "id",
     "source",
+    "id",
     "content",
     "url",
     "title",

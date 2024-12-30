@@ -19,7 +19,6 @@ async def github_readme_client() -> AsyncGenerator[GitHubReadmeClient, None]:
         yield client
 
 
-@pytest.mark.asyncio
 async def test_fetch_readmes_root_success(
     github_readme_client: GitHubReadmeClient,
     mocker: MockerFixture,
@@ -54,7 +53,6 @@ async def test_fetch_readmes_root_success(
     )
 
 
-@pytest.mark.asyncio
 async def test_fetch_readmes_with_ref(
     github_readme_client: GitHubReadmeClient,
     mocker: MockerFixture,
@@ -86,7 +84,6 @@ async def test_fetch_readmes_with_ref(
     )
 
 
-@pytest.mark.asyncio
 async def test_fetch_readmes_subdirectories(
     github_readme_client: GitHubReadmeClient,
     mocker: MockerFixture,
@@ -140,7 +137,6 @@ async def test_fetch_readmes_subdirectories(
     )
 
 
-@pytest.mark.asyncio
 async def test_fetch_readmes_no_directories(
     github_readme_client: GitHubReadmeClient,
 ) -> None:
@@ -156,7 +152,6 @@ async def test_fetch_readmes_no_directories(
             pass
 
 
-@pytest.mark.asyncio
 async def test_fetch_readmes_request_failure(
     github_readme_client: GitHubReadmeClient,
     mocker: MockerFixture,

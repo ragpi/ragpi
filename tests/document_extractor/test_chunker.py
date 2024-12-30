@@ -61,7 +61,6 @@ def sample_github_issue() -> GithubIssue:
     )
 
 
-@pytest.mark.asyncio
 async def test_chunk_markdown_page(
     chunker: Chunker,
     sample_markdown_page: MarkdownPage,
@@ -102,7 +101,6 @@ async def test_chunk_markdown_page(
     assert result[2].created_at == mock_current_time
 
 
-@pytest.mark.asyncio
 async def test_chunk_github_issue(
     chunker: Chunker,
     sample_github_issue: GithubIssue,

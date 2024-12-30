@@ -64,7 +64,6 @@ def test_extract_markdown_page(sample_html: bytes) -> None:
     assert "Footer content" not in page.content
 
 
-@pytest.mark.asyncio
 async def test_fetch_robots_txt_success(
     mocker: MockerFixture, sitemap_client: SitemapClient, robots_txt: str
 ) -> None:
@@ -79,7 +78,6 @@ async def test_fetch_robots_txt_success(
     assert result == robots_txt
 
 
-@pytest.mark.asyncio
 async def test_fetch_robots_txt_not_found(
     mocker: MockerFixture, sitemap_client: SitemapClient
 ) -> None:
@@ -93,7 +91,6 @@ async def test_fetch_robots_txt_not_found(
     assert result == ""
 
 
-@pytest.mark.asyncio
 async def test_parse_sitemap_success(
     mocker: MockerFixture, sitemap_client: SitemapClient, sample_sitemap_xml: str
 ) -> None:
@@ -109,7 +106,6 @@ async def test_parse_sitemap_success(
     assert urls == ["https://example.com/page1", "https://example.com/page2"]
 
 
-@pytest.mark.asyncio
 async def test_parse_sitemap_not_found(
     mocker: MockerFixture, sitemap_client: SitemapClient
 ) -> None:
@@ -123,7 +119,6 @@ async def test_parse_sitemap_not_found(
         await sitemap_client.parse_sitemap("https://example.com/sitemap.xml")
 
 
-@pytest.mark.asyncio
 async def test_fetch_page_success(
     mocker: MockerFixture, sitemap_client: SitemapClient, sample_html: bytes
 ) -> None:
@@ -143,7 +138,6 @@ async def test_fetch_page_success(
     assert "Test Page" in page.title
 
 
-@pytest.mark.asyncio
 async def test_fetch_page_disallowed_by_robots(
     mocker: MockerFixture, sitemap_client: SitemapClient
 ) -> None:
@@ -154,7 +148,6 @@ async def test_fetch_page_disallowed_by_robots(
     assert page is None
 
 
-@pytest.mark.asyncio
 async def test_fetch_sitemap_pages_with_filters(
     sitemap_client: SitemapClient,
     sample_sitemap_xml: str,
@@ -202,7 +195,6 @@ async def test_fetch_sitemap_pages_with_filters(
     assert "Test Page" in pages[0].title
 
 
-@pytest.mark.asyncio
 async def test_fetch_sitemap_pages_no_matching_urls(
     mocker: MockerFixture, sitemap_client: SitemapClient, sample_sitemap_xml: str
 ) -> None:

@@ -19,7 +19,6 @@ async def github_client() -> AsyncGenerator[GitHubClient, None]:
         yield client
 
 
-@pytest.mark.asyncio
 async def test_github_client_initialization() -> None:
     # Test successful initialization
     client = GitHubClient(
@@ -42,7 +41,6 @@ async def test_github_client_initialization() -> None:
         )
 
 
-@pytest.mark.asyncio
 async def test_parse_link_header(github_client: GitHubClient) -> None:
     # Test with valid header
     test_header = '<https://api.github.com/search?page=2>; rel="next", <https://api.github.com/search?page=5>; rel="last"'
@@ -59,7 +57,6 @@ async def test_parse_link_header(github_client: GitHubClient) -> None:
     assert result == {}
 
 
-@pytest.mark.asyncio
 async def test_request_success(
     github_client: GitHubClient, mocker: MockerFixture
 ) -> None:
@@ -76,7 +73,6 @@ async def test_request_success(
     assert headers == {"header": "value"}
 
 
-@pytest.mark.asyncio
 async def test_request_rate_limit(
     github_client: GitHubClient, mocker: MockerFixture
 ) -> None:
@@ -105,7 +101,6 @@ async def test_request_rate_limit(
     assert mock_session.call_count == 2
 
 
-@pytest.mark.asyncio
 async def test_request_404(github_client: GitHubClient, mocker: MockerFixture) -> None:
     mock_response = mocker.Mock(spec=ClientResponse)
     mock_response.status = 404
@@ -120,7 +115,6 @@ async def test_request_404(github_client: GitHubClient, mocker: MockerFixture) -
         await github_client.request("GET", "https://api.github.com/test")
 
 
-@pytest.mark.asyncio
 async def test_request_401(github_client: GitHubClient, mocker: MockerFixture) -> None:
     mock_response = mocker.Mock(spec=ClientResponse)
     mock_response.status = 401
@@ -134,7 +128,6 @@ async def test_request_401(github_client: GitHubClient, mocker: MockerFixture) -
         await github_client.request("GET", "https://api.github.com/test")
 
 
-@pytest.mark.asyncio
 async def test_request_client_error(
     github_client: GitHubClient, mocker: MockerFixture
 ) -> None:
@@ -149,7 +142,6 @@ async def test_request_client_error(
     assert mock_session.call_count == 3  # initial request + 2 retries
 
 
-@pytest.mark.asyncio
 async def test_request_unexpected_error(
     github_client: GitHubClient, mocker: MockerFixture
 ) -> None:

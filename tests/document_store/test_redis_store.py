@@ -119,6 +119,7 @@ def test_get_documents(
     pipeline_mock: Mock = mocker.Mock()
     pipeline_mock.execute.return_value = [
         [
+            TEST_SOURCE,
             f"{TEST_SOURCE}:doc1",
             "Test content 1",
             "http://test1.com",
@@ -126,6 +127,7 @@ def test_get_documents(
             sample_documents[0].created_at,
         ],
         [
+            TEST_SOURCE,
             f"{TEST_SOURCE}:doc2",
             "Test content 2",
             "http://test2.com",

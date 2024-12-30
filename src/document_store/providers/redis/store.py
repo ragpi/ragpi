@@ -60,19 +60,14 @@ class RedisDocumentStore(DocumentStoreService):
     def _extract_real_doc_id(self, source_name: str, key: str) -> str:
         return key.split(f"{source_name}:")[1]
 
-    def _map_search_results_to_documents(
-        self, source_name: str, search_results: list[dict[str, Any]]
-    ) -> list[Document]:
-        return [
-            Document(
-                id=self._extract_real_doc_id(source_name, doc["id"]),
-                content=doc["content"],
-                title=doc["title"],
-                url=doc["url"],
-                created_at=doc["created_at"],
-            )
-            for doc in search_results
-        ]
+    def _map_document(self, source_name: str, doc: dict[str, Any]):
+        return Document(
+            id=self._extract_real_doc_id(source_name, doc["id"]),
+            content=doc["content"],
+            title=doc["title"],
+            url=doc["url"],
+            created_at=doc["created_at"],
+        )
 
     def add_documents(self, source_name: str, documents: list[Document]) -> None:
         embeddings_result = self.embedding_client.create(
@@ -83,8 +78,8 @@ class RedisDocumentStore(DocumentStoreService):
 
         data: list[dict[str, Any]] = [
             {
-                "id": self._create_internal_doc_id(source_name, doc.id),
                 "source": source_name,
+                "id": self._create_internal_doc_id(source_name, doc.id),
                 "content": doc.content,
                 "title": doc.title,
                 "url": doc.url,
@@ -117,18 +112,11 @@ class RedisDocumentStore(DocumentStoreService):
                 *self.document_fields,
             )
 
-        docs = pipeline.execute()
+        results = pipeline.execute()
 
-        return [
-            Document(
-                id=self._extract_real_doc_id(source_name, doc[0]),
-                content=doc[2],
-                title=doc[4],
-                url=doc[3],
-                created_at=doc[5],
-            )
-            for doc in docs
-        ]
+        docs = [dict(zip(self.document_fields, doc_values)) for doc_values in results]
+
+        return [self._map_document(source_name, doc) for doc in docs]
 
     def get_document_ids(self, source_name: str) -> list[str]:
         source_key = self._get_source_key(source_name)
@@ -175,7 +163,7 @@ class RedisDocumentStore(DocumentStoreService):
         )
 
         search_results = self.index.query(vector_query)
-        return self._map_search_results_to_documents(source_name, search_results)
+        return [self._map_document(source_name, doc) for doc in search_results]
 
     def full_text_search(
         self, source_name: str, query: str, top_k: int
@@ -198,7 +186,7 @@ class RedisDocumentStore(DocumentStoreService):
 
         ft = self.client.ft(f"{self.index_name}")
         search_results = ft.search(query_obj)  # type: ignore
-        return self._map_search_results_to_documents(source_name, search_results.docs)
+        return [self._map_document(source_name, doc) for doc in search_results.docs]
 
     def search_documents(
         self, source_name: str, query: str, top_k: int

@@ -19,7 +19,6 @@ async def github_issue_client() -> AsyncGenerator[GitHubIssueClient, None]:
         yield client
 
 
-@pytest.mark.asyncio
 async def test_fetch_comments(
     github_issue_client: GitHubIssueClient,
     mocker: MockerFixture,
@@ -68,7 +67,6 @@ async def test_fetch_comments(
     )
 
 
-@pytest.mark.asyncio
 async def test_fetch_issues_basic(
     github_issue_client: GitHubIssueClient,
     mocker: MockerFixture,
@@ -103,7 +101,6 @@ async def test_fetch_issues_basic(
     assert len(issues[0].comments) == 0
 
 
-@pytest.mark.asyncio
 async def test_fetch_issues_with_comments(
     github_issue_client: GitHubIssueClient,
     mocker: MockerFixture,
@@ -146,7 +143,6 @@ async def test_fetch_issues_with_comments(
     assert issues[0].comments[0].body == "Comment 1"
 
 
-@pytest.mark.asyncio
 async def test_fetch_issues_with_label_filtering(
     github_issue_client: GitHubIssueClient,
     mocker: MockerFixture,
@@ -198,7 +194,6 @@ async def test_fetch_issues_with_label_filtering(
     assert issues[0].id == "2"
 
 
-@pytest.mark.asyncio
 async def test_fetch_issues_with_max_age(
     github_issue_client: GitHubIssueClient,
     mocker: MockerFixture,
@@ -226,7 +221,6 @@ async def test_fetch_issues_with_max_age(
     assert params["since"] == cutoff_date.strftime("%Y-%m-%d")
 
 
-@pytest.mark.asyncio
 async def test_fetch_issues_skip_pull_requests(
     github_issue_client: GitHubIssueClient,
     mocker: MockerFixture,
@@ -267,7 +261,6 @@ async def test_fetch_issues_skip_pull_requests(
     assert issues[0].title == "Issue 1"
 
 
-@pytest.mark.asyncio
 async def test_fetch_issues_multiple_pages(
     github_issue_client: GitHubIssueClient,
     mocker: MockerFixture,
