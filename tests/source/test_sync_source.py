@@ -95,8 +95,8 @@ def sample_documents() -> list[Document]:
 
 
 @pytest.fixture
-def mock_extract_documents(mocker: MockerFixture):
-    async def _mock_extract_docs(
+def patch_extract_documents(mocker: MockerFixture):
+    async def _extract_docs(
         source_sync_service: SourceSyncService, documents: list[Document]
     ):
         async def _doc_generator(_: SourceConfig) -> AsyncIterator[Document]:
@@ -109,7 +109,7 @@ def mock_extract_documents(mocker: MockerFixture):
             side_effect=_doc_generator,
         )
 
-    return _mock_extract_docs
+    return _extract_docs
 
 
 @pytest.fixture
@@ -162,7 +162,7 @@ def source_sync_service(
 async def test_sync_documents_success(
     source_sync_service: SourceSyncService,
     sample_documents: list[Document],
-    mock_extract_documents: AsyncMock,
+    patch_extract_documents: AsyncMock,
     mock_current_datetime: str,
     mocker: MockerFixture,
 ) -> None:
@@ -173,7 +173,7 @@ async def test_sync_documents_success(
     )
 
     # Mock document extraction
-    await mock_extract_documents(source_sync_service, sample_documents)
+    await patch_extract_documents(source_sync_service, sample_documents)
 
     # Mock metadata updates
     mock_metadata = SourceMetadata(
@@ -227,7 +227,7 @@ async def test_sync_documents_success(
 async def test_sync_documents_with_existing_docs(
     source_sync_service: SourceSyncService,
     sample_documents: list[Document],
-    mock_extract_documents: AsyncMock,
+    patch_extract_documents: AsyncMock,
     mock_current_datetime: str,
     mocker: MockerFixture,
 ) -> None:
@@ -241,7 +241,7 @@ async def test_sync_documents_with_existing_docs(
     )
 
     # Mock document extraction
-    await mock_extract_documents(source_sync_service, sample_documents)
+    await patch_extract_documents(source_sync_service, sample_documents)
 
     # Mock metadata updates
     mock_metadata = SourceMetadata(
@@ -279,7 +279,7 @@ async def test_sync_documents_with_existing_docs(
 async def test_sync_documents_with_stale_docs(
     source_sync_service: SourceSyncService,
     sample_documents: list[Document],
-    mock_extract_documents: AsyncMock,
+    patch_extract_documents: AsyncMock,
     mock_current_datetime: str,
     mocker: MockerFixture,
 ) -> None:
@@ -293,7 +293,7 @@ async def test_sync_documents_with_stale_docs(
     )
 
     # Mock document extraction
-    await mock_extract_documents(source_sync_service, sample_documents)
+    await patch_extract_documents(source_sync_service, sample_documents)
 
     # Mock metadata updates
     mock_metadata = SourceMetadata(
