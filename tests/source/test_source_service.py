@@ -53,7 +53,7 @@ def source_service(
 
 
 @pytest.fixture
-def mock_current_time() -> str:
+def mock_current_datetime() -> str:
     return datetime(2024, 1, 1, 12, 0, 0).isoformat()
 
 
@@ -102,7 +102,7 @@ async def test_create_source_success(
     source_service: SourceService,
     sample_create_request: CreateSourceRequest,
     sample_source_metadata: SourceMetadata,
-    mock_current_time: str,
+    mock_current_datetime: str,
     mocker: MockerFixture,
 ) -> None:
     # Mock UUID generation
@@ -112,7 +112,7 @@ async def test_create_source_success(
     # Mock current datetime
     mocker.patch(
         "src.source.service.get_current_datetime",
-        return_value=mock_current_time,
+        return_value=mock_current_datetime,
     )
 
     # Mock celery task
@@ -146,8 +146,8 @@ async def test_create_source_success(
         status=SourceStatus.PENDING,
         config=sample_create_request.config,
         id=str(mock_uuid),
-        created_at=mock_current_time,
-        updated_at=mock_current_time,
+        created_at=mock_current_datetime,
+        updated_at=mock_current_datetime,
     )
 
 
@@ -206,7 +206,7 @@ async def test_update_source_success(
     source_service: SourceService,
     sample_update_request: UpdateSourceRequest,
     sample_source_metadata: SourceMetadata,
-    mock_current_time: str,
+    mock_current_datetime: str,
     mocker: MockerFixture,
 ) -> None:
     # Mock existing document IDs
@@ -218,7 +218,7 @@ async def test_update_source_success(
     # Mock current datetime
     mocker.patch(
         "src.source.service.get_current_datetime",
-        return_value=mock_current_time,
+        return_value=mock_current_datetime,
     )
 
     # Mock lock service
@@ -262,7 +262,7 @@ async def test_update_source_success(
         description=sample_update_request.description,
         status=SourceStatus.PENDING,
         config=sample_update_request.config,
-        timestamp=mock_current_time,
+        timestamp=mock_current_datetime,
     )
 
 
@@ -286,7 +286,7 @@ async def test_update_source_locked(
 async def test_update_source_no_sync(
     source_service: SourceService,
     sample_source_metadata: SourceMetadata,
-    mock_current_time: str,
+    mock_current_datetime: str,
     mocker: MockerFixture,
 ) -> None:
     request_no_sync = UpdateSourceRequest(
@@ -304,7 +304,7 @@ async def test_update_source_no_sync(
     # Mock current datetime
     mocker.patch(
         "src.source.service.get_current_datetime",
-        return_value=mock_current_time,
+        return_value=mock_current_datetime,
     )
 
     # Mock metadata manager
@@ -333,7 +333,7 @@ async def test_update_source_no_sync(
         description="Updated description without sync",
         status=None,
         config=request_no_sync.config,
-        timestamp=mock_current_time,
+        timestamp=mock_current_datetime,
     )
 
     # Ensure the sync task was not called
@@ -343,7 +343,7 @@ async def test_update_source_no_sync(
 async def test_update_source_no_description_no_config(
     source_service: SourceService,
     sample_source_metadata: SourceMetadata,
-    mock_current_time: str,
+    mock_current_datetime: str,
     mocker: MockerFixture,
 ) -> None:
     request_only_sync = UpdateSourceRequest(sync=True)
@@ -360,7 +360,7 @@ async def test_update_source_no_description_no_config(
     # Mock current datetime
     mocker.patch(
         "src.source.service.get_current_datetime",
-        return_value=mock_current_time,
+        return_value=mock_current_datetime,
     )
 
     # Mock metadata manager
@@ -393,7 +393,7 @@ async def test_update_source_no_description_no_config(
         description=None,  # Because request_only_sync has no description
         status=SourceStatus.PENDING,  # Because sync=True => set to PENDING
         config=None,  # Because request_only_sync has no config
-        timestamp=mock_current_time,
+        timestamp=mock_current_datetime,
     )
     mock_sync_task.assert_called_once_with(
         source_name="test-source",

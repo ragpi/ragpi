@@ -22,7 +22,7 @@ def mock_document_store(mocker: MockerFixture) -> DocumentStoreService:
 
 @pytest.fixture
 def config_map() -> Dict[str, type[SourceConfig]]:
-    return {SourceType.SITEMAP.value: SitemapConfig}
+    return {"sitemap": SitemapConfig}
 
 
 @pytest.fixture

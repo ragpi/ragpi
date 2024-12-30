@@ -16,7 +16,7 @@ def chunker() -> Chunker:
 
 
 @pytest.fixture
-def mock_current_time() -> str:
+def mock_current_datetime() -> str:
     return datetime(2024, 1, 1, 12, 0, 0).isoformat()
 
 
@@ -64,13 +64,13 @@ def sample_github_issue() -> GithubIssue:
 async def test_chunk_markdown_page(
     chunker: Chunker,
     sample_markdown_page: MarkdownPage,
-    mock_current_time: datetime,
+    mock_current_datetime: datetime,
     mock_stable_id: str,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch(
         "src.document_extractor.chunker.get_current_datetime",
-        return_value=mock_current_time,
+        return_value=mock_current_datetime,
     )
     mocker.patch(
         "src.document_extractor.chunker.generate_stable_id",
@@ -84,33 +84,33 @@ async def test_chunk_markdown_page(
     assert result[0].title == "Test Document - Header 1"
     assert result[0].content == "# Header 1\nThis is content under header 1"
     assert result[0].url == "https://example.com/doc"
-    assert result[0].created_at == mock_current_time
+    assert result[0].created_at == mock_current_datetime
 
     # Chunk 2
     assert result[1].id == mock_stable_id
     assert result[1].title == "Test Document - Header 1 - Header 2"
     assert result[1].content == "## Header 2\nThis is content under header 2"
     assert result[1].url == "https://example.com/doc"
-    assert result[1].created_at == mock_current_time
+    assert result[1].created_at == mock_current_datetime
 
     # Chunk 3
     assert result[2].id == mock_stable_id
     assert result[2].title == "Test Document - Header 1 - Header 2 - Header 3"
     assert result[2].content == "### Header 3\nThis is content under header 3"
     assert result[2].url == "https://example.com/doc"
-    assert result[2].created_at == mock_current_time
+    assert result[2].created_at == mock_current_datetime
 
 
 async def test_chunk_github_issue(
     chunker: Chunker,
     sample_github_issue: GithubIssue,
-    mock_current_time: datetime,
+    mock_current_datetime: datetime,
     mock_stable_id: str,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch(
         "src.document_extractor.chunker.get_current_datetime",
-        return_value=mock_current_time,
+        return_value=mock_current_datetime,
     )
     mocker.patch(
         "src.document_extractor.chunker.generate_stable_id",
@@ -124,18 +124,18 @@ async def test_chunk_github_issue(
     assert result[0].title == sample_github_issue.title
     assert result[0].content == sample_github_issue.body
     assert result[0].url == sample_github_issue.url
-    assert result[0].created_at == mock_current_time
+    assert result[0].created_at == mock_current_datetime
 
     # Comment 1
     assert result[1].id == mock_stable_id
     assert result[1].title == sample_github_issue.title
     assert result[1].content == sample_github_issue.comments[0].body
     assert result[1].url == sample_github_issue.comments[0].url
-    assert result[1].created_at == mock_current_time
+    assert result[1].created_at == mock_current_datetime
 
     # Comment 2
     assert result[2].id == mock_stable_id
     assert result[2].title == sample_github_issue.title
     assert result[2].content == sample_github_issue.comments[1].body
     assert result[2].url == sample_github_issue.comments[1].url
-    assert result[2].created_at == mock_current_time
+    assert result[2].created_at == mock_current_datetime
