@@ -11,7 +11,7 @@ class Settings(BaseSettings):
         "You are an automated AI support assistant designed to assist users with their queries."
     )
 
-    API_KEY: str | None = None
+    API_KEYS: list[str] | None = None
 
     REDIS_URL: str = "redis://localhost:6379"
 

@@ -10,7 +10,7 @@ api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 def get_api_key(
     api_key: str = Security(api_key_header), settings: Settings = Depends(get_settings)
 ):
-    if not settings.API_KEY:
+    if not settings.API_KEYS:
         return
 
     if not api_key:
@@ -19,7 +19,7 @@ def get_api_key(
             detail="API key is missing",
         )
 
-    if api_key != settings.API_KEY:
+    if api_key not in settings.API_KEYS:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="API key is invalid",

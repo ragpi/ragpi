@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   redis:
     container_name: redis
@@ -23,7 +21,7 @@ services:
       - redis
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - API_KEY=${API_KEY}
+      - API_KEYS=${API_KEYS}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
     
@@ -37,7 +35,7 @@ services:
       - redis
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - API_KEY=${API_KEY}
+      - API_KEYS=${API_KEYS}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
 
