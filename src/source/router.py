@@ -1,5 +1,6 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends
 
+from src.config import Settings, get_settings
 from src.source.dependencies import get_source_service
 from src.source.schemas import (
     SearchSourceInput,
@@ -26,7 +27,13 @@ def get_all_sources(source_service: SourceService = Depends(get_source_service))
 def create_source(
     source_input: CreateSourceRequest,
     source_service: SourceService = Depends(get_source_service),
+    settings: Settings = Depends(get_settings),
 ):
+    if settings.API_ONLY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Source creation is disabled in API_ONLY mode.",
+        )
     return source_service.create_source(source_input)
 
 
@@ -51,7 +58,13 @@ def update_source(
     source_name: str,
     source_input: UpdateSourceRequest,
     source_service: SourceService = Depends(get_source_service),
+    settings: Settings = Depends(get_settings),
 ):
+    if settings.API_ONLY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Source update is disabled in API_ONLY mode.",
+        )
     return source_service.update_source(source_name, source_input)
 
 

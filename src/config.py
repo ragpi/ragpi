@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    API_ONLY: bool = False
+
     BASE_SYSTEM_PROMPT: str = (
         "You are an automated AI support assistant designed to assist users with their queries."
     )
