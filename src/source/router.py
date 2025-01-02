@@ -5,7 +5,6 @@ from src.source.dependencies import get_source_service
 from src.source.schemas import (
     SearchSourceInput,
     CreateSourceRequest,
-    SearchSourceRequest,
     UpdateSourceRequest,
 )
 from src.source.service import SourceService
@@ -82,12 +81,11 @@ def get_source_documents(
 @router.get("/{source_name}/search")
 def search_source(
     source_name: str,
-    query_input: SearchSourceRequest,
+    query: str,
+    top_k: int = 10,
     source_service: SourceService = Depends(get_source_service),
 ):
     results = source_service.search_source(
-        SearchSourceInput(
-            name=source_name, query=query_input.query, top_k=query_input.top_k
-        )
+        SearchSourceInput(name=source_name, query=query, top_k=top_k)
     )
     return results

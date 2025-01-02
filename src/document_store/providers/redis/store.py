@@ -136,8 +136,8 @@ class RedisDocumentStore(DocumentStoreService):
         self.index.drop_keys(keys)
 
     def delete_documents(self, source_name: str, doc_ids: list[str]) -> None:
-        ids = [self._get_doc_key(source_name, doc_id) for doc_id in doc_ids]
-        self.index.drop_keys(ids)
+        keys = [self._get_doc_key(source_name, doc_id) for doc_id in doc_ids]
+        self.index.drop_keys(keys)
 
     def vector_based_search(
         self, source_name: str, query: str, top_k: int
@@ -175,7 +175,8 @@ class RedisDocumentStore(DocumentStoreService):
 
         escaped_terms = [escape_special_characters(term) for term in query.split()]
         formatted_query_terms = " | ".join(escaped_terms)
-        formatted_query = f"@source:{{{source_name}}} {formatted_query_terms}"
+        formatted_source_name = escape_special_characters(source_name)
+        formatted_query = f"@source:{{{formatted_source_name}}} {formatted_query_terms}"
 
         query_obj = (  # type: ignore
             Query(formatted_query)  # type: ignore

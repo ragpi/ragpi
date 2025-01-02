@@ -1,6 +1,6 @@
 import logging
 
-from src.common.openai import get_openai_client
+from src.common.openai import get_embedding_openai_client
 from src.common.redis import RedisClient
 from src.config import Settings
 from src.document_extractor.service import DocumentExtractor
@@ -37,10 +37,7 @@ class SourceSyncService:
         self.existing_doc_ids = existing_doc_ids
         self.settings = settings
 
-        self.openai_client = get_openai_client(
-            provider=self.settings.EMBEDDING_PROVIDER,
-            ollama_url=self.settings.OLLAMA_BASE_URL,
-        )
+        self.openai_client = get_embedding_openai_client(settings=self.settings)
         self.document_store = RedisDocumentStore(
             index_name=self.settings.DOCUMENT_STORE_NAMESPACE,
             redis_client=self.redis_client,

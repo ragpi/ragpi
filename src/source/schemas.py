@@ -64,11 +64,6 @@ class UpdateSourceRequest(BaseModel):
     config: SourceConfig | None = None
 
 
-class SearchSourceRequest(BaseModel):
-    query: str
-    top_k: int = 10
-
-
 # Responses
 class SourceTaskResponse(BaseModel):
     task_id: str | None
