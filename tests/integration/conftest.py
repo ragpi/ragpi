@@ -16,8 +16,6 @@ from src.config import Settings, get_settings
 from src.main import app as main_app
 from src.task.celery import celery_app
 
-pytest_plugins = ("celery.contrib.pytest",)
-
 
 def pytest_sessionstart(session: pytest.Session) -> None:
     if not os.getenv("GITHUB_TOKEN"):
