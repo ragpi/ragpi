@@ -1,13 +1,9 @@
 from celery import Celery
 from fastapi import Depends
 
-from src.task.celery import celery_app
+from src.task.celery import get_celery_app
 from src.common.redis import RedisClient, get_redis_client
 from src.task.service import TaskService
-
-
-def get_celery_app() -> Celery:
-    return celery_app
 
 
 def get_task_service(

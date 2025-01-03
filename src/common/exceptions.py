@@ -2,6 +2,7 @@ from enum import Enum
 import logging
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
+from redis.exceptions import ConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -81,4 +82,12 @@ def unexpected_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "An unexpected error occurred"},
+    )
+
+
+def redis_connection_error(request: Request, exc: ConnectionError):
+    logger.error(exc)
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={"detail": "Failed to connect to Redis"},
     )

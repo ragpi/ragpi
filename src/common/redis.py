@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 def create_redis_client(redis_url: str) -> RedisClient:
     try:
         redis_client = Redis.from_url(redis_url, decode_responses=True)
-        redis_client.ping()
         return redis_client
     except Exception as e:
         raise RuntimeError("Failed to connect to Redis") from e

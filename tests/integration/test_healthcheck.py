@@ -10,3 +10,4 @@ class TestHealthcheck:
         assert data["api"]["status"] == "ok"
         assert data["redis"]["status"] == "ok"
         assert data["worker"]["status"] == "ok"
+        assert data["worker"]["active_workers"] == 1
