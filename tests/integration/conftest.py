@@ -1,3 +1,4 @@
+import os
 from typing import Any, Generator
 from unittest.mock import Mock
 import pytest
@@ -18,6 +19,13 @@ from src.task.celery import celery_app
 pytest_plugins = ("celery.contrib.pytest",)
 
 
+def pytest_sessionstart(session: pytest.Session) -> None:
+    if not os.getenv("GITHUB_TOKEN"):
+        pytest.exit(
+            "Error: GITHUB_TOKEN environment variable is not set. Please set it before running the integration tests."
+        )
+
+
 @pytest.fixture(scope="session")
 def redis_container() -> Generator[RedisContainer, None, None]:
     with RedisContainer(image="redis/redis-stack-server:latest") as redis:
@@ -32,7 +40,7 @@ def test_settings(redis_container: RedisContainer) -> Settings:
             f"{redis_container.get_exposed_port(6379)}"
         ),
         OPENAI_API_KEY="test-key",
-        GITHUB_TOKEN="test-token",
+        GITHUB_TOKEN=os.getenv("GITHUB_TOKEN", ""),
         API_KEYS=None,
         ENABLE_OTEL=False,
     )
@@ -87,8 +95,12 @@ def celery_config(test_settings: Settings) -> dict[str, Any]:
         "result_backend": test_settings.REDIS_URL,
         "broker_connection_retry_on_startup": True,
         "task_always_eager": False,
-        "task_store_eager_result": True,
     }
+
+
+# @pytest.fixture(scope="session")
+# def celery_worker_pool():
+#     return "prefork"
 
 
 @pytest.fixture(scope="session")

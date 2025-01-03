@@ -124,7 +124,7 @@ def source_sync_service(
 ) -> SourceSyncService:
     # Mock the OpenAI client creation
     mocker.patch(
-        "src.source.sync.get_openai_client",
+        "src.source.sync.get_embedding_openai_client",
         return_value=mock_openai_client,
     )
 

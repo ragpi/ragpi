@@ -10,15 +10,21 @@ def get_openai_client(*, api_key: str, base_url: str | None) -> OpenAI:
 
 def get_chat_openai_client(settings: Settings = Depends(get_settings)) -> OpenAI:
     provider = settings.CHAT_PROVIDER
-    api_key = "ollama" if provider == "ollama" else settings.OPENAI_API_KEY
-    base_url = settings.OLLAMA_BASE_URL if provider == "ollama" else None
+    if provider == "ollama":
+        return get_openai_client(api_key="ollama", base_url=settings.OLLAMA_BASE_URL)
 
-    return get_openai_client(api_key=api_key, base_url=base_url)
+    if not settings.OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY is not set")
+
+    return get_openai_client(api_key=settings.OPENAI_API_KEY, base_url=None)
 
 
 def get_embedding_openai_client(settings: Settings = Depends(get_settings)) -> OpenAI:
     provider = settings.EMBEDDING_PROVIDER
-    api_key = "ollama" if provider == "ollama" else settings.OPENAI_API_KEY
-    base_url = settings.OLLAMA_BASE_URL if provider == "ollama" else None
+    if provider == "ollama":
+        return get_openai_client(api_key="ollama", base_url=settings.OLLAMA_BASE_URL)
 
-    return get_openai_client(api_key=api_key, base_url=base_url)
+    if not settings.OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY is not set")
+
+    return get_openai_client(api_key=settings.OPENAI_API_KEY, base_url=None)

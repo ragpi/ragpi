@@ -29,9 +29,9 @@ class Settings(BaseSettings):
 
     EMBEDDING_DIMENSIONS: int = 1536
 
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: str | None = None
 
-    GITHUB_TOKEN: str
+    GITHUB_TOKEN: str | None = None
 
     GITHUB_API_VERSION: str = "2022-11-28"
 

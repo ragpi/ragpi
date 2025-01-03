@@ -17,7 +17,7 @@ class GitHubClient:
         concurrent_requests: int,
         user_agent: str,
         github_api_version: str,
-        github_token: str,
+        github_token: str | None,
     ):
         if not github_token:
             raise DocumentExtractorException(
