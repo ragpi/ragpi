@@ -14,7 +14,7 @@ from openai.types.create_embedding_response import CreateEmbeddingResponse, Usag
 
 from src.config import Settings, get_settings
 from src.main import app as main_app
-from src.task.celery import celery_app
+from src.celery import celery_app
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:

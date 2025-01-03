@@ -46,7 +46,7 @@ testcontainers = "^4.9.0"
 plugins = ['pydantic.mypy']
 
 [tool.pytest.ini_options]
-pythonpath = [".", "src"]
+pythonpath = ["."]
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = 'auto'
 

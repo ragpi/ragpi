@@ -28,7 +28,7 @@ services:
   task-worker:
     container_name: task-worker
     build: .
-    command: watchfiles --filter python "celery --app=src.task.celery.celery_app worker --concurrency=2 --loglevel=INFO" src
+    command: watchfiles --filter python "celery --app=src.celery.celery_app worker --concurrency=2 --loglevel=INFO" src
     volumes:
       - .:/app
     depends_on:

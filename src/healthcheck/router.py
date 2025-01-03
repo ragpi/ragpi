@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from src.config import Settings, get_settings
 from src.common.redis import RedisClient, get_redis_client
-from src.task.celery import get_celery_app
+from src.celery import get_celery_app
 
 router = APIRouter()
 
