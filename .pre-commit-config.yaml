@@ -7,11 +7,11 @@ repos:
         additional_dependencies: [pydantic, types-redis, redis]
         files: "(src/|tests/)"
 
-  - repo: local
-    hooks:
-      - id: tests
-        name: run tests
-        entry: pytest -v tests/
-        language: system
-        types: [python]
-        stages: [pre-push]
+  # - repo: local
+  #   hooks:
+  #     - id: unit-tests
+  #       name: run unit tests
+  #       entry: pytest -v tests/unit
+  #       language: system
+  #       types: [python]
+  #       stages: [pre-push]

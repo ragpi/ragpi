@@ -16,7 +16,7 @@ class GitHubIssueClient(GitHubClient):
         concurrent_requests: int,
         user_agent: str,
         github_api_version: str,
-        github_token: str,
+        github_token: str | None,
     ):
         super().__init__(
             concurrent_requests=concurrent_requests,

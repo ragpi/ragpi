@@ -6,7 +6,9 @@ from src.document_extractor.schemas import MarkdownPage
 
 
 class GitHubReadmeClient(GitHubClient):
-    def __init__(self, *, user_agent: str, github_api_version: str, github_token: str):
+    def __init__(
+        self, *, user_agent: str, github_api_version: str, github_token: str | None
+    ):
         super().__init__(
             concurrent_requests=1,
             user_agent=user_agent,

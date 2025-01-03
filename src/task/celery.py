@@ -13,6 +13,7 @@ celery_app = Celery(
     __name__,
     broker=redis_url,
     backend=redis_url,
+    broker_connection_retry_on_startup=True,
     include=["src.task.sync_source"],
 )
 

@@ -185,7 +185,7 @@ def test_delete_metadata_success(
     mock_delete.assert_called_once_with("metadata:test-source")
 
 
-def test_get_all_metadata_success(
+def test_list_metadata_success(
     metadata_manager: SourceMetadataManager,
     sample_metadata_dict: Dict[str, Any],
     mocker: MockerFixture,
@@ -206,7 +206,7 @@ def test_get_all_metadata_success(
         metadata_manager.document_store, "get_document_count", return_value=0
     )
 
-    result = metadata_manager.get_all_metadata()
+    result = metadata_manager.list_metadata()
 
     assert len(result) == 2
     assert all(isinstance(metadata, SourceMetadata) for metadata in result)

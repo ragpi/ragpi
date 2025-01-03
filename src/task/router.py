@@ -12,8 +12,8 @@ router = APIRouter(
 
 
 @router.get("")
-def get_all_tasks(task_service: TaskService = Depends(get_task_service)):
-    return task_service.get_all_tasks()
+def list_tasks(task_service: TaskService = Depends(get_task_service)):
+    return task_service.list_tasks()
 
 
 @router.get("/{task_id}")

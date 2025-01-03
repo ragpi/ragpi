@@ -22,7 +22,7 @@ class TaskService:
             metadata=task.get("result"),
         )
 
-    def get_all_tasks(self) -> list[Task]:
+    def list_tasks(self) -> list[Task]:
         keys: list[str] = [
             key for key in self.redis_client.scan_iter(f"{self.key_prefix}*")
         ]
