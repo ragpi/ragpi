@@ -3,15 +3,16 @@ repos:
     rev: "v1.13.0"
     hooks:
       - id: mypy
+        name: run mypy
         args: [--ignore-missing-imports, --check-untyped-defs]
         additional_dependencies: [pydantic, types-redis, redis]
         files: "(src/|tests/)"
 
-  # - repo: local
-  #   hooks:
-  #     - id: unit-tests
-  #       name: run unit tests
-  #       entry: pytest -v tests/unit
-  #       language: system
-  #       types: [python]
-  #       stages: [pre-push]
+  - repo: local
+    hooks:
+      - id: unit-tests
+        name: run unit tests
+        entry: pytest -v tests/unit
+        language: python
+        types: [python]
+        stages: [pre-push]
