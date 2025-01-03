@@ -41,7 +41,6 @@ pytest = "^8.3.4"
 pytest-mock = "^3.14.0"
 pytest-asyncio = "^0.25.0"
 testcontainers = "^4.9.0"
-responses = "^0.25.3"
 
 [tool.mypy]
 plugins = ['pydantic.mypy']
