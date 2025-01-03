@@ -2,6 +2,7 @@ import logging
 from typing import Any
 from celery import Celery, signals
 from celery.app.task import Context
+from fastapi import Request
 
 from src.config import get_settings
 
@@ -39,3 +40,7 @@ def handle_task_revoked(
     }
     state = type.upper()
     celery_app.backend.store_result(task_id=task_id, result=meta, state=state)  # type: ignore
+
+
+def get_celery_app(request: Request) -> Celery:
+    return request.app.state.celery_app

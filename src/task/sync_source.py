@@ -9,7 +9,7 @@ from celery.exceptions import Ignore
 from src.config import get_settings
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
-from src.task.celery import celery_app
+from src.celery import celery_app
 from src.source.config import SOURCE_CONFIG_MAP
 from src.source.sync import SourceSyncService
 

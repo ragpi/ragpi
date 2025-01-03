@@ -28,7 +28,7 @@ services:
   task-worker:
     container_name: task-worker
     image: ghcr.io/gladwindos/rag-api-dev:${API_VERSION:-latest}
-    command: celery --app=src.task.celery.celery_app worker --concurrency=2 --max-tasks-per-child=1 --loglevel=INFO
+    command: celery --app=src.celery.celery_app worker --concurrency=2 --max-tasks-per-child=1 --loglevel=INFO
     depends_on:
       - redis
     environment:
