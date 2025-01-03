@@ -17,7 +17,7 @@ from src.common.exceptions import (
 )
 from src.common.opentelemetry import setup_opentelemetry
 from src.common.redis import create_redis_client
-from src.config import get_settings
+from src.config import Settings, get_settings
 from src.source.router import router as source_router
 from src.chat.router import router as chat_router
 from src.task.router import router as tasks_router
@@ -60,36 +60,43 @@ app.exception_handler(KnownException)(known_exception_handler)
 app.exception_handler(Exception)(unexpected_exception_handler)
 
 
-@app.get("/health", response_class=JSONResponse, status_code=200)
-def healthcheck():
+@app.get("/healthcheck", response_class=JSONResponse, status_code=200)
+def healthcheck(settings: Settings = Depends(get_settings)):
     status = {
         "api": {"status": "ok"},
-        "redis": {"status": "error", "detail": ""},
-        "celery": {"status": "error", "detail": ""},
+        "redis": {"status": "ok"},
+        "worker": {"status": "ok"},
     }
 
+    has_error = False
+
     try:
-        # Check Redis
         redis_client = app.state.redis_client
         redis_client.ping()
-        status["redis"]["status"] = "ok"
     except Exception as e:
-        status["redis"]["detail"] = str(e)
+        status["redis"].update({"status": "error", "message": str(e)})
+        has_error = True
 
-    try:
-        # Check Celery workers
-        inspect = app.state.celery_app.control.inspect()
-        active_workers = inspect.active()
-        if not active_workers:
-            raise Exception("No active workers found")
-        status["celery"]["status"] = "ok"
-    except Exception as e:
-        status["celery"]["detail"] = str(e)
-
-    if all(s["status"] == "ok" for s in status.values()):
-        return status
+    if settings.API_ONLY:
+        status["worker"].update(
+            {
+                "status": "skipped",
+                "message": "Worker is not available in API only mode.",
+            }
+        )
     else:
-        return JSONResponse(status_code=503, content=status)
+        try:
+            inspect = app.state.celery_app.control.inspect()
+            active_workers = inspect.active()
+            if not active_workers:
+                raise Exception("No active workers found")
+        except Exception as e:
+            status["worker"].update({"status": "error", "message": str(e)})
+            has_error = True
+
+    if has_error:
+        return JSONResponse(status_code=500, content=status)
+    return status
 
 
 app.include_router(source_router)
