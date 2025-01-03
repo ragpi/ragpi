@@ -111,7 +111,7 @@ class SourceMetadataManager:
         metadata_key = self._get_metadata_key(source_name)
         self.client.delete(metadata_key)
 
-    def get_all_metadata(self) -> list[SourceMetadata]:
+    def list_metadata(self) -> list[SourceMetadata]:
         metadata_keys = self.client.keys("metadata:*")
         metadata: list[SourceMetadata] = []
         for key in metadata_keys:

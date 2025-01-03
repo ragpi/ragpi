@@ -123,8 +123,8 @@ class SourceService:
 
         return self.document_store.get_documents(source_name, limit, offset)
 
-    def get_all_sources(self):
-        return self.metadata_manager.get_all_metadata()
+    def list_sources(self):
+        return self.metadata_manager.list_metadata()
 
     def delete_source(self, source_name: str):
         if not self.metadata_manager.metadata_exists(source_name):

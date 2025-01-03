@@ -44,7 +44,7 @@ class ChatService:
 
     def _create_system_prompt(self, chat_input: CreateChatInput) -> str:
         if not chat_input.sources:
-            sources = self.source_service.get_all_sources()
+            sources = self.source_service.list_sources()
         else:
             sources = [
                 self.source_service.get_source(name) for name in chat_input.sources

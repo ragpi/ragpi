@@ -17,8 +17,8 @@ router = APIRouter(
 
 
 @router.get("")
-def get_all_sources(source_service: SourceService = Depends(get_source_service)):
-    sources = source_service.get_all_sources()
+def list_sources(source_service: SourceService = Depends(get_source_service)):
+    sources = source_service.list_sources()
     return sources
 
 
