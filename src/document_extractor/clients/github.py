@@ -115,14 +115,14 @@ class GitHubClient:
                         return data, dict(response.headers)
                 except DocumentExtractorException as e:
                     raise e
-                except ClientError as e:
-                    logger.exception(f"HTTP request failed")
+                except ClientError:
+                    logger.exception("HTTP request failed")
                     logger.warning(f"Retrying in {retry_backoff} seconds...")
                     retry_count += 1
                     wait_time = retry_backoff * (2**retry_count)
                     await asyncio.sleep(wait_time)
-                except Exception as e:
-                    logger.exception(f"Unexpected error")
+                except Exception:
+                    logger.exception("Unexpected error")
                     raise DocumentExtractorException(
                         f"Unexpected error when fetching {url}"
                     )

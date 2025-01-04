@@ -8,6 +8,14 @@ repos:
         additional_dependencies: [pydantic, types-redis, redis]
         files: "(src/|tests/)"
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        name: run ruff linter
+      - id: ruff-format
+        name: run ruff formatter
+
   - repo: local
     hooks:
       - id: unit-tests
@@ -16,5 +24,4 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-        always_run: true
         stages: [pre-push]
