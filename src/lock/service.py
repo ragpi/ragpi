@@ -32,11 +32,11 @@ class LockService:
             try:
                 lock.extend(extend_time)
             except LockError:
-                logger.exception(f"Failed to renew lock")
+                logger.exception("Failed to renew lock")
                 break
 
     def release_lock(self, lock: Lock):
         try:
             lock.release()
         except LockError:
-            logger.exception(f"Error releasing lock")
+            logger.exception("Error releasing lock")
