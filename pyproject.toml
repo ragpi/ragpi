@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "rag-api"
-version = "0.1.0"
+name = "ragpi"
+version = "0.0.1"
 description = ""
 authors = ["Your Name <you@example.com>"]
 license = "MIT"

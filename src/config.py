@@ -27,12 +27,12 @@ class Settings(BaseSettings):
     DEFAULT_CHUNK_OVERLAP: int = 50
     MAX_CONCURRENT_REQUESTS: int = 10
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
-    USER_AGENT: str = "RagApi"
+    USER_AGENT: str = "Ragpi"
     RATE_LIMIT: str = Field(
         pattern=r"^\d+/(second|minute|hour|day|month|year)$", default="60/minute"
     )
     ENABLE_OTEL: bool = False
-    OTEL_SERVICE_NAME: str = "rag-api"
+    OTEL_SERVICE_NAME: str = "ragpi"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     @model_validator(mode="after")
