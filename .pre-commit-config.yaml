@@ -13,6 +13,8 @@ repos:
       - id: unit-tests
         name: run unit tests
         entry: pytest -v tests/unit
-        language: python
+        language: system
         types: [python]
+        pass_filenames: false
+        always_run: true
         stages: [pre-push]
