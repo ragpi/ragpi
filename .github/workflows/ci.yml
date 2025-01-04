@@ -34,7 +34,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
       - name: Run mypy
-        run: poetry run mypy . --ignore-missing-imports --check-untyped-defs
+        run: poetry run mypy . --check-untyped-defs
       - name: Run ruff linter
         run: poetry run ruff check
       - name: Run ruff formatter
