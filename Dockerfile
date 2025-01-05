@@ -18,7 +18,8 @@ RUN poetry export -f requirements.txt --without-hashes -o /src/requirements.txt
 FROM python:3.11-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-  PYTHONUNBUFFERED=1 
+  PYTHONUNBUFFERED=1 \
+  PORT=8000 
 
 WORKDIR /app
 
@@ -28,4 +29,4 @@ RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY ./src /app/src
 
-CMD ["fastapi", "run", "src/main.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD fastapi run src/main.py --host 0.0.0.0 --port ${PORT}
