@@ -3,14 +3,14 @@ from pydantic import BaseModel
 from src.source.schemas import SearchSourceInput
 
 
-class FunctionTool(BaseModel):
+class ToolDefinition(BaseModel):
     model: type[BaseModel]
     name: str
     description: str
 
 
-FUNCTION_TOOLS: list[FunctionTool] = [
-    FunctionTool(
+TOOL_DEFINITIONS: list[ToolDefinition] = [
+    ToolDefinition(
         model=SearchSourceInput,
         name="search_source",
         description=(

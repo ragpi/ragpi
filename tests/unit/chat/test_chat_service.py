@@ -59,6 +59,7 @@ def chat_service(
         source_service=mock_source_service,
         openai_client=mock_openai_client,
         base_system_prompt="You are a helpful assistant.",
+        tool_definitions=[],
         chat_history_limit=10,
     )
 
