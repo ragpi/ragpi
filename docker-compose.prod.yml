@@ -11,7 +11,7 @@ services:
 
   api:
     container_name: api
-    image: ghcr.io/gladwindos/rag-api-dev:${API_VERSION:-latest}
+    image: ragpi/ragpi:${API_VERSION:-latest}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -27,7 +27,7 @@ services:
 
   task-worker:
     container_name: task-worker
-    image: ghcr.io/gladwindos/rag-api-dev:${API_VERSION:-latest}
+    image: ragpi/ragpi:${API_VERSION:-latest}
     command: celery --app=src.celery.celery_app worker --concurrency=2 --max-tasks-per-child=1 --loglevel=INFO
     depends_on:
       - redis
