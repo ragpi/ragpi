@@ -1,6 +1,6 @@
 from functools import lru_cache
 from typing import Literal
-from pydantic import Field, model_validator
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -28,9 +28,6 @@ class Settings(BaseSettings):
     MAX_CONCURRENT_REQUESTS: int = 10
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
     USER_AGENT: str = "Ragpi"
-    RATE_LIMIT: str = Field(
-        pattern=r"^\d+/(second|minute|hour|day|month|year)$", default="60/minute"
-    )
     ENABLE_OTEL: bool = False
     OTEL_SERVICE_NAME: str = "ragpi"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
