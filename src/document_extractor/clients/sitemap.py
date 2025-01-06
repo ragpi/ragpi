@@ -41,12 +41,11 @@ def extract_markdown_page(url: str, content: bytes) -> MarkdownPage:
 
     main_content = soup.main or soup.body
 
-    if main_content:
-        for unwanted in main_content.find_all(UNWANTED_TAGS):
-            unwanted.decompose()
-        markdown_content = html2text.html2text(str(main_content))
-    else:
-        markdown_content = html2text.html2text(str(soup))
+    content_to_process = main_content if main_content else soup
+    for unwanted in content_to_process.find_all(UNWANTED_TAGS):
+        unwanted.decompose()
+
+    markdown_content = html2text.html2text(str(content_to_process))
 
     return MarkdownPage(url=url, title=title, content=markdown_content)
 
