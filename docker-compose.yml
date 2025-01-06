@@ -21,7 +21,6 @@ services:
       - redis
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - API_KEYS=${API_KEYS}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
     
@@ -35,7 +34,6 @@ services:
       - redis
     environment:
       - REDIS_URL=redis://redis:6379/0
-      - API_KEYS=${API_KEYS}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
 

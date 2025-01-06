@@ -1,6 +1,6 @@
 from functools import lru_cache
 from typing import Literal
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     ENABLE_OTEL: bool = False
     OTEL_SERVICE_NAME: str = "ragpi"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+
+    @field_validator("API_KEYS", mode="before")
+    def split_api_keys(cls, value: str) -> list[str]:
+        return value.split(",") if value else []
 
     @model_validator(mode="after")
     def validate_provider_settings(self):

@@ -32,7 +32,6 @@ services:
     depends_on:
       - redis
     environment:
-      - API_KEYS=${API_KEYS}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - GITHUB_TOKEN=${GITHUB_TOKEN}
