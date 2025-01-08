@@ -1,6 +1,7 @@
 from typing import Literal
 from pydantic import BaseModel
 
+from src.common.schemas import Document
 from src.config import get_settings
 
 settings = get_settings()
@@ -17,8 +18,8 @@ class CreateChatInput(BaseModel):
     system: str | None = None
     messages: list[ChatMessage]
     max_attempts: int = settings.MAX_CHAT_ATTEMPTS
-    # TODO: Add max_retrieval_top_k?
 
 
 class ChatResponse(BaseModel):
     message: str | None
+    retrieved_documents: list[Document]
