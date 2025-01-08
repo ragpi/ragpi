@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 import json
 from openai import APIError, OpenAI, pydantic_function_tool
 from openai.types.chat import (
@@ -31,7 +29,7 @@ class ChatService:
         source_service: SourceService,
         openai_client: OpenAI,
         base_system_prompt: str,
-        tool_definitions: List[ToolDefinition],
+        tool_definitions: list[ToolDefinition],
         chat_history_limit: int,
     ):
         self.chat_client = openai_client
@@ -48,8 +46,8 @@ class ChatService:
         ]
 
     def _get_sources(
-        self, source_names: Optional[List[str]] = None
-    ) -> List[SourceMetadata]:
+        self, source_names: list[str] | None = None
+    ) -> list[SourceMetadata]:
         """Retrieve and validate sources."""
         if not source_names:
             sources = self.source_service.list_sources()
@@ -64,9 +62,9 @@ class ChatService:
     def _create_chat_messages(
         self,
         system_prompt: str,
-        chat_history: List[ChatCompletionMessageParam],
+        chat_history: list[ChatCompletionMessageParam],
         user_message: str,
-    ) -> List[ChatCompletionMessageParam]:
+    ) -> list[ChatCompletionMessageParam]:
         """Create the complete list of chat messages."""
         return [
             ChatCompletionSystemMessageParam(role="system", content=system_prompt),
@@ -77,8 +75,7 @@ class ChatService:
     def _handle_tool_call(
         self,
         tool_call: ChatCompletionMessageToolCall,
-        messages: List[ChatCompletionMessageParam],
-    ) -> None:
+    ) -> ChatCompletionToolMessageParam:
         """Handle a tool call and append the result to messages."""
         if tool_call.function.name != "search_source":
             raise ValueError(f"Unknown tool call: {tool_call.function.name}")
@@ -89,12 +86,10 @@ class ChatService:
             [{"url": doc.url, "content": doc.content} for doc in documents]
         )
 
-        messages.append(
-            ChatCompletionToolMessageParam(
-                tool_call_id=tool_call.id,
-                content=content,
-                role="tool",
-            )
+        return ChatCompletionToolMessageParam(
+            tool_call_id=tool_call.id,
+            content=content,
+            role="tool",
         )
 
     def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
@@ -107,7 +102,7 @@ class ChatService:
             )
 
             # Prepare chat history
-            chat_history: List[ChatCompletionMessageParam] = [
+            chat_history: list[ChatCompletionMessageParam] = [
                 (
                     ChatCompletionUserMessageParam(role="user", content=msg.content)
                     if msg.role == "user"
@@ -134,8 +129,11 @@ class ChatService:
                 messages.append(message)  # type: ignore
 
                 if message.tool_calls:
-                    for tool_call in message.tool_calls:
-                        self._handle_tool_call(tool_call, messages)
+                    tool_responses = [
+                        self._handle_tool_call(tool_call)
+                        for tool_call in message.tool_calls
+                    ]
+                    messages.extend(tool_responses)
                 elif message.content:
                     return ChatResponse(message=message.content)
                 else:
