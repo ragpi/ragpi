@@ -154,7 +154,6 @@ def source_sync_service(
             type=SourceType.SITEMAP,
             sitemap_url="https://example.com/sitemap.xml",
         ),
-        existing_doc_ids=set(),
         settings=mock_settings,
     )
 
@@ -170,6 +169,12 @@ async def test_sync_documents_success(
     mocker.patch(
         "src.source.sync.get_current_datetime",
         return_value=mock_current_datetime,
+    )
+
+    mocker.patch.object(
+        source_sync_service.document_store,
+        "get_document_ids",
+        return_value=[],
     )
 
     # Mock document extraction
@@ -205,17 +210,11 @@ async def test_sync_documents_success(
 
     # Verify metadata updates
     assert mock_update_metadata.call_count == 2
-    mock_update_metadata.assert_any_call(
-        name="test-source",
-        description=None,
-        status=SourceStatus.SYNCING,
-        config=None,
-        timestamp=mock_current_datetime,
-    )
     mock_update_metadata.assert_called_with(
         name="test-source",
         description=None,
         status=SourceStatus.COMPLETED,
+        num_docs=3,
         config=None,
         timestamp=mock_current_datetime,
     )
@@ -232,7 +231,11 @@ async def test_sync_documents_with_existing_docs(
     mocker: MockerFixture,
 ) -> None:
     # Set existing document IDs
-    source_sync_service.existing_doc_ids = {"doc1", "doc2"}
+    mocker.patch.object(
+        source_sync_service.document_store,
+        "get_document_ids",
+        return_value=["doc1", "doc2"],
+    )
 
     # Mock current datetime
     mocker.patch(
@@ -284,7 +287,11 @@ async def test_sync_documents_with_stale_docs(
     mocker: MockerFixture,
 ) -> None:
     # Set existing document IDs including a stale one
-    source_sync_service.existing_doc_ids = {"doc1", "doc2", "doc3", "stale-doc"}
+    mocker.patch.object(
+        source_sync_service.document_store,
+        "get_document_ids",
+        return_value=["doc1", "doc2", "doc3", "stale-doc"],
+    )
 
     # Mock current datetime
     mocker.patch(
@@ -335,6 +342,12 @@ async def test_sync_documents_failure_handling(
         return_value=mock_current_datetime,
     )
 
+    mocker.patch.object(
+        source_sync_service.document_store,
+        "get_document_ids",
+        return_value=[],
+    )
+
     # Mock document extraction to raise an exception
     mock_extract = AsyncMock()
     mock_extract.__aiter__.side_effect = Exception("Extraction failed")
@@ -369,6 +382,7 @@ async def test_sync_documents_failure_handling(
         name="test-source",
         description=None,
         status=SourceStatus.FAILED,
+        num_docs=None,
         config=None,
         timestamp=mock_current_datetime,
     )
@@ -394,7 +408,7 @@ async def test_add_documents_batch_failure(
     )
 
     with pytest.raises(SyncSourceException) as exc:
-        await source_sync_service._add_documents_batch(sample_documents)  # type: ignore
+        await source_sync_service._add_documents_batch(sample_documents, 0)  # type: ignore
 
     assert str(exc.value) == "Failed to sync documents for source test-source"
 
@@ -420,6 +434,6 @@ async def test_remove_stale_documents_failure(
     doc_ids_to_remove: Set[str] = {"stale1", "stale2"}
 
     with pytest.raises(SyncSourceException) as exc:
-        await source_sync_service._remove_stale_documents(doc_ids_to_remove)  # type: ignore
+        await source_sync_service._remove_stale_documents(doc_ids_to_remove, 0)  # type: ignore
 
     assert str(exc.value) == "Failed to sync documents for source test-source"

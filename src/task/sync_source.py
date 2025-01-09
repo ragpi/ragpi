@@ -18,7 +18,6 @@ from src.source.sync import SourceSyncService
 def sync_source_documents_task(
     source_name: str,
     source_config_dict: dict[str, Any],
-    existing_doc_ids: list[str],
 ) -> dict[str, Any]:
     """Celery task to sync documents for a given source."""
     settings = get_settings()
@@ -59,7 +58,6 @@ def sync_source_documents_task(
                     source_name=source_name,
                     config_map=SOURCE_CONFIG_MAP,
                     source_config=source_config,
-                    existing_doc_ids=set(existing_doc_ids),
                     settings=settings,
                 )
                 synced_source = await sync_service.sync_documents()

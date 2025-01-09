@@ -19,10 +19,6 @@ class DocumentStoreService(ABC):
         pass
 
     @abstractmethod
-    def get_document_count(self, source_name: str) -> int:
-        pass
-
-    @abstractmethod
     def delete_all_documents(self, source_name: str) -> None:
         pass
 

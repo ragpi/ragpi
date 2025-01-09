@@ -53,7 +53,6 @@ class SourceService:
         task = sync_source_documents_task.delay(
             source_name=source_input.name,
             source_config_dict=source_config_dict,
-            existing_doc_ids=[],
         )
 
         return SourceTask(
@@ -79,8 +78,6 @@ class SourceService:
         if self.lock_service.lock_exists(source_name):
             raise ResourceLockedException(ResourceType.SOURCE, source_name)
 
-        existing_doc_ids = self.document_store.get_document_ids(source_name)
-
         status = SourceStatus.PENDING if source_input and source_input.sync else None
         description = (
             source_input.description
@@ -93,6 +90,7 @@ class SourceService:
             name=source_name,
             description=description,
             status=status,
+            num_docs=None,
             config=config,
             timestamp=get_current_datetime(),
         )
@@ -102,7 +100,6 @@ class SourceService:
             task_id = sync_source_documents_task.delay(
                 source_name=source_name,
                 source_config_dict=source_config_dict,
-                existing_doc_ids=existing_doc_ids,
             )
 
             return SourceTask(
@@ -129,6 +126,9 @@ class SourceService:
     def delete_source(self, source_name: str):
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
+
+        if self.lock_service.lock_exists(source_name):
+            raise ResourceLockedException(ResourceType.SOURCE, source_name)
 
         self.document_store.delete_all_documents(source_name)
         self.metadata_manager.delete_metadata(source_name)

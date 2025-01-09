@@ -209,12 +209,6 @@ async def test_update_source_success(
     mock_current_datetime: str,
     mocker: MockerFixture,
 ) -> None:
-    # Mock existing document IDs
-    existing_doc_ids = ["doc1", "doc2"]
-    mocker.patch.object(
-        source_service.document_store, "get_document_ids", return_value=existing_doc_ids
-    )
-
     # Mock current datetime
     mocker.patch(
         "src.source.service.get_current_datetime",
@@ -254,13 +248,13 @@ async def test_update_source_success(
     mock_sync_source.assert_called_once_with(
         source_name="test-source",
         source_config_dict=sample_update_request.config.model_dump(),
-        existing_doc_ids=existing_doc_ids,
     )
 
     mock_update_metadata.assert_called_once_with(
         name="test-source",
         description=sample_update_request.description,
         status=SourceStatus.PENDING,
+        num_docs=None,
         config=sample_update_request.config,
         timestamp=mock_current_datetime,
     )
@@ -332,6 +326,7 @@ async def test_update_source_no_sync(
         name="test-source",
         description="Updated description without sync",
         status=None,
+        num_docs=None,
         config=request_no_sync.config,
         timestamp=mock_current_datetime,
     )
@@ -350,12 +345,6 @@ async def test_update_source_no_description_no_config(
 
     # Mock lock service
     mocker.patch.object(source_service.lock_service, "lock_exists", return_value=False)
-
-    # Mock existing document IDs
-    existing_doc_ids = ["doc1", "doc2"]
-    mocker.patch.object(
-        source_service.document_store, "get_document_ids", return_value=existing_doc_ids
-    )
 
     # Mock current datetime
     mocker.patch(
@@ -390,15 +379,15 @@ async def test_update_source_no_description_no_config(
 
     mock_update_metadata.assert_called_once_with(
         name="test-source",
-        description=None,  # Because request_only_sync has no description
-        status=SourceStatus.PENDING,  # Because sync=True => set to PENDING
-        config=None,  # Because request_only_sync has no config
+        description=None,
+        status=SourceStatus.PENDING,
+        num_docs=None,
+        config=None,
         timestamp=mock_current_datetime,
     )
     mock_sync_task.assert_called_once_with(
         source_name="test-source",
         source_config_dict=sample_source_metadata.config.model_dump(),
-        existing_doc_ids=existing_doc_ids,
     )
 
 
@@ -428,6 +417,7 @@ async def test_delete_source_success(
     mocker.patch.object(
         source_service.metadata_manager, "metadata_exists", return_value=True
     )
+    mocker.patch.object(source_service.lock_service, "lock_exists", return_value=False)
     mock_delete_metadata = mocker.patch.object(
         source_service.metadata_manager, "delete_metadata"
     )

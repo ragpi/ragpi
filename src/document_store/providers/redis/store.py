@@ -123,21 +123,16 @@ class RedisDocumentStore(DocumentStoreService):
         all_keys: list[str] = [key for key in self.client.scan_iter(f"{source_key}:*")]
         return [self._extract_real_doc_id(source_name, key) for key in all_keys]
 
-    def get_document_count(self, source_name: str) -> int:
-        source_key = self._get_source_key(source_name)
-        count = 0
-        for _ in self.client.scan_iter(f"{source_key}:*"):
-            count += 1
-        return count
-
     def delete_all_documents(self, source_name: str) -> None:
         source_key = self._get_source_key(source_name)
         keys = [key for key in self.client.scan_iter(f"{source_key}:*")]
-        self.index.drop_keys(keys)
+        if keys:
+            self.index.drop_keys(keys)
 
     def delete_documents(self, source_name: str, doc_ids: list[str]) -> None:
         keys = [self._get_doc_key(source_name, doc_id) for doc_id in doc_ids]
-        self.index.drop_keys(keys)
+        if keys:
+            self.index.drop_keys(keys)
 
     def vector_based_search(
         self, source_name: str, query: str, top_k: int

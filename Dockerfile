@@ -29,4 +29,9 @@ RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY ./src /app/src
 
-CMD fastapi run src/main.py --host 0.0.0.0 --port ${PORT}
+COPY --chmod=755 <<-"EOF" /entrypoint.sh
+#!/bin/sh
+exec fastapi run src/main.py --host 0.0.0.0 --port ${PORT}
+EOF
+
+ENTRYPOINT ["/entrypoint.sh"]

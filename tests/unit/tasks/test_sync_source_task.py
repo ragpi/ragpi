@@ -87,7 +87,6 @@ def test_sync_source_documents_success(
         "type": "sitemap",
         "sitemap_url": "https://example.com/sitemap.xml",
     }
-    existing_doc_ids = ["doc1", "doc2"]
 
     # Mock sync result
     mock_sync_result = SyncSourceOutput(
@@ -102,7 +101,7 @@ def test_sync_source_documents_success(
     }
 
     # Execute task
-    result = sync_source_documents_task(source_name, source_config, existing_doc_ids)
+    result = sync_source_documents_task(source_name, source_config)
 
     # Verify results
     assert result == {
@@ -135,7 +134,7 @@ def test_sync_source_documents_invalid_source_type(
     invalid_config = {"type": "invalid_type"}
 
     with pytest.raises(Ignore):
-        sync_source_documents_task(source_name, invalid_config, [])
+        sync_source_documents_task(source_name, invalid_config)
 
     mock_current_task.update_state.assert_called_with(
         state="FAILURE",
@@ -156,7 +155,7 @@ def test_sync_source_documents_invalid_config(
     invalid_config = {"type": "sitemap"}
 
     with pytest.raises(Ignore):
-        sync_source_documents_task(source_name, invalid_config, [])
+        sync_source_documents_task(source_name, invalid_config)
 
     mock_current_task.update_state.assert_called()
 
@@ -180,7 +179,7 @@ def test_sync_source_documents_lock_failure(
     config = {"type": "sitemap", "sitemap_url": "https://example.com/sitemap.xml"}
 
     with pytest.raises(Ignore):
-        sync_source_documents_task(source_name, config, [])
+        sync_source_documents_task(source_name, config)
 
     mock_current_task.update_state.assert_called_with(
         state="FAILURE",
@@ -209,7 +208,7 @@ def test_sync_source_documents_sync_failure(
     config = {"type": "sitemap", "sitemap_url": "https://example.com/sitemap.xml"}
 
     with pytest.raises(Ignore):
-        sync_source_documents_task(source_name, config, [])
+        sync_source_documents_task(source_name, config)
 
     mock_current_task.update_state.assert_called_with(
         state="FAILURE",

@@ -27,14 +27,12 @@ class SourceSyncService:
         source_name: str,
         config_map: dict[str, type[SourceConfig]],
         source_config: SourceConfig,
-        existing_doc_ids: set[str],
         settings: Settings,
     ):
         self.redis_client = redis_client
         self.source_name = source_name
         self.config_map = config_map
         self.source_config = source_config
-        self.existing_doc_ids = existing_doc_ids
         self.settings = settings
 
         self.openai_client = get_embedding_openai_client(settings=self.settings)
@@ -57,6 +55,9 @@ class SourceSyncService:
         """Main entry point for syncing documents for a source."""
         logger.info(f"Syncing documents for source {self.source_name}")
 
+        existing_doc_ids: set[str] = set(
+            self.document_store.get_document_ids(self.source_name)
+        )
         current_doc_ids: set[str] = set()
         docs_to_add: list[Document] = []
         added_doc_ids: set[str] = set()
@@ -67,6 +68,7 @@ class SourceSyncService:
                 name=self.source_name,
                 description=None,
                 status=SourceStatus.SYNCING,
+                num_docs=len(existing_doc_ids),
                 config=None,
                 timestamp=get_current_datetime(),
             )
@@ -81,33 +83,30 @@ class SourceSyncService:
                 current_doc_ids.add(doc.id)
 
                 # Only add if it's actually new and not already queued
-                if doc.id not in self.existing_doc_ids and doc.id not in added_doc_ids:
+                if doc.id not in existing_doc_ids and doc.id not in added_doc_ids:
                     docs_to_add.append(doc)
                     added_doc_ids.add(doc.id)
 
                     # If we have reached batch size, add the batch
                     if len(docs_to_add) >= self.batch_size:
-                        self._add_documents_batch(docs_to_add)
+                        self._add_documents_batch(docs_to_add, len(current_doc_ids))
                         docs_to_add = []
 
             # Add any remaining documents in the last batch
             if docs_to_add:
-                self._add_documents_batch(docs_to_add)
+                self._add_documents_batch(docs_to_add, len(current_doc_ids))
 
             # Remove documents that exist in the store but not in the current sync
-            doc_ids_to_remove = self.existing_doc_ids - current_doc_ids
+            doc_ids_to_remove = existing_doc_ids - current_doc_ids
             if doc_ids_to_remove:
-                self._remove_stale_documents(doc_ids_to_remove)
-
-            # If no documents were added in the entire sync
-            if not added_doc_ids:
-                logger.info(f"No new documents added to source {self.source_name}")
+                self._remove_stale_documents(doc_ids_to_remove, len(current_doc_ids))
 
             # Mark source as COMPLETED
             updated_source = self.metadata_manager.update_metadata(
                 name=self.source_name,
                 description=None,
                 status=SourceStatus.COMPLETED,
+                num_docs=len(current_doc_ids),
                 config=None,
                 timestamp=get_current_datetime(),
             )
@@ -123,15 +122,28 @@ class SourceSyncService:
                 name=self.source_name,
                 description=None,
                 status=SourceStatus.FAILED,
+                num_docs=None,
                 config=None,
                 timestamp=get_current_datetime(),
             )
             raise e
 
-    def _add_documents_batch(self, docs: list[Document]) -> None:
+    def _add_documents_batch(
+        self, docs: list[Document], current_doc_count: int
+    ) -> None:
         """Helper method to add a batch of documents to the document store."""
         try:
             self.document_store.add_documents(self.source_name, docs)
+
+            self.metadata_manager.update_metadata(
+                name=self.source_name,
+                description=None,
+                status=SourceStatus.SYNCING,
+                num_docs=current_doc_count,
+                config=None,
+                timestamp=get_current_datetime(),
+            )
+
             logger.info(
                 f"Added a batch of {len(docs)} documents to source {self.source_name}"
             )
@@ -143,12 +155,24 @@ class SourceSyncService:
                 f"Failed to sync documents for source {self.source_name}"
             )
 
-    def _remove_stale_documents(self, doc_ids_to_remove: set[str]) -> None:
+    def _remove_stale_documents(
+        self, doc_ids_to_remove: set[str], current_doc_count: int
+    ) -> None:
         """Helper method to remove stale documents from the document store."""
         try:
             self.document_store.delete_documents(
                 self.source_name, list(doc_ids_to_remove)
             )
+
+            self.metadata_manager.update_metadata(
+                name=self.source_name,
+                description=None,
+                status=SourceStatus.SYNCING,
+                num_docs=current_doc_count,
+                config=None,
+                timestamp=get_current_datetime(),
+            )
+
             logger.info(
                 f"Removed {len(doc_ids_to_remove)} documents from source {self.source_name}"
             )

@@ -162,22 +162,6 @@ def test_delete_documents(
     mock_drop_keys.assert_called_once_with(expected_keys)
 
 
-def test_get_document_count(
-    mocker: MockerFixture, document_store: RedisDocumentStore
-) -> None:
-    mock_keys: list[str] = [
-        f"{TEST_INDEX_NAME}:sources:{TEST_SOURCE}:doc1",
-        f"{TEST_INDEX_NAME}:sources:{TEST_SOURCE}:doc2",
-    ]
-    mock_scan_iter = mocker.patch.object(
-        document_store.client, "scan_iter", return_value=mock_keys
-    )
-
-    result: int = document_store.get_document_count(TEST_SOURCE)
-    mock_scan_iter.assert_called_once_with(f"{TEST_INDEX_NAME}:sources:{TEST_SOURCE}:*")
-    assert result == 2
-
-
 def test_delete_all_documents(
     mocker: MockerFixture, document_store: RedisDocumentStore
 ) -> None:

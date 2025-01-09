@@ -54,6 +54,7 @@ def sample_metadata_dict(
         "name": "test-source",
         "description": "Test description",
         "status": SourceStatus.PENDING,
+        "num_docs": 0,
         "config": sample_config.model_dump_json(),
         "created_at": "2024-01-01T12:00:00",
         "updated_at": "2024-01-01T12:00:00",
@@ -97,11 +98,6 @@ def test_create_metadata_success(
         return_value=sample_metadata_dict,
     )
     mock_redis_client_hset = mocker.patch.object(metadata_manager.client, "hset")
-
-    # Mock document store
-    mocker.patch.object(
-        metadata_manager.document_store, "get_document_count", return_value=0
-    )
 
     result = metadata_manager.create_metadata(
         source_name="test-source",
@@ -158,9 +154,6 @@ def test_get_metadata_success(
     mocker.patch.object(
         metadata_manager.client, "hgetall", return_value=sample_metadata_dict
     )
-    mocker.patch.object(
-        metadata_manager.document_store, "get_document_count", return_value=0
-    )
 
     result = metadata_manager.get_metadata("test-source")
 
@@ -202,9 +195,6 @@ def test_list_metadata_success(
     mock_hgetall = mocker.patch.object(
         metadata_manager.client, "hgetall", return_value=sample_metadata_dict
     )
-    mocker.patch.object(
-        metadata_manager.document_store, "get_document_count", return_value=0
-    )
 
     result = metadata_manager.list_metadata()
 
@@ -225,9 +215,6 @@ def test_update_metadata_success(
     mocker.patch.object(
         metadata_manager.client, "hgetall", return_value=sample_metadata_dict
     )
-    mocker.patch.object(
-        metadata_manager.document_store, "get_document_count", return_value=0
-    )
 
     mock_hset = mocker.patch.object(metadata_manager.client, "hset")
 
@@ -235,9 +222,19 @@ def test_update_metadata_success(
         name="test-source",
         description="Updated description",
         status=SourceStatus.COMPLETED,
+        num_docs=10,
         config=sample_config,
         timestamp="2024-01-01T13:00:00",
     )
 
     assert isinstance(result, SourceMetadata)
-    mock_hset.assert_called_once()
+    mock_hset.assert_called_once_with(
+        "metadata:test-source",
+        mapping={
+            "description": "Updated description",
+            "status": SourceStatus.COMPLETED,
+            "num_docs": 10,
+            "config": sample_config.model_dump_json(),
+            "updated_at": "2024-01-01T13:00:00",
+        },
+    )

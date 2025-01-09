@@ -81,6 +81,7 @@ class SourceMetadataManager:
                 "name": source_name,
                 "description": description,
                 "status": status,
+                "num_docs": 0,
                 "config": config_json,
                 "created_at": created_at,
                 "updated_at": updated_at,
@@ -92,7 +93,6 @@ class SourceMetadataManager:
     def get_metadata(self, source_name: str) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name)
         metadata = self.client.hgetall(metadata_key)
-        num_docs = self.document_store.get_document_count(source_name)
         source_config = self._deserialize_config(metadata["config"])
         status = SourceStatus(metadata["status"])
 
@@ -101,7 +101,7 @@ class SourceMetadataManager:
             name=metadata["name"],
             description=metadata["description"],
             status=status,
-            num_docs=num_docs,
+            num_docs=int(metadata["num_docs"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
             config=source_config,
@@ -124,6 +124,7 @@ class SourceMetadataManager:
         name: str,
         description: str | None,
         status: SourceStatus | None,
+        num_docs: int | None,
         config: SourceConfig | None,
         timestamp: str,
     ) -> SourceMetadata:
@@ -131,11 +132,14 @@ class SourceMetadataManager:
 
         update_mapping: dict[str, Any] = {"updated_at": timestamp}
 
+        if description is not None:
+            update_mapping["description"] = description
+
         if status is not None:
             update_mapping["status"] = status
 
-        if description is not None:
-            update_mapping["description"] = description
+        if num_docs is not None:
+            update_mapping["num_docs"] = num_docs
 
         if config is not None:
             config_dict = self._serialize_config(config)
