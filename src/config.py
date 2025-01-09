@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     API_ONLY: bool = False
-    BASE_SYSTEM_PROMPT: str = "You are an automated AI support assistant designed to assist users with their queries."
+    BASE_SYSTEM_PROMPT: str = "You are an AI assistant designed to retrieve and synthesize information from various sources to help users answer their queries."
     API_KEYS: list[str] | None = None
     REDIS_URL: str = "redis://localhost:6379"
     OPENAI_API_KEY: str | None = None
