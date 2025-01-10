@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(dependencies=[Depends(get_api_key)], lifespan=lifespan)
 
-if settings.ENABLE_OTEL:
+if settings.OTEL_ENABLED:
     setup_opentelemetry(settings.OTEL_SERVICE_NAME, app)
 
 app.exception_handler(ResourceNotFoundException)(resource_not_found_handler)

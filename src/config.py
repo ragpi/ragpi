@@ -5,32 +5,47 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    API_ONLY: bool = False
-    BASE_SYSTEM_PROMPT: str = "You are an AI assistant designed to retrieve and synthesize information from various sources to help users answer their queries."
+    # Application Configuration
     API_KEYS: list[str] | None = None
-    REDIS_URL: str = "redis://localhost:6379"
-    OPENAI_API_KEY: str | None = None
-    OLLAMA_BASE_URL: str | None = None
+    WORKERS_ENABLED: bool = True
+    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    USER_AGENT: str = "Ragpi"
+    MAX_CONCURRENT_REQUESTS: int = 10
+
+    # Provider Configuration
     VECTOR_STORE_PROVIDER: Literal["redis"] = "redis"
     CHAT_PROVIDER: Literal["openai", "ollama"] = "openai"
     EMBEDDING_PROVIDER: Literal["openai", "ollama"] = "openai"
+    OLLAMA_BASE_URL: str | None = None
+    OPENAI_API_KEY: str | None = None
+
+    # Redis Configuration
+    REDIS_URL: str = "redis://localhost:6379"
+
+    # GitHub Configuration
+    GITHUB_TOKEN: str | None = None
+    GITHUB_API_VERSION: str = "2022-11-28"
+
+    # Model Settings
     DEFAULT_CHAT_MODEL: str = "gpt-4o-mini"
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     EMBEDDING_DIMENSIONS: int = 1536
-    GITHUB_TOKEN: str | None = None
-    GITHUB_API_VERSION: str = "2022-11-28"
+    BASE_SYSTEM_PROMPT: str = "You are an AI assistant designed to retrieve and synthesize information from various sources to help users answer their queries."
+
+    # Chat Settings
     CHAT_HISTORY_LIMIT: int = 20
     MAX_CHAT_ATTEMPTS: int = 5
+
+    # Document Processing Configuration
     DOCUMENT_STORE_NAMESPACE: str = "document_store"
     DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"
     DEFAULT_CHUNK_SIZE: int = 512
     DEFAULT_CHUNK_OVERLAP: int = 50
-    MAX_CONCURRENT_REQUESTS: int = 10
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
-    USER_AGENT: str = "Ragpi"
-    ENABLE_OTEL: bool = False
+
+    # OpenTelemetry Settings
+    OTEL_ENABLED: bool = False
     OTEL_SERVICE_NAME: str = "ragpi"
-    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     @field_validator("API_KEYS", mode="before")
     def split_api_keys(cls, value: str) -> list[str]:
@@ -63,4 +78,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings():
-    return Settings()  # type: ignore
+    return Settings()

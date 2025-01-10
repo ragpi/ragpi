@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Depends
 
-from src.common.api_only_check import api_only_check
+from src.common.workers_enabled_check import workers_enabled_check
 from src.source.dependencies import get_source_service
 from src.source.schemas import (
     SearchSourceInput,
@@ -23,7 +23,9 @@ def list_sources(source_service: SourceService = Depends(get_source_service)):
 
 
 @router.post(
-    "", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(api_only_check)]
+    "",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(workers_enabled_check)],
 )
 def create_source(
     source_input: CreateSourceRequest,
@@ -51,7 +53,7 @@ def delete_source(
 @router.put(
     "/{source_name}",
     status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[Depends(api_only_check)],
+    dependencies=[Depends(workers_enabled_check)],
 )
 def update_source(
     source_name: str,

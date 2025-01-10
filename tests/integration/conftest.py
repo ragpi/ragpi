@@ -40,7 +40,7 @@ def test_settings(redis_container: RedisContainer) -> Settings:
         OPENAI_API_KEY="test-key",
         GITHUB_TOKEN=os.getenv("GITHUB_TOKEN", ""),
         API_KEYS=None,
-        ENABLE_OTEL=False,
+        OTEL_ENABLED=False,
     )
 
 

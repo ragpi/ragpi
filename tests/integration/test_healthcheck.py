@@ -9,5 +9,5 @@ class TestHealthcheck:
         data = response.json()
         assert data["api"]["status"] == "ok"
         assert data["redis"]["status"] == "ok"
-        assert data["worker"]["status"] == "ok"
-        assert data["worker"]["active_workers"] == 1
+        assert data["workers"]["status"] == "ok"
+        assert data["workers"]["active_workers"] == 1

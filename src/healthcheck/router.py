@@ -19,7 +19,7 @@ def healthcheck(
     health_status: dict[str, Any] = {
         "api": {"status": "ok"},
         "redis": {"status": "ok"},
-        "worker": {"status": "ok"},
+        "workers": {"status": "ok"},
     }
 
     has_error = False
@@ -32,11 +32,11 @@ def healthcheck(
         has_error = True
 
     # Check Celery Worker status
-    if settings.API_ONLY:
-        health_status["worker"].update(
+    if not settings.WORKERS_ENABLED:
+        health_status["workers"].update(
             {
                 "status": "skipped",
-                "message": "Worker is not available in API_ONLY mode.",
+                "message": "Workers are disabled. Set WORKERS_ENABLED to True to enable workers.",
             }
         )
     else:
@@ -46,7 +46,7 @@ def healthcheck(
             if not active_workers:
                 raise Exception("No active workers found")
             worker_count = len(active_workers.keys())
-            health_status["worker"].update(
+            health_status["workers"].update(
                 {"status": "ok", "active_workers": worker_count}
             )
         except Exception as e:

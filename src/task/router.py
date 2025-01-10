@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from src.common.api_only_check import api_only_check
+from src.common.workers_enabled_check import workers_enabled_check
 from src.task.dependencies import get_task_service
 from src.task.service import TaskService
 
@@ -22,7 +22,7 @@ def get_task(task_id: str, task_service: TaskService = Depends(get_task_service)
     return task_service.get_task(task_id)
 
 
-@router.post("/{task_id}/terminate", dependencies=[Depends(api_only_check)])
+@router.post("/{task_id}/terminate", dependencies=[Depends(workers_enabled_check)])
 def terminate_task(task_id: str, task_service: TaskService = Depends(get_task_service)):
     task_service.terminate_task(task_id)
 
