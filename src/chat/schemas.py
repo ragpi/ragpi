@@ -15,7 +15,6 @@ class ChatMessage(BaseModel):
 class CreateChatInput(BaseModel):
     sources: list[str] | None = None
     chat_model: str = settings.DEFAULT_CHAT_MODEL
-    system: str | None = None
     messages: list[ChatMessage]
     max_attempts: int = settings.MAX_CHAT_ATTEMPTS
 

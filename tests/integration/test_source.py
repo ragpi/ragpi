@@ -163,7 +163,7 @@ class TestSource:
 
         # Delete source
         response = test_client.delete(f"/sources/{source_data['name']}")
-        assert response.status_code == 200
+        assert response.status_code == 204
 
         # Verify source is gone
         response = test_client.get(f"/sources/{source_data['name']}")

@@ -6,6 +6,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Application Configuration
+    API_NAME: str = "Ragpi"
+    API_SUMMARY: str = "Ragpi is an AI assistant designed to retrieve and synthesize information from various sources to help users answer their queries."
     API_KEYS: list[str] | None = None
     WORKERS_ENABLED: bool = True
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"

@@ -12,14 +12,6 @@ class SourceStatus(str, Enum):
     FAILED = "failed"
 
 
-# Inputs
-class SearchSourceInput(BaseModel):
-    name: str = Field(description="Source name")
-    query: str = Field(description="Search query")
-    top_k: int = Field(description="Number of results to return")
-
-
-# Outputs
 class SourceMetadata(BaseModel):
     id: str
     name: str
@@ -31,19 +23,6 @@ class SourceMetadata(BaseModel):
     config: SourceConfig
 
 
-class SyncSourceOutput(BaseModel):
-    source: SourceMetadata
-    docs_added: int
-    docs_removed: int
-
-
-class SourceTask(BaseModel):
-    task_id: str | None
-    source: SourceMetadata
-    message: str
-
-
-# Requests
 class CreateSourceRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     description: str
@@ -64,8 +43,20 @@ class UpdateSourceRequest(BaseModel):
     config: SourceConfig | None = None
 
 
-# Responses
-class SourceTaskResponse(BaseModel):
+class SourceTask(BaseModel):
     task_id: str | None
     source: SourceMetadata
-    message: str | None = None
+    message: str
+
+
+class SyncSourceOutput(BaseModel):
+    source: SourceMetadata
+    docs_added: int
+    docs_removed: int
+
+
+# Also used by chat tool definitions
+class SearchSourceInput(BaseModel):
+    name: str = Field(description="Source name")
+    query: str = Field(description="Search query")
+    top_k: int = Field(description="Number of documents to retrieve")

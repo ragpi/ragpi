@@ -1,10 +1,13 @@
 from fastapi import APIRouter, status, Depends
 
+from src.common.schemas import Document
 from src.common.workers_enabled_check import workers_enabled_check
 from src.source.dependencies import get_source_service
 from src.source.schemas import (
     SearchSourceInput,
     CreateSourceRequest,
+    SourceMetadata,
+    SourceTask,
     UpdateSourceRequest,
 )
 from src.source.service import SourceService
@@ -17,9 +20,10 @@ router = APIRouter(
 
 
 @router.get("")
-def list_sources(source_service: SourceService = Depends(get_source_service)):
-    sources = source_service.list_sources()
-    return sources
+def list_sources(
+    source_service: SourceService = Depends(get_source_service),
+) -> list[SourceMetadata]:
+    return source_service.list_sources()
 
 
 @router.post(
@@ -30,24 +34,22 @@ def list_sources(source_service: SourceService = Depends(get_source_service)):
 def create_source(
     source_input: CreateSourceRequest,
     source_service: SourceService = Depends(get_source_service),
-):
+) -> SourceTask:
     return source_service.create_source(source_input)
 
 
 @router.get("/{source_name}")
 def get_source(
     source_name: str, source_service: SourceService = Depends(get_source_service)
-):
-    results = source_service.get_source(source_name)
-    return results
+) -> SourceMetadata:
+    return source_service.get_source(source_name)
 
 
-@router.delete("/{source_name}")
+@router.delete("/{source_name}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_source(
     source_name: str, source_service: SourceService = Depends(get_source_service)
 ):
     source_service.delete_source(source_name)
-    return {"message": f"Source '{source_name}' deleted"}
 
 
 @router.put(
@@ -59,7 +61,7 @@ def update_source(
     source_name: str,
     source_input: UpdateSourceRequest,
     source_service: SourceService = Depends(get_source_service),
-):
+) -> SourceTask:
     return source_service.update_source(source_name, source_input)
 
 
@@ -69,9 +71,8 @@ def get_source_documents(
     limit: int | None = None,
     offset: int | None = None,
     source_service: SourceService = Depends(get_source_service),
-):
-    results = source_service.get_source_documents(source_name, limit, offset)
-    return results
+) -> list[Document]:
+    return source_service.get_source_documents(source_name, limit, offset)
 
 
 @router.get("/{source_name}/search")
@@ -80,8 +81,7 @@ def search_source(
     query: str,
     top_k: int = 10,
     source_service: SourceService = Depends(get_source_service),
-):
-    results = source_service.search_source(
+) -> list[Document]:
+    return source_service.search_source(
         SearchSourceInput(name=source_name, query=query, top_k=top_k)
     )
-    return results

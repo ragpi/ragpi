@@ -42,7 +42,12 @@ async def lifespan(app: FastAPI):
     app.state.redis_client.close()
 
 
-app = FastAPI(dependencies=[Depends(get_api_key)], lifespan=lifespan)
+app = FastAPI(
+    title=settings.API_NAME,
+    summary=settings.API_SUMMARY,
+    dependencies=[Depends(get_api_key)],
+    lifespan=lifespan,
+)
 
 if settings.OTEL_ENABLED:
     setup_opentelemetry(settings.OTEL_SERVICE_NAME, app)

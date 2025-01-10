@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
 from src.common.workers_enabled_check import workers_enabled_check
 from src.task.dependencies import get_task_service
+from src.task.schemas import Task
 from src.task.service import TaskService
 
 
@@ -13,20 +14,38 @@ router = APIRouter(
 
 
 @router.get("")
-def list_tasks(task_service: TaskService = Depends(get_task_service)):
+def list_tasks(task_service: TaskService = Depends(get_task_service)) -> list[Task]:
     return task_service.list_tasks()
 
 
 @router.get("/{task_id}")
-def get_task(task_id: str, task_service: TaskService = Depends(get_task_service)):
+def get_task(
+    task_id: str, task_service: TaskService = Depends(get_task_service)
+) -> Task:
     return task_service.get_task(task_id)
 
 
-@router.post("/{task_id}/terminate", dependencies=[Depends(workers_enabled_check)])
-def terminate_task(task_id: str, task_service: TaskService = Depends(get_task_service)):
+@router.post(
+    "/{task_id}/terminate",
+    dependencies=[Depends(workers_enabled_check)],
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={
+        202: {
+            "description": "Task termination initiated",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Terminating task <task_id>"}
+                }
+            },
+        }
+    },
+)
+def terminate_task(
+    task_id: str, task_service: TaskService = Depends(get_task_service)
+) -> JSONResponse:
     task_service.terminate_task(task_id)
 
     return JSONResponse(
         content={"message": f"Terminating task {task_id}"},
-        status_code=200,
+        status_code=status.HTTP_202_ACCEPTED,
     )
