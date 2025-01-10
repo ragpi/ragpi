@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, status, Depends
 
-from src.config import Settings, get_settings
+from src.common.api_only_check import api_only_check
 from src.source.dependencies import get_source_service
 from src.source.schemas import (
     SearchSourceInput,
@@ -22,17 +22,13 @@ def list_sources(source_service: SourceService = Depends(get_source_service)):
     return sources
 
 
-@router.post("", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(api_only_check)]
+)
 def create_source(
     source_input: CreateSourceRequest,
     source_service: SourceService = Depends(get_source_service),
-    settings: Settings = Depends(get_settings),
 ):
-    if settings.API_ONLY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Source creation is disabled in API_ONLY mode.",
-        )
     return source_service.create_source(source_input)
 
 
@@ -52,18 +48,16 @@ def delete_source(
     return {"message": f"Source '{source_name}' deleted"}
 
 
-@router.put("/{source_name}", status_code=status.HTTP_202_ACCEPTED)
+@router.put(
+    "/{source_name}",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(api_only_check)],
+)
 def update_source(
     source_name: str,
     source_input: UpdateSourceRequest,
     source_service: SourceService = Depends(get_source_service),
-    settings: Settings = Depends(get_settings),
 ):
-    if settings.API_ONLY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Source update is disabled in API_ONLY mode.",
-        )
     return source_service.update_source(source_name, source_input)
 
 
