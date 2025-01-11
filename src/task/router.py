@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
+from src.common.exceptions import ResourceType, resource_not_found_response
 from src.common.workers_enabled_check import workers_enabled_check
 from src.task.dependencies import get_task_service
 from src.task.schemas import Task
@@ -18,7 +19,7 @@ def list_tasks(task_service: TaskService = Depends(get_task_service)) -> list[Ta
     return task_service.list_tasks()
 
 
-@router.get("/{task_id}")
+@router.get("/{task_id}", responses={**resource_not_found_response(ResourceType.TASK)})
 def get_task(
     task_id: str, task_service: TaskService = Depends(get_task_service)
 ) -> Task:
@@ -34,10 +35,11 @@ def get_task(
             "description": "Task termination initiated",
             "content": {
                 "application/json": {
-                    "example": {"message": "Terminating task <task_id>"}
+                    "example": {"message": "Terminating task 'example'"}
                 }
             },
-        }
+        },
+        **resource_not_found_response(ResourceType.TASK),
     },
 )
 def terminate_task(

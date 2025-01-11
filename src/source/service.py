@@ -87,7 +87,7 @@ class SourceService:
         config = source_input.config if source_input and source_input.config else None
 
         updated_source = self.metadata_manager.update_metadata(
-            name=source_name,
+            name=source_name,  # source name is not updated
             description=description,
             status=status,
             num_docs=None,

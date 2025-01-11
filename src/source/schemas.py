@@ -38,7 +38,7 @@ class CreateSourceRequest(BaseModel):
 
 
 class UpdateSourceRequest(BaseModel):
-    sync: bool = False
+    sync: bool = True
     description: str | None = None
     config: SourceConfig | None = None
 

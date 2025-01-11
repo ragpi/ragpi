@@ -15,6 +15,8 @@ from src.common.exceptions import (
     resource_not_found_handler,
     unexpected_exception_handler,
     redis_connection_error,
+    service_unavailable_response,
+    internal_error_response,
 )
 from src.common.opentelemetry import setup_opentelemetry
 from src.common.redis import create_redis_client
@@ -47,6 +49,7 @@ app = FastAPI(
     summary=settings.API_SUMMARY,
     dependencies=[Depends(get_api_key)],
     lifespan=lifespan,
+    responses={**service_unavailable_response, **internal_error_response},
 )
 
 if settings.OTEL_ENABLED:
