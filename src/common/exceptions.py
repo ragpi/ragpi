@@ -230,9 +230,10 @@ validation_error_response: ResponseDict = {
                     "detail": "Validation error",
                     "errors": [
                         {
-                            "loc": "field",
-                            "msg": "error message",
                             "type": "type",
+                            "loc": "field.subfield",
+                            "msg": "error message",
+                            "input": "input value",
                         }
                     ],
                 }
