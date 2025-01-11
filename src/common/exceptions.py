@@ -1,8 +1,12 @@
 from enum import Enum
 import logging
+from typing import Any
 from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from redis.exceptions import ConnectionError
+
+from src.source.config import SourceType
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +17,7 @@ class ResourceType(str, Enum):
     MODEL = "Model"
 
 
+# Exceptions
 class ResourceNotFoundException(Exception):
     def __init__(self, resource_type: ResourceType, identifier: str):
         self.resource_type = resource_type.value
@@ -43,6 +48,7 @@ class KnownException(Exception):
         super().__init__(message)
 
 
+# Exception handlers
 def resource_not_found_handler(request: Request, exc: ResourceNotFoundException):
     logger.error(exc)
     return JSONResponse(
@@ -85,9 +91,153 @@ def unexpected_exception_handler(request: Request, exc: Exception):
     )
 
 
-def redis_connection_error(request: Request, exc: ConnectionError):
-    logger.error(exc)
+def redis_connection_exception_handler(request: Request, exc: ConnectionError):
+    logger.error(f"Failed to connect to Redis: {exc}")
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        content={"detail": "Failed to connect to Redis"},
+        content={"detail": "Service unavailable"},
     )
+
+
+def validation_exception_handler(request: Request, exc: RequestValidationError):
+    def loc_to_dot_sep(loc: tuple[Any, ...]) -> str:
+        """Convert a tuple of location parts to a dot-separated string"""
+        path = ""
+        for i, x in enumerate(loc):
+            if isinstance(x, str):
+                if i > 0:
+                    path += "."
+                path += x
+            elif isinstance(x, int):
+                path += f"[{x}]"
+            else:
+                raise TypeError("Unexpected type")
+        return path
+
+    def handle_source_type_error(error: dict[str, Any]) -> dict[str, Any]:
+        """Handle specific source type validation errors"""
+        if error["ctx"]["discriminator"] != "'type'":
+            return error
+
+        valid_types = ", ".join(SourceType._value2member_map_.keys())
+
+        if error["type"] == "union_tag_not_found":
+            return {
+                "type": "missing",
+                "loc": "body.config.type",
+                "msg": f"Missing required 'type' field. Must be one of: {valid_types}",
+                "input": error["input"],
+            }
+
+        if error["type"] == "union_tag_invalid":
+            return {
+                "type": "invalid",
+                "loc": "body.config.type",
+                "msg": f"Invalid 'type' field. Must be one of: {valid_types}",
+                "input": error["input"],
+            }
+
+        return error
+
+    def process_error(error: dict[str, Any]) -> dict[str, Any]:
+        """Process individual validation errors"""
+        error["loc"] = loc_to_dot_sep(error["loc"])
+
+        if error["type"] in ("union_tag_not_found", "union_tag_invalid"):
+            error = handle_source_type_error(error)
+
+        return error
+
+    errors = [process_error(error) for error in exc.errors()]
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": "Validation error", "errors": errors},
+    )
+
+
+# Response definitions for OpenAPI documentation
+ResponseDict = dict[int | str, dict[str, Any]]
+
+
+def resource_not_found_response(
+    resource_type: ResourceType,
+) -> ResponseDict:
+    return {
+        404: {
+            "description": f"{resource_type.value} not found",
+            "content": {
+                "application/json": {
+                    "example": {"detail": f"{resource_type.value} 'example' not found"}
+                }
+            },
+        }
+    }
+
+
+def resource_already_exists_response(
+    resource_type: ResourceType,
+) -> ResponseDict:
+    return {
+        409: {
+            "description": f"{resource_type.value} already exists",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": f"{resource_type.value} 'example' already exists"
+                    }
+                }
+            },
+        }
+    }
+
+
+def resource_locked_response(resource_type: ResourceType) -> ResponseDict:
+    return {
+        423: {
+            "description": f"{resource_type.value} locked",
+            "content": {
+                "application/json": {
+                    "example": {"detail": f"{resource_type.value} 'example' is locked"}
+                }
+            },
+        }
+    }
+
+
+service_unavailable_response: ResponseDict = {
+    503: {
+        "description": "Service unavailable",
+        "content": {"application/json": {"example": {"detail": "Service unavailable"}}},
+    }
+}
+
+internal_error_response: ResponseDict = {
+    500: {
+        "description": "Internal server error",
+        "content": {
+            "application/json": {"example": {"detail": "An unexpected error occurred"}}
+        },
+    }
+}
+
+validation_error_response: ResponseDict = {
+    422: {
+        "description": "Validation error",
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": "Validation error",
+                    "errors": [
+                        {
+                            "type": "type",
+                            "loc": "field.sub_field",
+                            "msg": "error message",
+                            "input": "input value",
+                        }
+                    ],
+                }
+            }
+        },
+    }
+}

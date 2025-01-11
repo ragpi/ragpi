@@ -10,12 +10,45 @@ from src.celery import get_celery_app
 router = APIRouter()
 
 
-@router.get("/healthcheck", response_class=JSONResponse, status_code=status.HTTP_200_OK)
+@router.get(
+    "/healthcheck",
+    tags=["healthcheck"],
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {
+            "description": "Healthcheck status",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "api": {"status": "ok"},
+                        "redis": {"status": "ok"},
+                        "workers": {"status": "ok", "active_workers": 2},
+                    }
+                }
+            },
+        },
+        503: {
+            "description": "Service unavailable",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "api": {"status": "ok"},
+                        "redis": {"status": "error", "message": "Connection error"},
+                        "workers": {
+                            "status": "error",
+                            "message": "No active workers found",
+                        },
+                    }
+                }
+            },
+        },
+    },
+)
 def healthcheck(
     settings: Settings = Depends(get_settings),
     redis_client: RedisClient = Depends(get_redis_client),
     celery_app: Celery = Depends(get_celery_app),
-):
+) -> JSONResponse:
     health_status: dict[str, Any] = {
         "api": {"status": "ok"},
         "redis": {"status": "ok"},
@@ -58,4 +91,4 @@ def healthcheck(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, content=health_status
         )
 
-    return health_status
+    return JSONResponse(status_code=status.HTTP_200_OK, content=health_status)

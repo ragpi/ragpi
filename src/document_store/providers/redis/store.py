@@ -94,13 +94,13 @@ class RedisDocumentStore(DocumentStoreService):
         self.index.load(id_field="id", data=data)  # type: ignore
 
     def get_documents(
-        self, source_name: str, limit: int | None, offset: int | None
+        self, source_name: str, limit: int, offset: int
     ) -> list[Document]:
         source_key = self._get_source_key(source_name)
         all_keys: list[str] = [key for key in self.client.scan_iter(f"{source_key}:*")]
 
-        start = offset or 0
-        end = start + limit if limit else len(all_keys)
+        start = offset
+        end = start + limit
 
         keys = all_keys[start:end]
 

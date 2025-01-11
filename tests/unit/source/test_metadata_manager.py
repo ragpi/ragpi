@@ -1,6 +1,6 @@
 import pytest
 from pytest_mock import MockerFixture
-from typing import Any, Dict
+from typing import Any
 
 from src.common.exceptions import ResourceAlreadyExistsException, ResourceType
 from src.common.redis import RedisClient
@@ -21,7 +21,7 @@ def mock_document_store(mocker: MockerFixture) -> DocumentStoreService:
 
 
 @pytest.fixture
-def config_map() -> Dict[str, type[SourceConfig]]:
+def config_map() -> dict[str, type[SourceConfig]]:
     return {"sitemap": SitemapConfig}
 
 
@@ -29,7 +29,7 @@ def config_map() -> Dict[str, type[SourceConfig]]:
 def metadata_manager(
     mock_redis_client: RedisClient,
     mock_document_store: DocumentStoreService,
-    config_map: Dict[str, type[SourceConfig]],
+    config_map: dict[str, type[SourceConfig]],
 ) -> SourceMetadataManager:
     return SourceMetadataManager(
         redis_client=mock_redis_client,
@@ -48,7 +48,7 @@ def sample_config() -> SitemapConfig:
 @pytest.fixture
 def sample_metadata_dict(
     sample_config: SitemapConfig,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "id": "test-id",
         "name": "test-source",
@@ -87,7 +87,7 @@ def test_metadata_exists_false(
 def test_create_metadata_success(
     metadata_manager: SourceMetadataManager,
     sample_config: SitemapConfig,
-    sample_metadata_dict: Dict[str, Any],
+    sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
     # Mock redis client
@@ -147,7 +147,7 @@ def test_create_metadata_already_exists(
 
 def test_get_metadata_success(
     metadata_manager: SourceMetadataManager,
-    sample_metadata_dict: Dict[str, Any],
+    sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(metadata_manager.client, "exists", return_value=True)
@@ -180,7 +180,7 @@ def test_delete_metadata_success(
 
 def test_list_metadata_success(
     metadata_manager: SourceMetadataManager,
-    sample_metadata_dict: Dict[str, Any],
+    sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
     # Mock self.client.keys
@@ -207,7 +207,7 @@ def test_list_metadata_success(
 def test_update_metadata_success(
     metadata_manager: SourceMetadataManager,
     sample_config: SitemapConfig,
-    sample_metadata_dict: Dict[str, Any],
+    sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
     # Mock calls in self.get_metadata
