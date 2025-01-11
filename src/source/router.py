@@ -54,20 +54,6 @@ def get_source(
     return source_service.get_source(source_name)
 
 
-@router.delete(
-    "/{source_name}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    responses={
-        **resource_not_found_response(ResourceType.SOURCE),
-        **resource_locked_response(ResourceType.SOURCE),
-    },
-)
-def delete_source(
-    source_name: str, source_service: SourceService = Depends(get_source_service)
-):
-    source_service.delete_source(source_name)
-
-
 @router.put(
     "/{source_name}",
     status_code=status.HTTP_202_ACCEPTED,
@@ -83,6 +69,20 @@ def update_source(
     source_service: SourceService = Depends(get_source_service),
 ) -> SourceTask:
     return source_service.update_source(source_name, source_input)
+
+
+@router.delete(
+    "/{source_name}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        **resource_not_found_response(ResourceType.SOURCE),
+        **resource_locked_response(ResourceType.SOURCE),
+    },
+)
+def delete_source(
+    source_name: str, source_service: SourceService = Depends(get_source_service)
+):
+    source_service.delete_source(source_name)
 
 
 @router.get(

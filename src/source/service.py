@@ -32,6 +32,9 @@ class SourceService:
         self.metadata_manager = metadata_manager
         self.lock_service = lock_service
 
+    def list_sources(self):
+        return self.metadata_manager.list_metadata()
+
     def create_source(self, source_input: CreateSourceRequest) -> SourceTask:
         if self.metadata_manager.metadata_exists(source_input.name):
             raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_input.name)
@@ -112,17 +115,6 @@ class SourceService:
             task_id=None, source=updated_source, message="Source updated."
         )
 
-    def get_source_documents(
-        self, source_name: str, limit: int | None, offset: int | None
-    ):
-        if not self.metadata_manager.metadata_exists(source_name):
-            raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
-
-        return self.document_store.get_documents(source_name, limit, offset)
-
-    def list_sources(self):
-        return self.metadata_manager.list_metadata()
-
     def delete_source(self, source_name: str):
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
@@ -132,6 +124,14 @@ class SourceService:
 
         self.document_store.delete_all_documents(source_name)
         self.metadata_manager.delete_metadata(source_name)
+
+    def get_source_documents(
+        self, source_name: str, limit: int | None, offset: int | None
+    ):
+        if not self.metadata_manager.metadata_exists(source_name):
+            raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
+
+        return self.document_store.get_documents(source_name, limit, offset)
 
     def search_source(self, source_input: SearchSourceInput):
         if not self.metadata_manager.metadata_exists(source_input.name):
