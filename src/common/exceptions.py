@@ -1,7 +1,8 @@
 from enum import Enum
 import logging
-from typing import Any
+from typing import Any, Sequence
 from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from redis.exceptions import ConnectionError
 
@@ -96,7 +97,34 @@ def redis_connection_error(request: Request, exc: ConnectionError):
     )
 
 
-# Response examples for OpenAPI documentation
+def validation_exception_handler(request: Request, exc: RequestValidationError):
+    def loc_to_dot_sep(loc: tuple[Any, ...]) -> str:
+        path = ""
+        for i, x in enumerate(loc):
+            if isinstance(x, str):
+                if i > 0:
+                    path += "."
+                path += x
+            elif isinstance(x, int):
+                path += f"[{x}]"
+            else:
+                raise TypeError("Unexpected type")
+        return path
+
+    def convert_errors(e: RequestValidationError) -> Sequence[Any]:
+        new_errors: Sequence[Any] = e.errors()
+        for error in new_errors:
+            error["loc"] = loc_to_dot_sep(error["loc"])
+        return new_errors
+
+    errors = convert_errors(exc)
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": "Validation error", "errors": errors},
+    )
+
+
 ResponseDict = dict[int | str, dict[str, Any]]
 
 
@@ -157,6 +185,26 @@ internal_error_response: ResponseDict = {
         "description": "Internal server error",
         "content": {
             "application/json": {"example": {"detail": "An unexpected error occurred"}}
+        },
+    }
+}
+
+validation_error_response: ResponseDict = {
+    422: {
+        "description": "Validation error",
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": "Validation error",
+                    "errors": [
+                        {
+                            "loc": "field",
+                            "msg": "error message",
+                            "type": "type",
+                        }
+                    ],
+                }
+            }
         },
     }
 }
