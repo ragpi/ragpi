@@ -89,7 +89,7 @@ def unexpected_exception_handler(request: Request, exc: Exception):
     )
 
 
-def redis_connection_error(request: Request, exc: ConnectionError):
+def redis_connection_exception_handler(request: Request, exc: ConnectionError):
     logger.error(f"Failed to connect to Redis: {exc}")
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

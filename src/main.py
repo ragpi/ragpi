@@ -15,11 +15,11 @@ from src.common.exceptions import (
     resource_locked_handler,
     resource_not_found_handler,
     unexpected_exception_handler,
-    redis_connection_error,
+    redis_connection_exception_handler,
+    validation_exception_handler,
     service_unavailable_response,
     internal_error_response,
     validation_error_response,
-    validation_exception_handler,
 )
 from src.common.opentelemetry import setup_opentelemetry
 from src.common.redis import create_redis_client
@@ -67,7 +67,7 @@ app.exception_handler(ResourceNotFoundException)(resource_not_found_handler)
 app.exception_handler(ResourceAlreadyExistsException)(resource_already_exists_handler)
 app.exception_handler(ResourceLockedException)(resource_locked_handler)
 app.exception_handler(KnownException)(known_exception_handler)
-app.exception_handler(ConnectionError)(redis_connection_error)
+app.exception_handler(ConnectionError)(redis_connection_exception_handler)
 app.exception_handler(Exception)(unexpected_exception_handler)
 
 
