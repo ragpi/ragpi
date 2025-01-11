@@ -10,7 +10,7 @@ class DocumentStoreService(ABC):
 
     @abstractmethod
     def get_documents(
-        self, source_name: str, limit: int | None, offset: int | None
+        self, source_name: str, limit: int, offset: int
     ) -> list[Document]:
         pass
 

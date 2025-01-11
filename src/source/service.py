@@ -125,9 +125,7 @@ class SourceService:
         self.document_store.delete_all_documents(source_name)
         self.metadata_manager.delete_metadata(source_name)
 
-    def get_source_documents(
-        self, source_name: str, limit: int | None, offset: int | None
-    ):
+    def get_source_documents(self, source_name: str, limit: int, offset: int):
         if not self.metadata_manager.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 

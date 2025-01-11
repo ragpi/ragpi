@@ -91,8 +91,8 @@ def delete_source(
 )
 def get_source_documents(
     source_name: str,
-    limit: int | None = None,
-    offset: int | None = None,
+    limit: int = 100,
+    offset: int = 0,
     source_service: SourceService = Depends(get_source_service),
 ) -> list[Document]:
     return source_service.get_source_documents(source_name, limit, offset)
