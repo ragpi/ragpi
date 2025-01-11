@@ -89,10 +89,10 @@ def unexpected_exception_handler(request: Request, exc: Exception):
 
 
 def redis_connection_error(request: Request, exc: ConnectionError):
-    logger.error(exc)
+    logger.error(f"Failed to connect to Redis: {exc}")
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        content={"detail": "Failed to connect to Redis"},
+        content={"detail": "Service unavailable"},
     )
 
 
@@ -148,9 +148,7 @@ def resource_locked_response(resource_type: ResourceType) -> ResponseDict:
 service_unavailable_response: ResponseDict = {
     503: {
         "description": "Service unavailable",
-        "content": {
-            "application/json": {"example": {"detail": "Failed to connect to Redis"}}
-        },
+        "content": {"application/json": {"example": {"detail": "Service unavailable"}}},
     }
 }
 
