@@ -1,6 +1,6 @@
 from enum import Enum
 import logging
-from typing import Any, Union
+from typing import Any
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from redis.exceptions import ConnectionError
@@ -97,7 +97,7 @@ def redis_connection_error(request: Request, exc: ConnectionError):
 
 
 # Response examples for OpenAPI documentation
-ResponseDict = dict[Union[int, str], dict[str, Any]]
+ResponseDict = dict[int | str, dict[str, Any]]
 
 
 def resource_not_found_response(

@@ -1,7 +1,7 @@
 from enum import Enum
 import re
 from pydantic import BaseModel, field_validator
-from typing import Union, Literal
+from typing import Literal
 
 from src.config import get_settings
 
@@ -60,7 +60,7 @@ class GithubReadmeConfig(BaseSourceConfig):
     ref: str | None = None
 
 
-SourceConfig = Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig]
+SourceConfig = SitemapConfig | GithubIssuesConfig | GithubReadmeConfig
 
 SOURCE_CONFIG_MAP: dict[str, type[SourceConfig]] = {
     SourceType.SITEMAP: SitemapConfig,
