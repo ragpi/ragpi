@@ -1,10 +1,12 @@
 from enum import Enum
 import logging
-from typing import Any, Sequence
+from typing import Any
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from redis.exceptions import ConnectionError
+
+from src.source.config import SourceType
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +101,7 @@ def redis_connection_exception_handler(request: Request, exc: ConnectionError):
 
 def validation_exception_handler(request: Request, exc: RequestValidationError):
     def loc_to_dot_sep(loc: tuple[Any, ...]) -> str:
+        """Convert a tuple of location parts to a dot-separated string"""
         path = ""
         for i, x in enumerate(loc):
             if isinstance(x, str):
@@ -111,13 +114,41 @@ def validation_exception_handler(request: Request, exc: RequestValidationError):
                 raise TypeError("Unexpected type")
         return path
 
-    def convert_errors(e: RequestValidationError) -> Sequence[Any]:
-        new_errors: Sequence[Any] = e.errors()
-        for error in new_errors:
-            error["loc"] = loc_to_dot_sep(error["loc"])
-        return new_errors
+    def handle_source_type_error(error: dict[str, Any]) -> dict[str, Any]:
+        """Handle specific source type validation errors"""
+        if error["ctx"]["discriminator"] != "'type'":
+            return error
 
-    errors = convert_errors(exc)
+        valid_types = ", ".join(SourceType._value2member_map_.keys())
+
+        if error["type"] == "union_tag_not_found":
+            return {
+                "type": "missing",
+                "loc": "body.config.type",
+                "msg": f"Missing required 'type' field. Must be one of: {valid_types}",
+                "input": error["input"],
+            }
+
+        if error["type"] == "union_tag_invalid":
+            return {
+                "type": "invalid",
+                "loc": "body.config.type",
+                "msg": f"Invalid 'type' field. Must be one of: {valid_types}",
+                "input": error["input"],
+            }
+
+        return error
+
+    def process_error(error: dict[str, Any]) -> dict[str, Any]:
+        """Process individual validation errors"""
+        error["loc"] = loc_to_dot_sep(error["loc"])
+
+        if error["type"] in ("union_tag_not_found", "union_tag_invalid"):
+            error = handle_source_type_error(error)
+
+        return error
+
+    errors = [process_error(error) for error in exc.errors()]
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -125,6 +156,7 @@ def validation_exception_handler(request: Request, exc: RequestValidationError):
     )
 
 
+# Response definitions for OpenAPI documentation
 ResponseDict = dict[int | str, dict[str, Any]]
 
 
