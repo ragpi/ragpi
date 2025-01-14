@@ -3,27 +3,19 @@ from datetime import datetime, timedelta, timezone
 import logging
 from typing import Any, AsyncGenerator
 
-from src.document_extractor.clients.github import GitHubClient
-from src.document_extractor.schemas import GithubIssue, GithubIssueComment
+from src.sources.common.github_client import GitHubClient
+from src.sources.github_issues.schemas import GithubIssue, GithubIssueComment
 
 logger = logging.getLogger(__name__)
 
 
-class GitHubIssueClient(GitHubClient):
+class GitHubIssuesFetcher:
     def __init__(
         self,
         *,
-        concurrent_requests: int,
-        user_agent: str,
-        github_api_version: str,
-        github_token: str | None,
+        github_client: GitHubClient,
     ):
-        super().__init__(
-            concurrent_requests=concurrent_requests,
-            user_agent=user_agent,
-            github_api_version=github_api_version,
-            github_token=github_token,
-        )
+        self.client = github_client
 
     async def fetch_comments(self, comments_url: str) -> list[GithubIssueComment]:
         comments: list[GithubIssueComment] = []
@@ -31,7 +23,7 @@ class GitHubIssueClient(GitHubClient):
         params: dict[str, str] | None = {"per_page": "100"}
 
         while True:
-            data, headers = await self.request("GET", url, params=params)
+            data, headers = await self.client.request("GET", url, params=params)
 
             if not data:
                 break
@@ -53,7 +45,7 @@ class GitHubIssueClient(GitHubClient):
             # Check for 'next' link in headers
             link_header = headers.get("Link")
             if link_header:
-                links = self._parse_link_header(link_header)
+                links = self.client.parse_link_header(link_header)
                 next_url = links.get("next")
                 if next_url:
                     url = next_url
@@ -116,7 +108,7 @@ class GitHubIssueClient(GitHubClient):
             )
 
         while True:
-            data, headers = await self.request("GET", url, params=params)
+            data, headers = await self.client.request("GET", url, params=params)
             if not data:
                 break
 
@@ -132,7 +124,7 @@ class GitHubIssueClient(GitHubClient):
             # Check for 'next' link in headers
             link_header = headers.get("Link")
             if link_header:
-                links = self._parse_link_header(link_header)
+                links = self.client.parse_link_header(link_header)
                 next_url = links.get("next")
                 if next_url:
                     url = next_url

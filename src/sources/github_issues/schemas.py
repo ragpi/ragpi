@@ -1,12 +1,6 @@
 from pydantic import BaseModel
 
 
-class MarkdownPage(BaseModel):
-    url: str
-    title: str
-    content: str
-
-
 class GithubIssueComment(BaseModel):
     id: str
     url: str

@@ -9,8 +9,9 @@ import html2text
 from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
-from src.document_extractor.exceptions import DocumentExtractorException
-from src.document_extractor.schemas import MarkdownPage
+from src.sources.common.exceptions import DocumentExtractorException
+from src.sources.common.schemas import MarkdownPage
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ def extract_markdown_page(url: str, content: bytes) -> MarkdownPage:
     return MarkdownPage(url=url, title=title, content=markdown_content)
 
 
-class SitemapClient:
+class SitemapCrawler:
     def __init__(self, *, concurrent_requests: int, user_agent: str):
         self.user_agent = user_agent
         self.session: ClientSession = ClientSession(

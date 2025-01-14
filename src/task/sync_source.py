@@ -10,8 +10,8 @@ from src.config import get_settings
 from src.source.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app
-from src.source.config import SOURCE_CONFIG_MAP
 from src.source.sync import SourceSyncService
+from src.sources.registry import SOURCE_REGISTRY
 
 
 @celery_app.task(name="Sync Source Documents")
@@ -45,18 +45,18 @@ def sync_source_documents_task(
             lock_renewal_task = asyncio.create_task(lock_service.renew_lock(lock))
             try:
                 source_type = source_config_dict.get("type")
-                if source_type not in SOURCE_CONFIG_MAP:
+                if source_type not in SOURCE_REGISTRY:
                     raise SyncSourceException(f"Unsupported source type: {source_type}")
 
                 try:
-                    source_config = SOURCE_CONFIG_MAP[source_type](**source_config_dict)
+                    source_config = SOURCE_REGISTRY[source_type](**source_config_dict)
                 except ValueError as e:
                     raise SyncSourceException(f"Invalid source config: {e}")
 
                 sync_service = SourceSyncService(
                     redis_client=redis_client,
                     source_name=source_name,
-                    config_map=SOURCE_CONFIG_MAP,
+                    source_registry=SOURCE_REGISTRY,
                     source_config=source_config,
                     settings=settings,
                 )

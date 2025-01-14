@@ -3,13 +3,11 @@ import logging
 from src.common.openai import get_embedding_openai_client
 from src.common.redis import RedisClient
 from src.config import Settings
-from src.document_extractor.service import DocumentExtractor
+from src.sources.document_extractor import DocumentExtractor
 from src.document_store.providers.redis.store import RedisDocumentStore
 from src.source.exceptions import SyncSourceException
 from src.common.schemas import Document
-from src.source.config import (
-    SourceConfig,
-)
+from src.sources.registry import SourceConfig, SourceRegistryType
 from src.source.metadata import SourceMetadataManager
 from src.source.schemas import SourceStatus, SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
@@ -25,13 +23,13 @@ class SourceSyncService:
         *,
         redis_client: RedisClient,
         source_name: str,
-        config_map: dict[str, type[SourceConfig]],
+        source_registry: SourceRegistryType,
         source_config: SourceConfig,
         settings: Settings,
     ):
         self.redis_client = redis_client
         self.source_name = source_name
-        self.config_map = config_map
+        self.source_registry = source_registry
         self.source_config = source_config
         self.settings = settings
 
@@ -46,7 +44,7 @@ class SourceSyncService:
         self.metadata_manager = SourceMetadataManager(
             redis_client=self.redis_client,
             document_store=self.document_store,
-            config_map=self.config_map,
+            source_registry=self.source_registry,
         )
         self.document_extractor = DocumentExtractor(self.settings)
         self.batch_size = self.settings.DOCUMENT_SYNC_BATCH_SIZE

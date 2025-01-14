@@ -3,7 +3,7 @@ import logging
 from typing import Any
 
 from src.document_store.base import DocumentStoreService
-from src.source.config import SourceConfig
+from src.sources.registry import SourceConfig
 from src.common.redis import RedisClient
 from src.common.exceptions import (
     ResourceNotFoundException,
@@ -11,6 +11,7 @@ from src.common.exceptions import (
     ResourceType,
 )
 from src.source.schemas import SourceMetadata, SourceStatus
+from src.sources.registry import SourceRegistryType
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +21,11 @@ class SourceMetadataManager:
         self,
         redis_client: RedisClient,
         document_store: DocumentStoreService,
-        config_map: dict[str, type[SourceConfig]],
+        source_registry: SourceRegistryType,
     ):
         self.client = redis_client
         self.document_store = document_store
-        self.config_map = config_map
+        self.source_registry = source_registry
 
     def _get_metadata_key(self, source_name: str, should_exist: bool = True) -> str:
         key_name = f"metadata:{source_name}"
@@ -49,9 +50,9 @@ class SourceMetadataManager:
         if not source_type:
             raise ValueError(f"Unknown source type: {source_type}")
 
-        ConfigModel = self.config_map[source_type]
+        SourceConfigModel = self.source_registry[source_type]
 
-        return ConfigModel(**config_dict)
+        return SourceConfigModel(**config_dict)
 
     def metadata_exists(self, source_name: str) -> bool:
         try:

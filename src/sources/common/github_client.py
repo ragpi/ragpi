@@ -5,7 +5,8 @@ from types import TracebackType
 from typing import Any, Type
 from aiohttp import ClientError, ClientSession
 
-from src.document_extractor.exceptions import DocumentExtractorException
+from src.sources.common.exceptions import DocumentExtractorException
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class GitHubClient:
         if self.session:
             await self.session.close()
 
-    def _parse_link_header(self, header: str) -> dict[str, str]:
+    def parse_link_header(self, header: str) -> dict[str, str]:
         links = header.split(", ")
         link_dict: dict[str, str] = {}
         for link in links:

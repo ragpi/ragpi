@@ -1,20 +1,18 @@
 import base64
 from typing import AsyncGenerator
-from src.document_extractor.clients.github import GitHubClient
-from src.document_extractor.exceptions import DocumentExtractorException
-from src.document_extractor.schemas import MarkdownPage
+
+from src.sources.common.exceptions import DocumentExtractorException
+from src.sources.common.github_client import GitHubClient
+from src.sources.common.schemas import MarkdownPage
 
 
-class GitHubReadmeClient(GitHubClient):
+class GitHubReadmeFetcher:
     def __init__(
-        self, *, user_agent: str, github_api_version: str, github_token: str | None
+        self,
+        *,
+        github_client: GitHubClient,
     ):
-        super().__init__(
-            concurrent_requests=1,
-            user_agent=user_agent,
-            github_api_version=github_api_version,
-            github_token=github_token,
-        )
+        self.client = github_client
 
     async def fetch_readmes(
         self,
@@ -45,7 +43,7 @@ class GitHubReadmeClient(GitHubClient):
             if ref:
                 params["ref"] = ref
 
-            data, _ = await self.request("GET", url, params=params)
+            data, _ = await self.client.request("GET", url, params=params)
             if not data:
                 raise DocumentExtractorException(
                     f"Failed to fetch README content at {url}"
