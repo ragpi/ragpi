@@ -14,7 +14,7 @@ from src.sources.document_extractor import DocumentExtractor
 from src.sources.types import SourceType
 from src.sources.registry import SourceConfig
 from src.sources.sitemap.config import SitemapConfig
-from src.source.metadata import SourceMetadataManager
+from src.source.metadata import SourceMetadataStore
 from src.source.schemas import SourceMetadata, SourceStatus, SyncSourceOutput
 from src.source.sync import SourceSyncService
 
@@ -52,8 +52,8 @@ def mock_document_store(mocker: MockerFixture) -> RedisDocumentStore:
 
 
 @pytest.fixture
-def mock_metadata_manager(mocker: MockerFixture) -> SourceMetadataManager:
-    return mocker.Mock(spec=SourceMetadataManager)
+def mock_metadata_store(mocker: MockerFixture) -> SourceMetadataStore:
+    return mocker.Mock(spec=SourceMetadataStore)
 
 
 @pytest.fixture
@@ -120,7 +120,7 @@ def source_sync_service(
     mock_settings: Settings,
     mock_openai_client: OpenAI,
     mock_document_store: RedisDocumentStore,
-    mock_metadata_manager: SourceMetadataManager,
+    mock_metadata_store: SourceMetadataStore,
     mock_document_extractor: DocumentExtractor,
     mocker: MockerFixture,
 ) -> SourceSyncService:
@@ -142,10 +142,10 @@ def source_sync_service(
         return_value=mock_document_extractor,
     )
 
-    # Mock SourceMetadataManager creation
+    # Mock SourceMetadataStore creation
     mocker.patch(
-        "src.source.sync.SourceMetadataManager",
-        return_value=mock_metadata_manager,
+        "src.source.sync.SourceMetadataStore",
+        return_value=mock_metadata_store,
     )
 
     return SourceSyncService(
@@ -194,7 +194,7 @@ async def test_sync_documents_success(
         updated_at=mock_current_datetime,
     )
     mock_update_metadata = mocker.patch.object(
-        source_sync_service.metadata_manager,
+        source_sync_service.metadata_store,
         "update_metadata",
         return_value=mock_metadata,
     )
@@ -260,7 +260,7 @@ async def test_sync_documents_with_existing_docs(
         updated_at=mock_current_datetime,
     )
     mocker.patch.object(
-        source_sync_service.metadata_manager,
+        source_sync_service.metadata_store,
         "update_metadata",
         return_value=mock_metadata,
     )
@@ -316,7 +316,7 @@ async def test_sync_documents_with_stale_docs(
         updated_at=mock_current_datetime,
     )
     mocker.patch.object(
-        source_sync_service.metadata_manager,
+        source_sync_service.metadata_store,
         "update_metadata",
         return_value=mock_metadata,
     )
@@ -371,7 +371,7 @@ async def test_sync_documents_failure_handling(
         updated_at=mock_current_datetime,
     )
     mock_update_metadata = mocker.patch.object(
-        source_sync_service.metadata_manager,
+        source_sync_service.metadata_store,
         "update_metadata",
         return_value=mock_metadata,
     )

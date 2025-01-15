@@ -8,7 +8,7 @@ from src.document_store.base import DocumentStoreService
 from src.sources.types import SourceType
 from src.sources.registry import SourceRegistryType
 from src.sources.sitemap.config import SitemapConfig
-from src.source.metadata import SourceMetadataManager
+from src.source.metadata import SourceMetadataStore
 from src.source.schemas import SourceMetadata, SourceStatus
 
 
@@ -28,12 +28,12 @@ def source_registry() -> SourceRegistryType:
 
 
 @pytest.fixture
-def metadata_manager(
+def metadata_store(
     mock_redis_client: RedisClient,
     mock_document_store: DocumentStoreService,
     source_registry: SourceRegistryType,
-) -> SourceMetadataManager:
-    return SourceMetadataManager(
+) -> SourceMetadataStore:
+    return SourceMetadataStore(
         redis_client=mock_redis_client,
         document_store=mock_document_store,
         source_registry=source_registry,
@@ -64,44 +64,44 @@ def sample_metadata_dict(
 
 
 def test_metadata_exists_true(
-    metadata_manager: SourceMetadataManager,
+    metadata_store: SourceMetadataStore,
     mocker: MockerFixture,
 ) -> None:
     mock_redis_client_exists = mocker.patch.object(
-        metadata_manager.client, "exists", return_value=True
+        metadata_store.client, "exists", return_value=True
     )
 
-    assert metadata_manager.metadata_exists("test-source") is True
+    assert metadata_store.metadata_exists("test-source") is True
     mock_redis_client_exists.assert_called_once_with("metadata:test-source")
 
 
 def test_metadata_exists_false(
-    metadata_manager: SourceMetadataManager,
+    metadata_store: SourceMetadataStore,
     mocker: MockerFixture,
 ) -> None:
     mock_redis_client_exists = mocker.patch.object(
-        metadata_manager.client, "exists", return_value=False
+        metadata_store.client, "exists", return_value=False
     )
-    assert metadata_manager.metadata_exists("test-source") is False
+    assert metadata_store.metadata_exists("test-source") is False
     mock_redis_client_exists.assert_called_once_with("metadata:test-source")
 
 
 def test_create_metadata_success(
-    metadata_manager: SourceMetadataManager,
+    metadata_store: SourceMetadataStore,
     sample_config: SitemapConfig,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
     # Mock redis client
-    mocker.patch.object(metadata_manager.client, "exists", side_effect=[False, True])
+    mocker.patch.object(metadata_store.client, "exists", side_effect=[False, True])
     mocker.patch.object(
-        metadata_manager.client,
+        metadata_store.client,
         "hgetall",
         return_value=sample_metadata_dict,
     )
-    mock_redis_client_hset = mocker.patch.object(metadata_manager.client, "hset")
+    mock_redis_client_hset = mocker.patch.object(metadata_store.client, "hset")
 
-    result = metadata_manager.create_metadata(
+    result = metadata_store.create_metadata(
         source_name="test-source",
         description="Test description",
         status=SourceStatus.PENDING,
@@ -126,14 +126,14 @@ def test_create_metadata_success(
 
 
 def test_create_metadata_already_exists(
-    metadata_manager: SourceMetadataManager,
+    metadata_store: SourceMetadataStore,
     sample_config: SitemapConfig,
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch.object(metadata_manager.client, "exists", return_value=True)
+    mocker.patch.object(metadata_store.client, "exists", return_value=True)
 
     with pytest.raises(ResourceAlreadyExistsException) as exc:
-        metadata_manager.create_metadata(
+        metadata_store.create_metadata(
             source_name="test-source",
             description="Test description",
             status=SourceStatus.PENDING,
@@ -148,16 +148,16 @@ def test_create_metadata_already_exists(
 
 
 def test_get_metadata_success(
-    metadata_manager: SourceMetadataManager,
+    metadata_store: SourceMetadataStore,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch.object(metadata_manager.client, "exists", return_value=True)
+    mocker.patch.object(metadata_store.client, "exists", return_value=True)
     mocker.patch.object(
-        metadata_manager.client, "hgetall", return_value=sample_metadata_dict
+        metadata_store.client, "hgetall", return_value=sample_metadata_dict
     )
 
-    result = metadata_manager.get_metadata("test-source")
+    result = metadata_store.get_metadata("test-source")
 
     assert isinstance(result, SourceMetadata)
     assert result.id == sample_metadata_dict["id"]
@@ -168,37 +168,37 @@ def test_get_metadata_success(
 
 
 def test_delete_metadata_success(
-    metadata_manager: SourceMetadataManager,
+    metadata_store: SourceMetadataStore,
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch.object(metadata_manager.client, "exists", return_value=True)
+    mocker.patch.object(metadata_store.client, "exists", return_value=True)
 
-    mock_delete = mocker.patch.object(metadata_manager.client, "delete")
+    mock_delete = mocker.patch.object(metadata_store.client, "delete")
 
-    metadata_manager.delete_metadata("test-source")
+    metadata_store.delete_metadata("test-source")
 
     mock_delete.assert_called_once_with("metadata:test-source")
 
 
 def test_list_metadata_success(
-    metadata_manager: SourceMetadataManager,
+    metadata_store: SourceMetadataStore,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
     # Mock self.client.keys
     mocker.patch.object(
-        metadata_manager.client,
+        metadata_store.client,
         "keys",
         return_value=["metadata:source1", "metadata:source2"],
     )
 
     # Mock calls in self.get_metadata
-    mocker.patch.object(metadata_manager.client, "exists", return_value=True)
+    mocker.patch.object(metadata_store.client, "exists", return_value=True)
     mock_hgetall = mocker.patch.object(
-        metadata_manager.client, "hgetall", return_value=sample_metadata_dict
+        metadata_store.client, "hgetall", return_value=sample_metadata_dict
     )
 
-    result = metadata_manager.list_metadata()
+    result = metadata_store.list_metadata()
 
     assert len(result) == 2
     assert all(isinstance(metadata, SourceMetadata) for metadata in result)
@@ -207,20 +207,20 @@ def test_list_metadata_success(
 
 
 def test_update_metadata_success(
-    metadata_manager: SourceMetadataManager,
+    metadata_store: SourceMetadataStore,
     sample_config: SitemapConfig,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
     # Mock calls in self.get_metadata
-    mocker.patch.object(metadata_manager.client, "exists", return_value=True)
+    mocker.patch.object(metadata_store.client, "exists", return_value=True)
     mocker.patch.object(
-        metadata_manager.client, "hgetall", return_value=sample_metadata_dict
+        metadata_store.client, "hgetall", return_value=sample_metadata_dict
     )
 
-    mock_hset = mocker.patch.object(metadata_manager.client, "hset")
+    mock_hset = mocker.patch.object(metadata_store.client, "hset")
 
-    result = metadata_manager.update_metadata(
+    result = metadata_store.update_metadata(
         name="test-source",
         description="Updated description",
         status=SourceStatus.COMPLETED,

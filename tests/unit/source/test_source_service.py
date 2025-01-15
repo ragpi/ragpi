@@ -20,14 +20,14 @@ from src.source.schemas import (
     UpdateSourceRequest,
 )
 from src.source.service import SourceService
-from src.source.metadata import SourceMetadataManager
+from src.source.metadata import SourceMetadataStore
 from src.document_store.base import DocumentStoreService
 from src.lock.service import LockService
 
 
 @pytest.fixture
-def mock_metadata_manager(mocker: MockerFixture) -> SourceMetadataManager:
-    return mocker.Mock(spec=SourceMetadataManager)
+def mock_metadata_store(mocker: MockerFixture) -> SourceMetadataStore:
+    return mocker.Mock(spec=SourceMetadataStore)
 
 
 @pytest.fixture
@@ -42,12 +42,12 @@ def mock_lock_service(mocker: MockerFixture) -> LockService:
 
 @pytest.fixture
 def source_service(
-    mock_metadata_manager: SourceMetadataManager,
+    mock_metadata_store: SourceMetadataStore,
     mock_document_store: DocumentStoreService,
     mock_lock_service: LockService,
 ) -> SourceService:
     return SourceService(
-        metadata_manager=mock_metadata_manager,
+        metadata_store=mock_metadata_store,
         document_store=mock_document_store,
         lock_service=mock_lock_service,
     )
@@ -124,12 +124,12 @@ async def test_create_source_success(
         return_value=mock_task,
     )
 
-    # Mock metadata manager
+    # Mock metadata store
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=False
+        source_service.metadata_store, "metadata_exists", return_value=False
     )
     mock_create_metadata = mocker.patch.object(
-        source_service.metadata_manager,
+        source_service.metadata_store,
         "create_metadata",
         return_value=sample_source_metadata,
     )
@@ -158,7 +158,7 @@ async def test_create_source_already_exists(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=True
+        source_service.metadata_store, "metadata_exists", return_value=True
     )
 
     with pytest.raises(ResourceAlreadyExistsException) as exc:
@@ -174,10 +174,10 @@ async def test_get_source_success(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=True
+        source_service.metadata_store, "metadata_exists", return_value=True
     )
     mock_get_metadata = mocker.patch.object(
-        source_service.metadata_manager,
+        source_service.metadata_store,
         "get_metadata",
         return_value=sample_source_metadata,
     )
@@ -193,7 +193,7 @@ async def test_get_source_not_found(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=False
+        source_service.metadata_store, "metadata_exists", return_value=False
     )
 
     with pytest.raises(ResourceNotFoundException) as exc:
@@ -227,12 +227,12 @@ async def test_update_source_success(
         return_value=mock_task,
     )
 
-    # Mock metadata manager
+    # Mock metadata store
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=True
+        source_service.metadata_store, "metadata_exists", return_value=True
     )
     mock_update_metadata = mocker.patch.object(
-        source_service.metadata_manager,
+        source_service.metadata_store,
         "update_metadata",
         return_value=sample_source_metadata,
     )
@@ -267,7 +267,7 @@ async def test_update_source_locked(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=True
+        source_service.metadata_store, "metadata_exists", return_value=True
     )
     mocker.patch.object(source_service.lock_service, "lock_exists", return_value=True)
 
@@ -302,12 +302,12 @@ async def test_update_source_no_sync(
         return_value=mock_current_datetime,
     )
 
-    # Mock metadata manager
+    # Mock metadata store
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=True
+        source_service.metadata_store, "metadata_exists", return_value=True
     )
     mock_update_metadata = mocker.patch.object(
-        source_service.metadata_manager,
+        source_service.metadata_store,
         "update_metadata",
         return_value=sample_source_metadata,
     )
@@ -353,12 +353,12 @@ async def test_update_source_no_description_no_config(
         return_value=mock_current_datetime,
     )
 
-    # Mock metadata manager
+    # Mock metadata store
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=True
+        source_service.metadata_store, "metadata_exists", return_value=True
     )
     mock_update_metadata = mocker.patch.object(
-        source_service.metadata_manager,
+        source_service.metadata_store,
         "update_metadata",
         return_value=sample_source_metadata,
     )
@@ -397,7 +397,7 @@ async def test_search_source_success(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=True
+        source_service.metadata_store, "metadata_exists", return_value=True
     )
     mock_results = [{"id": "doc1"}, {"id": "doc2"}]
     mock_search_documents = mocker.patch.object(
@@ -416,11 +416,11 @@ async def test_delete_source_success(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_manager, "metadata_exists", return_value=True
+        source_service.metadata_store, "metadata_exists", return_value=True
     )
     mocker.patch.object(source_service.lock_service, "lock_exists", return_value=False)
     mock_delete_metadata = mocker.patch.object(
-        source_service.metadata_manager, "delete_metadata"
+        source_service.metadata_store, "delete_metadata"
     )
     mock_delete_documents = mocker.patch.object(
         source_service.document_store, "delete_all_documents"

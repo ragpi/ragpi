@@ -8,7 +8,7 @@ from src.common.exceptions import (
 )
 from src.document_store.base import DocumentStoreService
 from src.lock.service import LockService
-from src.source.metadata import SourceMetadataManager
+from src.source.metadata import SourceMetadataStore
 from src.source.schemas import (
     CreateSourceRequest,
     SearchSourceInput,
@@ -24,24 +24,24 @@ from src.common.current_datetime import get_current_datetime
 class SourceService:
     def __init__(
         self,
-        metadata_manager: SourceMetadataManager,
+        metadata_store: SourceMetadataStore,
         document_store: DocumentStoreService,
         lock_service: LockService,
     ):
         self.document_store = document_store
-        self.metadata_manager = metadata_manager
+        self.metadata_store = metadata_store
         self.lock_service = lock_service
 
     def list_sources(self):
-        return self.metadata_manager.list_metadata()
+        return self.metadata_store.list_metadata()
 
     def create_source(self, source_input: CreateSourceRequest) -> SourceTask:
-        if self.metadata_manager.metadata_exists(source_input.name):
+        if self.metadata_store.metadata_exists(source_input.name):
             raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_input.name)
 
         timestamp = get_current_datetime()
 
-        created_source = self.metadata_manager.create_metadata(
+        created_source = self.metadata_store.create_metadata(
             source_name=source_input.name,
             description=source_input.description,
             status=SourceStatus.PENDING,
@@ -65,17 +65,17 @@ class SourceService:
         )
 
     def get_source(self, source_name: str) -> SourceMetadata:
-        if not self.metadata_manager.metadata_exists(source_name):
+        if not self.metadata_store.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
-        return self.metadata_manager.get_metadata(source_name)
+        return self.metadata_store.get_metadata(source_name)
 
     def update_source(
         self,
         source_name: str,
         source_input: UpdateSourceRequest | None = None,
     ) -> SourceTask:
-        if not self.metadata_manager.metadata_exists(source_name):
+        if not self.metadata_store.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
         if self.lock_service.lock_exists(source_name):
@@ -89,7 +89,7 @@ class SourceService:
         )
         config = source_input.config if source_input and source_input.config else None
 
-        updated_source = self.metadata_manager.update_metadata(
+        updated_source = self.metadata_store.update_metadata(
             name=source_name,
             description=description,
             status=status,
@@ -116,23 +116,23 @@ class SourceService:
         )
 
     def delete_source(self, source_name: str):
-        if not self.metadata_manager.metadata_exists(source_name):
+        if not self.metadata_store.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
         if self.lock_service.lock_exists(source_name):
             raise ResourceLockedException(ResourceType.SOURCE, source_name)
 
         self.document_store.delete_all_documents(source_name)
-        self.metadata_manager.delete_metadata(source_name)
+        self.metadata_store.delete_metadata(source_name)
 
     def get_source_documents(self, source_name: str, limit: int, offset: int):
-        if not self.metadata_manager.metadata_exists(source_name):
+        if not self.metadata_store.metadata_exists(source_name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
         return self.document_store.get_documents(source_name, limit, offset)
 
     def search_source(self, source_input: SearchSourceInput):
-        if not self.metadata_manager.metadata_exists(source_input.name):
+        if not self.metadata_store.metadata_exists(source_input.name):
             raise ResourceNotFoundException(ResourceType.SOURCE, source_input.name)
 
         return self.document_store.search_documents(

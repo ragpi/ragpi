@@ -8,7 +8,7 @@ from src.document_store.providers.redis.store import RedisDocumentStore
 from src.source.exceptions import SyncSourceException
 from src.common.schemas import Document
 from src.sources.registry import SourceConfig, SourceRegistryType
-from src.source.metadata import SourceMetadataManager
+from src.source.metadata import SourceMetadataStore
 from src.source.schemas import SourceStatus, SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
 
@@ -41,7 +41,7 @@ class SourceSyncService:
             embedding_model=self.settings.EMBEDDING_MODEL,
             embedding_dimensions=self.settings.EMBEDDING_DIMENSIONS,
         )
-        self.metadata_manager = SourceMetadataManager(
+        self.metadata_store = SourceMetadataStore(
             redis_client=self.redis_client,
             document_store=self.document_store,
             source_registry=self.source_registry,
@@ -62,7 +62,7 @@ class SourceSyncService:
 
         try:
             # Mark source as SYNCING
-            self.metadata_manager.update_metadata(
+            self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
                 status=SourceStatus.SYNCING,
@@ -100,7 +100,7 @@ class SourceSyncService:
                 self._remove_stale_documents(doc_ids_to_remove, len(current_doc_ids))
 
             # Mark source as COMPLETED
-            updated_source = self.metadata_manager.update_metadata(
+            updated_source = self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
                 status=SourceStatus.COMPLETED,
@@ -116,7 +116,7 @@ class SourceSyncService:
             )
 
         except Exception as e:
-            self.metadata_manager.update_metadata(
+            self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
                 status=SourceStatus.FAILED,
@@ -133,7 +133,7 @@ class SourceSyncService:
         try:
             self.document_store.add_documents(self.source_name, docs)
 
-            self.metadata_manager.update_metadata(
+            self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
                 status=SourceStatus.SYNCING,
@@ -162,7 +162,7 @@ class SourceSyncService:
                 self.source_name, list(doc_ids_to_remove)
             )
 
-            self.metadata_manager.update_metadata(
+            self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
                 status=SourceStatus.SYNCING,

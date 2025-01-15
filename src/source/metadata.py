@@ -16,7 +16,7 @@ from src.sources.registry import SourceRegistryType
 logger = logging.getLogger(__name__)
 
 
-class SourceMetadataManager:
+class SourceMetadataStore:
     def __init__(
         self,
         redis_client: RedisClient,
