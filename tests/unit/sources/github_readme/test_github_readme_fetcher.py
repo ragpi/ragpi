@@ -1,26 +1,24 @@
 import base64
 from unittest.mock import call
 import pytest
-from typing import AsyncGenerator, Any
+from typing import Any
 from pytest_mock import MockerFixture
 
-from src.document_extractor.clients.github_readme import GitHubReadmeClient
-from src.document_extractor.exceptions import DocumentExtractorException
-from src.document_extractor.schemas import MarkdownPage
+from src.sources.common.exceptions import DocumentExtractorException
+from src.sources.common.github_client import GitHubClient
+from src.sources.common.schemas import MarkdownPage
+from src.sources.github_readme.fetcher import GitHubReadmeFetcher
 
 
 @pytest.fixture
-async def github_readme_client() -> AsyncGenerator[GitHubReadmeClient, None]:
-    async with GitHubReadmeClient(
-        user_agent="test-agent",
-        github_api_version="2022-11-28",
-        github_token="test-token",
-    ) as client:
-        yield client
+async def github_readme_fetcher(
+    github_client: GitHubClient,
+) -> GitHubReadmeFetcher:
+    return GitHubReadmeFetcher(github_client=github_client)
 
 
 async def test_fetch_readmes_root_success(
-    github_readme_client: GitHubReadmeClient,
+    github_readme_fetcher: GitHubReadmeFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_response = {
@@ -29,12 +27,12 @@ async def test_fetch_readmes_root_success(
         "path": "README.md",
         "html_url": "https://github.com/test/repo/blob/main/README.md",
     }
-    mock_request = mocker.patch.object(github_readme_client, "request")
+    mock_request = mocker.patch.object(github_readme_fetcher.client, "request")
     mock_request.return_value = (mock_response, {})
 
     readme_pages = [
         page
-        async for page in github_readme_client.fetch_readmes(
+        async for page in github_readme_fetcher.fetch_readmes(
             repo_owner="test",
             repo_name="repo",
         )
@@ -54,7 +52,7 @@ async def test_fetch_readmes_root_success(
 
 
 async def test_fetch_readmes_with_ref(
-    github_readme_client: GitHubReadmeClient,
+    github_readme_fetcher: GitHubReadmeFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_response = {
@@ -64,12 +62,12 @@ async def test_fetch_readmes_with_ref(
         "html_url": "https://github.com/test/repo/blob/dev/README.md",
     }
 
-    mock_request = mocker.patch.object(github_readme_client, "request")
+    mock_request = mocker.patch.object(github_readme_fetcher.client, "request")
     mock_request.return_value = (mock_response, {})
 
     readme_pages = [
         page
-        async for page in github_readme_client.fetch_readmes(
+        async for page in github_readme_fetcher.fetch_readmes(
             repo_owner="test",
             repo_name="repo",
             ref="dev",
@@ -85,7 +83,7 @@ async def test_fetch_readmes_with_ref(
 
 
 async def test_fetch_readmes_subdirectories(
-    github_readme_client: GitHubReadmeClient,
+    github_readme_fetcher: GitHubReadmeFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_responses: list[tuple[dict[str, Any], dict[str, Any]]] = [
@@ -109,12 +107,12 @@ async def test_fetch_readmes_subdirectories(
         ),
     ]
 
-    mock_request = mocker.patch.object(github_readme_client, "request")
+    mock_request = mocker.patch.object(github_readme_fetcher.client, "request")
     mock_request.side_effect = mock_responses
 
     readme_pages = [
         page
-        async for page in github_readme_client.fetch_readmes(
+        async for page in github_readme_fetcher.fetch_readmes(
             repo_owner="test",
             repo_name="repo",
             include_root=True,
@@ -138,13 +136,13 @@ async def test_fetch_readmes_subdirectories(
 
 
 async def test_fetch_readmes_no_directories(
-    github_readme_client: GitHubReadmeClient,
+    github_readme_fetcher: GitHubReadmeFetcher,
 ) -> None:
     with pytest.raises(
         DocumentExtractorException,
         match="No directories specified to fetch READMEs",
     ):
-        async for _ in github_readme_client.fetch_readmes(
+        async for _ in github_readme_fetcher.fetch_readmes(
             repo_owner="test",
             repo_name="repo",
             include_root=False,
@@ -153,17 +151,17 @@ async def test_fetch_readmes_no_directories(
 
 
 async def test_fetch_readmes_request_failure(
-    github_readme_client: GitHubReadmeClient,
+    github_readme_fetcher: GitHubReadmeFetcher,
     mocker: MockerFixture,
 ) -> None:
-    mock_request = mocker.patch.object(github_readme_client, "request")
+    mock_request = mocker.patch.object(github_readme_fetcher.client, "request")
     mock_request.return_value = (None, None)
 
     with pytest.raises(
         DocumentExtractorException,
         match="Failed to fetch README content at",
     ):
-        async for _ in github_readme_client.fetch_readmes(
+        async for _ in github_readme_fetcher.fetch_readmes(
             repo_owner="test",
             repo_name="repo",
         ):

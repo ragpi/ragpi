@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, Mock
 from typing import AsyncGenerator
 from urllib.robotparser import RobotFileParser
 
-from src.document_extractor.exceptions import DocumentExtractorException
-from src.document_extractor.schemas import MarkdownPage
-from src.document_extractor.clients.sitemap import SitemapClient, extract_markdown_page
+from src.sources.common.exceptions import DocumentExtractorException
+from src.sources.common.schemas import MarkdownPage
+from src.sources.sitemap.crawler import SitemapCrawler, extract_markdown_page
 
 
 @pytest.fixture
@@ -46,8 +46,8 @@ def robots_txt() -> str:
 
 
 @pytest.fixture
-async def sitemap_client() -> AsyncGenerator[SitemapClient, None]:
-    async with SitemapClient(concurrent_requests=2, user_agent="test-bot") as client:
+async def sitemap_client() -> AsyncGenerator[SitemapCrawler, None]:
+    async with SitemapCrawler(concurrent_requests=2, user_agent="test-bot") as client:
         yield client
 
 
@@ -65,7 +65,7 @@ def test_extract_markdown_page(sample_html: bytes) -> None:
 
 
 async def test_fetch_robots_txt_success(
-    mocker: MockerFixture, sitemap_client: SitemapClient, robots_txt: str
+    mocker: MockerFixture, sitemap_client: SitemapCrawler, robots_txt: str
 ) -> None:
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -79,7 +79,7 @@ async def test_fetch_robots_txt_success(
 
 
 async def test_fetch_robots_txt_not_found(
-    mocker: MockerFixture, sitemap_client: SitemapClient
+    mocker: MockerFixture, sitemap_client: SitemapCrawler
 ) -> None:
     mock_response = AsyncMock()
     mock_response.status = 404
@@ -92,7 +92,7 @@ async def test_fetch_robots_txt_not_found(
 
 
 async def test_parse_sitemap_success(
-    mocker: MockerFixture, sitemap_client: SitemapClient, sample_sitemap_xml: str
+    mocker: MockerFixture, sitemap_client: SitemapCrawler, sample_sitemap_xml: str
 ) -> None:
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -107,7 +107,7 @@ async def test_parse_sitemap_success(
 
 
 async def test_parse_sitemap_not_found(
-    mocker: MockerFixture, sitemap_client: SitemapClient
+    mocker: MockerFixture, sitemap_client: SitemapCrawler
 ) -> None:
     mock_response = AsyncMock()
     mock_response.status = 404
@@ -120,7 +120,7 @@ async def test_parse_sitemap_not_found(
 
 
 async def test_fetch_page_success(
-    mocker: MockerFixture, sitemap_client: SitemapClient, sample_html: bytes
+    mocker: MockerFixture, sitemap_client: SitemapCrawler, sample_html: bytes
 ) -> None:
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -139,7 +139,7 @@ async def test_fetch_page_success(
 
 
 async def test_fetch_page_disallowed_by_robots(
-    mocker: MockerFixture, sitemap_client: SitemapClient
+    mocker: MockerFixture, sitemap_client: SitemapCrawler
 ) -> None:
     robots_parser = RobotFileParser()
     mocker.patch.object(robots_parser, "can_fetch", return_value=False)
@@ -149,7 +149,7 @@ async def test_fetch_page_disallowed_by_robots(
 
 
 async def test_fetch_sitemap_pages_with_filters(
-    sitemap_client: SitemapClient,
+    sitemap_client: SitemapCrawler,
     sample_sitemap_xml: str,
     sample_html: bytes,
     mocker: MockerFixture,
@@ -196,7 +196,7 @@ async def test_fetch_sitemap_pages_with_filters(
 
 
 async def test_fetch_sitemap_pages_no_matching_urls(
-    mocker: MockerFixture, sitemap_client: SitemapClient, sample_sitemap_xml: str
+    mocker: MockerFixture, sitemap_client: SitemapCrawler, sample_sitemap_xml: str
 ) -> None:
     mock_response = AsyncMock()
     mock_response.status = 200

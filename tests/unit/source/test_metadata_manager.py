@@ -5,7 +5,9 @@ from typing import Any
 from src.common.exceptions import ResourceAlreadyExistsException, ResourceType
 from src.common.redis import RedisClient
 from src.document_store.base import DocumentStoreService
-from src.source.config import SourceConfig, SitemapConfig, SourceType
+from src.sources.types import SourceType
+from src.sources.registry import SourceRegistryType
+from src.sources.sitemap.config import SitemapConfig
 from src.source.metadata import SourceMetadataManager
 from src.source.schemas import SourceMetadata, SourceStatus
 
@@ -21,20 +23,20 @@ def mock_document_store(mocker: MockerFixture) -> DocumentStoreService:
 
 
 @pytest.fixture
-def config_map() -> dict[str, type[SourceConfig]]:
-    return {"sitemap": SitemapConfig}
+def source_registry() -> SourceRegistryType:
+    return {SourceType.SITEMAP: SitemapConfig}
 
 
 @pytest.fixture
 def metadata_manager(
     mock_redis_client: RedisClient,
     mock_document_store: DocumentStoreService,
-    config_map: dict[str, type[SourceConfig]],
+    source_registry: SourceRegistryType,
 ) -> SourceMetadataManager:
     return SourceMetadataManager(
         redis_client=mock_redis_client,
         document_store=mock_document_store,
-        config_map=config_map,
+        source_registry=source_registry,
     )
 
 

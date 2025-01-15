@@ -8,10 +8,12 @@ from typing import AsyncIterator, Set
 from src.common.redis import RedisClient
 from src.common.schemas import Document
 from src.config import Settings
-from src.document_extractor.service import DocumentExtractor
 from src.document_store.providers.redis.store import RedisDocumentStore
 from src.source.exceptions import SyncSourceException
-from src.source.config import SourceConfig, SitemapConfig, SourceType
+from src.sources.document_extractor import DocumentExtractor
+from src.sources.types import SourceType
+from src.sources.registry import SourceConfig
+from src.sources.sitemap.config import SitemapConfig
 from src.source.metadata import SourceMetadataManager
 from src.source.schemas import SourceMetadata, SourceStatus, SyncSourceOutput
 from src.source.sync import SourceSyncService
@@ -149,7 +151,7 @@ def source_sync_service(
     return SourceSyncService(
         redis_client=mock_redis_client,
         source_name="test-source",
-        config_map={"sitemap": SitemapConfig},
+        source_registry={SourceType.SITEMAP: SitemapConfig},
         source_config=SitemapConfig(
             type=SourceType.SITEMAP,
             sitemap_url="https://example.com/sitemap.xml",

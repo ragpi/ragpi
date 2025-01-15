@@ -1,26 +1,23 @@
 from unittest.mock import call
 import pytest
 from datetime import datetime, timedelta
-from typing import AsyncGenerator, Any
+from typing import Any
 from pytest_mock import MockerFixture
 
-from src.document_extractor.clients.github_issue import GitHubIssueClient
-from src.document_extractor.schemas import GithubIssue
+from src.sources.common.github_client import GitHubClient
+from src.sources.github_issues.fetcher import GitHubIssuesFetcher
+from src.sources.github_issues.schemas import GithubIssue
 
 
 @pytest.fixture
-async def github_issue_client() -> AsyncGenerator[GitHubIssueClient, None]:
-    async with GitHubIssueClient(
-        concurrent_requests=2,
-        user_agent="test-agent",
-        github_api_version="2022-11-28",
-        github_token="test-token",
-    ) as client:
-        yield client
+async def github_issue_fetcher(
+    github_client: GitHubClient,
+) -> GitHubIssuesFetcher:
+    return GitHubIssuesFetcher(github_client=github_client)
 
 
 async def test_fetch_comments(
-    github_issue_client: GitHubIssueClient,
+    github_issue_fetcher: GitHubIssuesFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_responses: list[tuple[list[dict[str, Any]], dict[str, str]]] = [
@@ -38,10 +35,10 @@ async def test_fetch_comments(
         ),
     ]
 
-    mock_request = mocker.patch.object(github_issue_client, "request")
+    mock_request = mocker.patch.object(github_issue_fetcher.client, "request")
     mock_request.side_effect = mock_responses
 
-    comments = await github_issue_client.fetch_comments(
+    comments = await github_issue_fetcher.fetch_comments(
         "https://api.github.com/repos/test/repo/issues/1/comments"
     )
 
@@ -68,7 +65,7 @@ async def test_fetch_comments(
 
 
 async def test_fetch_issues_basic(
-    github_issue_client: GitHubIssueClient,
+    github_issue_fetcher: GitHubIssuesFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_issues: list[dict[str, Any]] = [
@@ -82,12 +79,12 @@ async def test_fetch_issues_basic(
         },
     ]
 
-    mock_request = mocker.patch.object(github_issue_client, "request")
+    mock_request = mocker.patch.object(github_issue_fetcher.client, "request")
     mock_request.return_value = (mock_issues, {})
 
     issues = [
         issue
-        async for issue in github_issue_client.fetch_issues(
+        async for issue in github_issue_fetcher.fetch_issues(
             repo_owner="test",
             repo_name="repo",
         )
@@ -102,7 +99,7 @@ async def test_fetch_issues_basic(
 
 
 async def test_fetch_issues_with_comments(
-    github_issue_client: GitHubIssueClient,
+    github_issue_fetcher: GitHubIssuesFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_issue: dict[str, Any] = {
@@ -121,7 +118,7 @@ async def test_fetch_issues_with_comments(
         "body": "Comment 1",
     }
 
-    mock_request = mocker.patch.object(github_issue_client, "request")
+    mock_request = mocker.patch.object(github_issue_fetcher.client, "request")
     mock_request.side_effect = [
         ([mock_issue], {}),
         ([mock_comment], {}),
@@ -129,7 +126,7 @@ async def test_fetch_issues_with_comments(
 
     issues = [
         issue
-        async for issue in github_issue_client.fetch_issues(
+        async for issue in github_issue_fetcher.fetch_issues(
             repo_owner="test",
             repo_name="repo",
         )
@@ -144,7 +141,7 @@ async def test_fetch_issues_with_comments(
 
 
 async def test_fetch_issues_with_label_filtering(
-    github_issue_client: GitHubIssueClient,
+    github_issue_fetcher: GitHubIssuesFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_issues: list[dict[str, Any]] = [
@@ -166,13 +163,13 @@ async def test_fetch_issues_with_label_filtering(
         },
     ]
 
-    mock_request = mocker.patch.object(github_issue_client, "request")
+    mock_request = mocker.patch.object(github_issue_fetcher.client, "request")
     mock_request.return_value = (mock_issues, {})
 
     # Test include_labels
     issues = [
         issue
-        async for issue in github_issue_client.fetch_issues(
+        async for issue in github_issue_fetcher.fetch_issues(
             repo_owner="test",
             repo_name="repo",
             include_labels=["bug"],
@@ -184,7 +181,7 @@ async def test_fetch_issues_with_label_filtering(
     # Test exclude_labels
     issues = [
         issue
-        async for issue in github_issue_client.fetch_issues(
+        async for issue in github_issue_fetcher.fetch_issues(
             repo_owner="test",
             repo_name="repo",
             exclude_labels=["bug"],
@@ -195,15 +192,15 @@ async def test_fetch_issues_with_label_filtering(
 
 
 async def test_fetch_issues_with_max_age(
-    github_issue_client: GitHubIssueClient,
+    github_issue_fetcher: GitHubIssuesFetcher,
     mocker: MockerFixture,
 ) -> None:
-    mock_request = mocker.patch.object(github_issue_client, "request")
+    mock_request = mocker.patch.object(github_issue_fetcher.client, "request")
     mock_request.return_value = ([], {})
 
     _ = [
         issue
-        async for issue in github_issue_client.fetch_issues(
+        async for issue in github_issue_fetcher.fetch_issues(
             repo_owner="test",
             repo_name="repo",
             max_age=30,
@@ -222,7 +219,7 @@ async def test_fetch_issues_with_max_age(
 
 
 async def test_fetch_issues_skip_pull_requests(
-    github_issue_client: GitHubIssueClient,
+    github_issue_fetcher: GitHubIssuesFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_issues: list[dict[str, Any]] = [
@@ -245,12 +242,12 @@ async def test_fetch_issues_skip_pull_requests(
         },
     ]
 
-    mock_request = mocker.patch.object(github_issue_client, "request")
+    mock_request = mocker.patch.object(github_issue_fetcher.client, "request")
     mock_request.return_value = (mock_issues, {})
 
     issues = [
         issue
-        async for issue in github_issue_client.fetch_issues(
+        async for issue in github_issue_fetcher.fetch_issues(
             repo_owner="test",
             repo_name="repo",
         )
@@ -262,7 +259,7 @@ async def test_fetch_issues_skip_pull_requests(
 
 
 async def test_fetch_issues_multiple_pages(
-    github_issue_client: GitHubIssueClient,
+    github_issue_fetcher: GitHubIssuesFetcher,
     mocker: MockerFixture,
 ) -> None:
     mock_responses: list[tuple[list[dict[str, Any]], dict[str, str]]] = [
@@ -297,12 +294,12 @@ async def test_fetch_issues_multiple_pages(
         ),
     ]
 
-    mock_request = mocker.patch.object(github_issue_client, "request")
+    mock_request = mocker.patch.object(github_issue_fetcher.client, "request")
     mock_request.side_effect = mock_responses
 
     issues = [
         issue
-        async for issue in github_issue_client.fetch_issues(
+        async for issue in github_issue_fetcher.fetch_issues(
             repo_owner="test",
             repo_name="repo",
         )

@@ -1,22 +1,10 @@
 import datetime
 import pytest
 from aiohttp import ClientError, ClientResponse, ClientSession
-from typing import AsyncGenerator
 from pytest_mock import MockerFixture
 
-from src.document_extractor.clients.github import GitHubClient
-from src.document_extractor.exceptions import DocumentExtractorException
-
-
-@pytest.fixture
-async def github_client() -> AsyncGenerator[GitHubClient, None]:
-    async with GitHubClient(
-        concurrent_requests=2,
-        user_agent="test-agent",
-        github_api_version="2022-11-28",
-        github_token="test-token",
-    ) as client:
-        yield client
+from src.sources.common.exceptions import DocumentExtractorException
+from src.sources.common.github_client import GitHubClient
 
 
 async def test_github_client_initialization() -> None:
@@ -48,12 +36,12 @@ async def test_parse_link_header(github_client: GitHubClient) -> None:
         "next": "https://api.github.com/search?page=2",
         "last": "https://api.github.com/search?page=5",
     }
-    result = github_client._parse_link_header(test_header)  # type: ignore
+    result = github_client.parse_link_header(test_header)  # type: ignore
     assert result == expected
 
     # Test with invalid header
     invalid_header = "invalid header format"
-    result = github_client._parse_link_header(invalid_header)  # type: ignore
+    result = github_client.parse_link_header(invalid_header)  # type: ignore
     assert result == {}
 
 
