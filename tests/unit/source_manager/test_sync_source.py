@@ -9,14 +9,14 @@ from src.common.redis import RedisClient
 from src.common.schemas import Document
 from src.config import Settings
 from src.document_store.providers.redis.store import RedisDocumentStore
-from src.source.exceptions import SyncSourceException
+from src.source_manager.exceptions import SyncSourceException
 from src.sources.document_extractor import DocumentExtractor
 from src.sources.types import SourceType
 from src.sources.registry import SourceConfig
 from src.sources.sitemap.config import SitemapConfig
-from src.source.metadata import SourceMetadataStore
-from src.source.schemas import SourceMetadata, SourceStatus, SyncSourceOutput
-from src.source.sync import SourceSyncService
+from src.source_manager.metadata import SourceMetadataStore
+from src.source_manager.schemas import SourceMetadata, SourceStatus, SyncSourceOutput
+from src.source_manager.sync import SourceSyncService
 
 
 @pytest.fixture
@@ -126,25 +126,25 @@ def source_sync_service(
 ) -> SourceSyncService:
     # Mock the OpenAI client creation
     mocker.patch(
-        "src.source.sync.get_embedding_openai_client",
+        "src.source_manager.sync.get_embedding_openai_client",
         return_value=mock_openai_client,
     )
 
     # Mock RedisDocumentStore creation
     mocker.patch(
-        "src.source.sync.RedisDocumentStore",
+        "src.source_manager.sync.RedisDocumentStore",
         return_value=mock_document_store,
     )
 
     # Mock DocumentExtractor creation
     mocker.patch(
-        "src.source.sync.DocumentExtractor",
+        "src.source_manager.sync.DocumentExtractor",
         return_value=mock_document_extractor,
     )
 
     # Mock SourceMetadataStore creation
     mocker.patch(
-        "src.source.sync.SourceMetadataStore",
+        "src.source_manager.sync.SourceMetadataStore",
         return_value=mock_metadata_store,
     )
 
@@ -169,7 +169,7 @@ async def test_sync_documents_success(
 ) -> None:
     # Mock current datetime
     mocker.patch(
-        "src.source.sync.get_current_datetime",
+        "src.source_manager.sync.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
@@ -241,7 +241,7 @@ async def test_sync_documents_with_existing_docs(
 
     # Mock current datetime
     mocker.patch(
-        "src.source.sync.get_current_datetime",
+        "src.source_manager.sync.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
@@ -297,7 +297,7 @@ async def test_sync_documents_with_stale_docs(
 
     # Mock current datetime
     mocker.patch(
-        "src.source.sync.get_current_datetime",
+        "src.source_manager.sync.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
@@ -340,7 +340,7 @@ async def test_sync_documents_failure_handling(
 ) -> None:
     # Mock current datetime
     mocker.patch(
-        "src.source.sync.get_current_datetime",
+        "src.source_manager.sync.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
@@ -398,7 +398,7 @@ async def test_add_documents_batch_failure(
 ) -> None:
     # Mock current datetime
     mocker.patch(
-        "src.source.sync.get_current_datetime",
+        "src.source_manager.sync.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
@@ -422,7 +422,7 @@ async def test_remove_stale_documents_failure(
 ) -> None:
     # Mock current datetime
     mocker.patch(
-        "src.source.sync.get_current_datetime",
+        "src.source_manager.sync.get_current_datetime",
         return_value=mock_current_datetime,
     )
 

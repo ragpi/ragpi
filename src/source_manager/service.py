@@ -8,8 +8,8 @@ from src.common.exceptions import (
 )
 from src.document_store.base import DocumentStoreService
 from src.lock.service import LockService
-from src.source.metadata import SourceMetadataStore
-from src.source.schemas import (
+from src.source_manager.metadata import SourceMetadataStore
+from src.source_manager.schemas import (
     CreateSourceRequest,
     SearchSourceInput,
     SourceMetadata,
@@ -21,7 +21,7 @@ from src.task.sync_source import sync_source_documents_task
 from src.common.current_datetime import get_current_datetime
 
 
-class SourceService:
+class SourceManagerService:
     def __init__(
         self,
         metadata_store: SourceMetadataStore,

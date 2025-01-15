@@ -5,11 +5,11 @@ from src.common.redis import RedisClient
 from src.config import Settings
 from src.sources.document_extractor import DocumentExtractor
 from src.document_store.providers.redis.store import RedisDocumentStore
-from src.source.exceptions import SyncSourceException
+from src.source_manager.exceptions import SyncSourceException
 from src.common.schemas import Document
 from src.sources.registry import SourceConfig, SourceRegistryType
-from src.source.metadata import SourceMetadataStore
-from src.source.schemas import SourceStatus, SyncSourceOutput
+from src.source_manager.metadata import SourceMetadataStore
+from src.source_manager.schemas import SourceStatus, SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
 
 logger = logging.getLogger(__name__)

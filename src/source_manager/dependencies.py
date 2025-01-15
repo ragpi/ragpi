@@ -5,8 +5,8 @@ from src.document_store.base import DocumentStoreService
 from src.document_store.dependencies import get_document_store
 from src.lock.dependencies import get_lock_service
 from src.lock.service import LockService
-from src.source.metadata import SourceMetadataStore
-from src.source.service import SourceService
+from src.source_manager.metadata import SourceMetadataStore
+from src.source_manager.service import SourceManagerService
 from src.sources.registry import SOURCE_REGISTRY, SourceRegistryType
 
 
@@ -26,12 +26,12 @@ def get_metadata_store(
     )
 
 
-def get_source_service(
+def get_source_manager(
     metadata_store: SourceMetadataStore = Depends(get_metadata_store),
     document_store: DocumentStoreService = Depends(get_document_store),
     lock_service: LockService = Depends(get_lock_service),
-) -> SourceService:
-    return SourceService(
+) -> SourceManagerService:
+    return SourceManagerService(
         metadata_store=metadata_store,
         document_store=document_store,
         lock_service=lock_service,

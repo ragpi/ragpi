@@ -8,15 +8,15 @@ from src.common.exceptions import (
 )
 from src.common.schemas import Document
 from src.common.workers_enabled_check import workers_enabled_check
-from src.source.dependencies import get_source_service
-from src.source.schemas import (
+from src.source_manager.dependencies import get_source_manager
+from src.source_manager.schemas import (
     SearchSourceInput,
     CreateSourceRequest,
     SourceMetadata,
     SourceTask,
     UpdateSourceRequest,
 )
-from src.source.service import SourceService
+from src.source_manager.service import SourceManagerService
 
 
 router = APIRouter(
@@ -27,9 +27,9 @@ router = APIRouter(
 
 @router.get("")
 def list_sources(
-    source_service: SourceService = Depends(get_source_service),
+    source_manager: SourceManagerService = Depends(get_source_manager),
 ) -> list[SourceMetadata]:
-    return source_service.list_sources()
+    return source_manager.list_sources()
 
 
 @router.post(
@@ -40,18 +40,18 @@ def list_sources(
 )
 def create_source(
     source_input: CreateSourceRequest,
-    source_service: SourceService = Depends(get_source_service),
+    source_manager: SourceManagerService = Depends(get_source_manager),
 ) -> SourceTask:
-    return source_service.create_source(source_input)
+    return source_manager.create_source(source_input)
 
 
 @router.get(
     "/{source_name}", responses={**resource_not_found_response(ResourceType.SOURCE)}
 )
 def get_source(
-    source_name: str, source_service: SourceService = Depends(get_source_service)
+    source_name: str, source_manager: SourceManagerService = Depends(get_source_manager)
 ) -> SourceMetadata:
-    return source_service.get_source(source_name)
+    return source_manager.get_source(source_name)
 
 
 @router.put(
@@ -66,9 +66,9 @@ def get_source(
 def update_source(
     source_name: str,
     source_input: UpdateSourceRequest,
-    source_service: SourceService = Depends(get_source_service),
+    source_manager: SourceManagerService = Depends(get_source_manager),
 ) -> SourceTask:
-    return source_service.update_source(source_name, source_input)
+    return source_manager.update_source(source_name, source_input)
 
 
 @router.delete(
@@ -80,9 +80,9 @@ def update_source(
     },
 )
 def delete_source(
-    source_name: str, source_service: SourceService = Depends(get_source_service)
+    source_name: str, source_manager: SourceManagerService = Depends(get_source_manager)
 ):
-    source_service.delete_source(source_name)
+    source_manager.delete_source(source_name)
 
 
 @router.get(
@@ -93,9 +93,9 @@ def get_source_documents(
     source_name: str,
     limit: int = 100,
     offset: int = 0,
-    source_service: SourceService = Depends(get_source_service),
+    source_manager: SourceManagerService = Depends(get_source_manager),
 ) -> list[Document]:
-    return source_service.get_source_documents(source_name, limit, offset)
+    return source_manager.get_source_documents(source_name, limit, offset)
 
 
 @router.get(
@@ -106,8 +106,8 @@ def search_source(
     source_name: str,
     query: str,
     top_k: int = 10,
-    source_service: SourceService = Depends(get_source_service),
+    source_manager: SourceManagerService = Depends(get_source_manager),
 ) -> list[Document]:
-    return source_service.search_source(
+    return source_manager.search_source(
         SearchSourceInput(name=source_name, query=query, top_k=top_k)
     )

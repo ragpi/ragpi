@@ -11,7 +11,7 @@ from src.common.exceptions import (
 )
 from src.sources.types import SourceType
 from src.sources.sitemap.config import SitemapConfig
-from src.source.schemas import (
+from src.source_manager.schemas import (
     CreateSourceRequest,
     SearchSourceInput,
     SourceMetadata,
@@ -19,8 +19,8 @@ from src.source.schemas import (
     SourceTask,
     UpdateSourceRequest,
 )
-from src.source.service import SourceService
-from src.source.metadata import SourceMetadataStore
+from src.source_manager.service import SourceManagerService
+from src.source_manager.metadata import SourceMetadataStore
 from src.document_store.base import DocumentStoreService
 from src.lock.service import LockService
 
@@ -41,12 +41,12 @@ def mock_lock_service(mocker: MockerFixture) -> LockService:
 
 
 @pytest.fixture
-def source_service(
+def source_manager(
     mock_metadata_store: SourceMetadataStore,
     mock_document_store: DocumentStoreService,
     mock_lock_service: LockService,
-) -> SourceService:
-    return SourceService(
+) -> SourceManagerService:
+    return SourceManagerService(
         metadata_store=mock_metadata_store,
         document_store=mock_document_store,
         lock_service=mock_lock_service,
@@ -100,7 +100,7 @@ def sample_update_request() -> UpdateSourceRequest:
 
 
 async def test_create_source_success(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     sample_create_request: CreateSourceRequest,
     sample_source_metadata: SourceMetadata,
     mock_current_datetime: str,
@@ -108,11 +108,11 @@ async def test_create_source_success(
 ) -> None:
     # Mock UUID generation
     mock_uuid = UUID("12345678-1234-5678-1234-567812345678")
-    mocker.patch("src.source.service.uuid4", return_value=mock_uuid)
+    mocker.patch("src.source_manager.service.uuid4", return_value=mock_uuid)
 
     # Mock current datetime
     mocker.patch(
-        "src.source.service.get_current_datetime",
+        "src.source_manager.service.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
@@ -120,21 +120,21 @@ async def test_create_source_success(
     mock_task = mocker.Mock()
     mock_task.id = "task-id"
     mocker.patch(
-        "src.source.service.sync_source_documents_task.delay",
+        "src.source_manager.service.sync_source_documents_task.delay",
         return_value=mock_task,
     )
 
     # Mock metadata store
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=False
+        source_manager.metadata_store, "metadata_exists", return_value=False
     )
     mock_create_metadata = mocker.patch.object(
-        source_service.metadata_store,
+        source_manager.metadata_store,
         "create_metadata",
         return_value=sample_source_metadata,
     )
 
-    result = source_service.create_source(sample_create_request)
+    result = source_manager.create_source(sample_create_request)
 
     assert isinstance(result, SourceTask)
     assert result.task_id == "task-id"
@@ -153,58 +153,58 @@ async def test_create_source_success(
 
 
 async def test_create_source_already_exists(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     sample_create_request: CreateSourceRequest,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=True
+        source_manager.metadata_store, "metadata_exists", return_value=True
     )
 
     with pytest.raises(ResourceAlreadyExistsException) as exc:
-        source_service.create_source(sample_create_request)
+        source_manager.create_source(sample_create_request)
 
     assert exc.value.resource_type == ResourceType.SOURCE
     assert exc.value.identifier == sample_create_request.name
 
 
 async def test_get_source_success(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     sample_source_metadata: SourceMetadata,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=True
+        source_manager.metadata_store, "metadata_exists", return_value=True
     )
     mock_get_metadata = mocker.patch.object(
-        source_service.metadata_store,
+        source_manager.metadata_store,
         "get_metadata",
         return_value=sample_source_metadata,
     )
 
-    result = source_service.get_source("test-source")
+    result = source_manager.get_source("test-source")
 
     assert result == sample_source_metadata
     mock_get_metadata.assert_called_once_with("test-source")
 
 
 async def test_get_source_not_found(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=False
+        source_manager.metadata_store, "metadata_exists", return_value=False
     )
 
     with pytest.raises(ResourceNotFoundException) as exc:
-        source_service.get_source("test-source")
+        source_manager.get_source("test-source")
 
     assert exc.value.resource_type == ResourceType.SOURCE
     assert exc.value.identifier == "test-source"
 
 
 async def test_update_source_success(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     sample_update_request: UpdateSourceRequest,
     sample_source_metadata: SourceMetadata,
     mock_current_datetime: str,
@@ -212,32 +212,32 @@ async def test_update_source_success(
 ) -> None:
     # Mock current datetime
     mocker.patch(
-        "src.source.service.get_current_datetime",
+        "src.source_manager.service.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
     # Mock lock service
-    mocker.patch.object(source_service.lock_service, "lock_exists", return_value=False)
+    mocker.patch.object(source_manager.lock_service, "lock_exists", return_value=False)
 
     # Mock sync task
     mock_task = mocker.Mock()
     mock_task.id = "task-id"
     mock_sync_source = mocker.patch(
-        "src.source.service.sync_source_documents_task.delay",
+        "src.source_manager.service.sync_source_documents_task.delay",
         return_value=mock_task,
     )
 
     # Mock metadata store
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=True
+        source_manager.metadata_store, "metadata_exists", return_value=True
     )
     mock_update_metadata = mocker.patch.object(
-        source_service.metadata_store,
+        source_manager.metadata_store,
         "update_metadata",
         return_value=sample_source_metadata,
     )
 
-    result = source_service.update_source("test-source", sample_update_request)
+    result = source_manager.update_source("test-source", sample_update_request)
 
     assert isinstance(result, SourceTask)
     assert result.task_id == "task-id"
@@ -262,24 +262,24 @@ async def test_update_source_success(
 
 
 async def test_update_source_locked(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     sample_update_request: UpdateSourceRequest,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=True
+        source_manager.metadata_store, "metadata_exists", return_value=True
     )
-    mocker.patch.object(source_service.lock_service, "lock_exists", return_value=True)
+    mocker.patch.object(source_manager.lock_service, "lock_exists", return_value=True)
 
     with pytest.raises(ResourceLockedException) as exc:
-        source_service.update_source("test-source", sample_update_request)
+        source_manager.update_source("test-source", sample_update_request)
 
     assert exc.value.resource_type == ResourceType.SOURCE
     assert exc.value.identifier == "test-source"
 
 
 async def test_update_source_no_sync(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     sample_source_metadata: SourceMetadata,
     mock_current_datetime: str,
     mocker: MockerFixture,
@@ -294,28 +294,30 @@ async def test_update_source_no_sync(
     )
 
     # Mock lock service
-    mocker.patch.object(source_service.lock_service, "lock_exists", return_value=False)
+    mocker.patch.object(source_manager.lock_service, "lock_exists", return_value=False)
 
     # Mock current datetime
     mocker.patch(
-        "src.source.service.get_current_datetime",
+        "src.source_manager.service.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
     # Mock metadata store
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=True
+        source_manager.metadata_store, "metadata_exists", return_value=True
     )
     mock_update_metadata = mocker.patch.object(
-        source_service.metadata_store,
+        source_manager.metadata_store,
         "update_metadata",
         return_value=sample_source_metadata,
     )
 
     # Mock sync task
-    mock_sync_task = mocker.patch("src.source.service.sync_source_documents_task.delay")
+    mock_sync_task = mocker.patch(
+        "src.source_manager.service.sync_source_documents_task.delay"
+    )
 
-    result = source_service.update_source("test-source", request_no_sync)
+    result = source_manager.update_source("test-source", request_no_sync)
 
     assert isinstance(result, SourceTask)
     # With no sync, the task_id should be None
@@ -337,7 +339,7 @@ async def test_update_source_no_sync(
 
 
 async def test_update_source_no_description_no_config(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     sample_source_metadata: SourceMetadata,
     mock_current_datetime: str,
     mocker: MockerFixture,
@@ -345,20 +347,20 @@ async def test_update_source_no_description_no_config(
     request_only_sync = UpdateSourceRequest(sync=True)
 
     # Mock lock service
-    mocker.patch.object(source_service.lock_service, "lock_exists", return_value=False)
+    mocker.patch.object(source_manager.lock_service, "lock_exists", return_value=False)
 
     # Mock current datetime
     mocker.patch(
-        "src.source.service.get_current_datetime",
+        "src.source_manager.service.get_current_datetime",
         return_value=mock_current_datetime,
     )
 
     # Mock metadata store
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=True
+        source_manager.metadata_store, "metadata_exists", return_value=True
     )
     mock_update_metadata = mocker.patch.object(
-        source_service.metadata_store,
+        source_manager.metadata_store,
         "update_metadata",
         return_value=sample_source_metadata,
     )
@@ -367,11 +369,11 @@ async def test_update_source_no_description_no_config(
     mock_task = mocker.Mock()
     mock_task.id = "task-id"
     mock_sync_task = mocker.patch(
-        "src.source.service.sync_source_documents_task.delay",
+        "src.source_manager.service.sync_source_documents_task.delay",
         return_value=mock_task,
     )
 
-    result = source_service.update_source("test-source", request_only_sync)
+    result = source_manager.update_source("test-source", request_only_sync)
 
     assert isinstance(result, SourceTask)
     assert result.task_id == "task-id"
@@ -393,40 +395,40 @@ async def test_update_source_no_description_no_config(
 
 
 async def test_search_source_success(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=True
+        source_manager.metadata_store, "metadata_exists", return_value=True
     )
     mock_results = [{"id": "doc1"}, {"id": "doc2"}]
     mock_search_documents = mocker.patch.object(
-        source_service.document_store, "search_documents", return_value=mock_results
+        source_manager.document_store, "search_documents", return_value=mock_results
     )
 
     search_input = SearchSourceInput(name="test-source", query="test query", top_k=2)
-    result = source_service.search_source(search_input)
+    result = source_manager.search_source(search_input)
 
     assert result == mock_results
     mock_search_documents.assert_called_once_with("test-source", "test query", 2)
 
 
 async def test_delete_source_success(
-    source_service: SourceService,
+    source_manager: SourceManagerService,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
-        source_service.metadata_store, "metadata_exists", return_value=True
+        source_manager.metadata_store, "metadata_exists", return_value=True
     )
-    mocker.patch.object(source_service.lock_service, "lock_exists", return_value=False)
+    mocker.patch.object(source_manager.lock_service, "lock_exists", return_value=False)
     mock_delete_metadata = mocker.patch.object(
-        source_service.metadata_store, "delete_metadata"
+        source_manager.metadata_store, "delete_metadata"
     )
     mock_delete_documents = mocker.patch.object(
-        source_service.document_store, "delete_all_documents"
+        source_manager.document_store, "delete_all_documents"
     )
 
-    source_service.delete_source("test-source")
+    source_manager.delete_source("test-source")
 
     mock_delete_metadata.assert_called_once_with("test-source")
     mock_delete_documents.assert_called_once_with("test-source")

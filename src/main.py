@@ -24,7 +24,7 @@ from src.common.exceptions import (
 from src.common.opentelemetry import setup_opentelemetry
 from src.common.redis import create_redis_client
 from src.config import get_settings
-from src.source.router import router as source_router
+from src.source_manager.router import router as source_router
 from src.chat.router import router as chat_router
 from src.task.router import router as tasks_router
 from src.healthcheck.router import router as health_router

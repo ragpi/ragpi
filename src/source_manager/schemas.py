@@ -55,7 +55,6 @@ class SyncSourceOutput(BaseModel):
     docs_removed: int
 
 
-# Also used by chat tool definitions
 class SearchSourceInput(BaseModel):
     name: str = Field(description="Source name")
     query: str = Field(description="Search query")

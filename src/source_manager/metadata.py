@@ -10,7 +10,7 @@ from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceType,
 )
-from src.source.schemas import SourceMetadata, SourceStatus
+from src.source_manager.schemas import SourceMetadata, SourceStatus
 from src.sources.registry import SourceRegistryType
 
 logger = logging.getLogger(__name__)

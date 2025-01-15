@@ -8,8 +8,8 @@ from src.document_store.base import DocumentStoreService
 from src.sources.types import SourceType
 from src.sources.registry import SourceRegistryType
 from src.sources.sitemap.config import SitemapConfig
-from src.source.metadata import SourceMetadataStore
-from src.source.schemas import SourceMetadata, SourceStatus
+from src.source_manager.metadata import SourceMetadataStore
+from src.source_manager.schemas import SourceMetadata, SourceStatus
 
 
 @pytest.fixture
