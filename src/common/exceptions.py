@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from redis.exceptions import ConnectionError
 
-from src.source.config import SourceType
+from src.source_connectors.source_type import SourceType
 
 logger = logging.getLogger(__name__)
 

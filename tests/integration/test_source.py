@@ -2,7 +2,7 @@ import time
 from typing import Any
 import pytest
 from fastapi.testclient import TestClient
-from src.source.schemas import SourceStatus
+from src.source_manager.schemas import SourceStatus
 from tests.integration.utils import wait_for_task_status
 
 

@@ -8,8 +8,8 @@ from celery.exceptions import Ignore
 
 from src.config import Settings
 from src.common.redis import RedisClient
-from src.source.sync import SourceSyncService
-from src.source.schemas import SourceMetadata, SyncSourceOutput
+from src.source_manager.sync import SourceSyncService
+from src.source_manager.schemas import SourceMetadata, SyncSourceOutput
 from src.task.sync_source import sync_source_documents_task
 
 
