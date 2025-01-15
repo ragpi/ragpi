@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import field_validator
 
 from src.sources.common.schemas import BaseSourceConfig
-from src.sources.types import SourceType
+from src.sources.source_type import SourceType
 
 
 def validate_regex(pattern: str | None) -> str | None:

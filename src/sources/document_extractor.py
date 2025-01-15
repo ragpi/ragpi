@@ -7,7 +7,7 @@ from src.sources.common.exceptions import DocumentExtractorException
 from src.sources.github_issues.extractor import extract_documents_from_github_issues
 from src.sources.github_readme.extractor import extract_documents_from_github_readme
 from src.sources.sitemap.extractor import extract_documents_from_sitemap
-from src.sources.types import SourceType
+from src.sources.source_type import SourceType
 from src.sources.registry import SourceConfig
 
 logger = logging.getLogger(__name__)

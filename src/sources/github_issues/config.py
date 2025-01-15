@@ -1,7 +1,7 @@
 from typing import Literal
 
 from src.sources.common.schemas import BaseSourceConfig
-from src.sources.types import SourceType
+from src.sources.source_type import SourceType
 
 
 class GithubIssuesConfig(BaseSourceConfig):
