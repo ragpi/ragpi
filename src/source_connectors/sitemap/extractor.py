@@ -1,9 +1,9 @@
 import logging
 from typing import AsyncGenerator
 from src.common.schemas import Document
-from src.sources.common.chunker import chunk_markdown_page
-from src.sources.sitemap.config import SitemapConfig
-from src.sources.sitemap.crawler import SitemapCrawler
+from src.source_connectors.common.chunker import chunk_markdown_page
+from src.source_connectors.sitemap.config import SitemapConfig
+from src.source_connectors.sitemap.crawler import SitemapCrawler
 
 logger = logging.getLogger(__name__)
 

@@ -3,12 +3,16 @@ from typing import AsyncGenerator
 
 from src.config import Settings
 from src.common.schemas import Document
-from src.sources.common.exceptions import DocumentExtractorException
-from src.sources.github_issues.extractor import extract_documents_from_github_issues
-from src.sources.github_readme.extractor import extract_documents_from_github_readme
-from src.sources.sitemap.extractor import extract_documents_from_sitemap
-from src.sources.source_type import SourceType
-from src.sources.registry import SourceConfig
+from src.source_connectors.common.exceptions import DocumentExtractorException
+from src.source_connectors.github_issues.extractor import (
+    extract_documents_from_github_issues,
+)
+from src.source_connectors.github_readme.extractor import (
+    extract_documents_from_github_readme,
+)
+from src.source_connectors.sitemap.extractor import extract_documents_from_sitemap
+from src.source_connectors.source_type import SourceType
+from src.source_connectors.registry import SourceConfig
 
 logger = logging.getLogger(__name__)
 

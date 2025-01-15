@@ -9,8 +9,8 @@ import html2text
 from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
-from src.sources.common.exceptions import DocumentExtractorException
-from src.sources.common.schemas import MarkdownPage
+from src.source_connectors.common.exceptions import DocumentExtractorException
+from src.source_connectors.common.schemas import MarkdownPage
 
 
 logger = logging.getLogger(__name__)

@@ -3,7 +3,7 @@ import logging
 from typing import Any
 
 from src.document_store.base import DocumentStoreService
-from src.sources.registry import SourceConfig
+from src.source_connectors.registry import SourceConfig
 from src.common.redis import RedisClient
 from src.common.exceptions import (
     ResourceNotFoundException,
@@ -11,7 +11,7 @@ from src.common.exceptions import (
     ResourceType,
 )
 from src.source_manager.schemas import SourceMetadata, SourceStatus
-from src.sources.registry import SourceRegistryType
+from src.source_connectors.registry import SourceRegistryType
 
 logger = logging.getLogger(__name__)
 

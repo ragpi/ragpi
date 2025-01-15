@@ -3,8 +3,8 @@ from typing import Literal
 
 from pydantic import field_validator
 
-from src.sources.common.schemas import BaseSourceConfig
-from src.sources.source_type import SourceType
+from src.source_connectors.common.schemas import BaseSourceConfig
+from src.source_connectors.source_type import SourceType
 
 
 def validate_regex(pattern: str | None) -> str | None:

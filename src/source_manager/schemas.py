@@ -2,7 +2,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 import re
 
-from src.sources.registry import SourceConfig
+from src.source_connectors.registry import SourceConfig
 
 
 class SourceStatus(str, Enum):

@@ -1,9 +1,9 @@
 import base64
 from typing import AsyncGenerator
 
-from src.sources.common.exceptions import DocumentExtractorException
-from src.sources.common.github_client import GitHubClient
-from src.sources.common.schemas import MarkdownPage
+from src.source_connectors.common.exceptions import DocumentExtractorException
+from src.source_connectors.common.github_client import GitHubClient
+from src.source_connectors.common.schemas import MarkdownPage
 
 
 class GitHubReadmeFetcher:

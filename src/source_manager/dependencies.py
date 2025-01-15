@@ -7,7 +7,7 @@ from src.lock.dependencies import get_lock_service
 from src.lock.service import LockService
 from src.source_manager.metadata import SourceMetadataStore
 from src.source_manager.service import SourceManagerService
-from src.sources.registry import SOURCE_REGISTRY, SourceRegistryType
+from src.source_connectors.registry import SOURCE_REGISTRY, SourceRegistryType
 
 
 def get_source_registry() -> SourceRegistryType:

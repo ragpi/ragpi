@@ -2,10 +2,10 @@ from typing import Annotated, Union
 
 from pydantic import Field
 
-from src.sources.github_issues.config import GithubIssuesConfig
-from src.sources.github_readme.config import GithubReadmeConfig
-from src.sources.sitemap.config import SitemapConfig
-from src.sources.source_type import SourceType
+from src.source_connectors.github_issues.config import GithubIssuesConfig
+from src.source_connectors.github_readme.config import GithubReadmeConfig
+from src.source_connectors.sitemap.config import SitemapConfig
+from src.source_connectors.source_type import SourceType
 
 
 SourceConfig = Annotated[

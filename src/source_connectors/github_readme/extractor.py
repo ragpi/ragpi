@@ -1,9 +1,9 @@
 from typing import AsyncGenerator
 from src.common.schemas import Document
-from src.sources.common.chunker import chunk_markdown_page
-from src.sources.common.github_client import GitHubClient
-from src.sources.github_readme.config import GithubReadmeConfig
-from src.sources.github_readme.fetcher import GitHubReadmeFetcher
+from src.source_connectors.common.chunker import chunk_markdown_page
+from src.source_connectors.common.github_client import GitHubClient
+from src.source_connectors.github_readme.config import GithubReadmeConfig
+from src.source_connectors.github_readme.fetcher import GitHubReadmeFetcher
 
 
 async def extract_documents_from_github_readme(

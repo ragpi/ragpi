@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, Mock
 from typing import AsyncGenerator
 from urllib.robotparser import RobotFileParser
 
-from src.sources.common.exceptions import DocumentExtractorException
-from src.sources.common.schemas import MarkdownPage
-from src.sources.sitemap.crawler import SitemapCrawler, extract_markdown_page
+from src.source_connectors.common.exceptions import DocumentExtractorException
+from src.source_connectors.common.schemas import MarkdownPage
+from src.source_connectors.sitemap.crawler import SitemapCrawler, extract_markdown_page
 
 
 @pytest.fixture

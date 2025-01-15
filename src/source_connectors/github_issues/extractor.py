@@ -1,9 +1,9 @@
 from typing import AsyncGenerator
 
-from src.sources.common.github_client import GitHubClient
-from src.sources.github_issues.chunker import chunk_github_issue
-from src.sources.github_issues.config import GithubIssuesConfig
-from src.sources.github_issues.fetcher import GitHubIssuesFetcher
+from src.source_connectors.common.github_client import GitHubClient
+from src.source_connectors.github_issues.chunker import chunk_github_issue
+from src.source_connectors.github_issues.config import GithubIssuesConfig
+from src.source_connectors.github_issues.fetcher import GitHubIssuesFetcher
 from src.common.schemas import Document
 
 

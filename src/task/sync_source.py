@@ -11,7 +11,7 @@ from src.source_manager.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app
 from src.source_manager.sync import SourceSyncService
-from src.sources.registry import SOURCE_REGISTRY
+from src.source_connectors.registry import SOURCE_REGISTRY
 
 
 @celery_app.task(name="Sync Source Documents")

@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 from typing import Any
 from pytest_mock import MockerFixture
 
-from src.sources.common.github_client import GitHubClient
-from src.sources.github_issues.fetcher import GitHubIssuesFetcher
-from src.sources.github_issues.schemas import GithubIssue
+from src.source_connectors.common.github_client import GitHubClient
+from src.source_connectors.github_issues.fetcher import GitHubIssuesFetcher
+from src.source_connectors.github_issues.schemas import GithubIssue
 
 
 @pytest.fixture
