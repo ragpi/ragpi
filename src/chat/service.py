@@ -19,22 +19,22 @@ from src.common.exceptions import (
     ResourceType,
 )
 from src.common.schemas import Document
-from src.source_manager.schemas import SearchSourceInput, SourceMetadata
-from src.source_manager.service import SourceManagerService
+from src.sources.schemas import SearchSourceInput, SourceMetadata
+from src.sources.service import SourceService
 
 
 class ChatService:
     def __init__(
         self,
         *,
-        source_manager: SourceManagerService,
+        source_service: SourceService,
         openai_client: OpenAI,
         base_system_prompt: str,
         tool_definitions: list[ToolDefinition],
         chat_history_limit: int,
     ):
         self.chat_client = openai_client
-        self.source_manager = source_manager
+        self.source_service = source_service
         self.base_system_prompt = base_system_prompt
         self.chat_history_limit = chat_history_limit
         self.tools = [
@@ -51,9 +51,9 @@ class ChatService:
     ) -> list[SourceMetadata]:
         """Retrieve and validate sources."""
         if not source_names:
-            sources = self.source_manager.list_sources()
+            sources = self.source_service.list_sources()
         else:
-            sources = [self.source_manager.get_source(name) for name in source_names]
+            sources = [self.source_service.get_source(name) for name in source_names]
 
         if not sources:
             raise ChatException("No sources found.")
@@ -82,7 +82,7 @@ class ChatService:
             raise ValueError(f"Unknown tool call: {tool_call.function.name}")
 
         args = json.loads(tool_call.function.arguments)
-        documents = self.source_manager.search_source(SearchSourceInput(**args))
+        documents = self.source_service.search_source(SearchSourceInput(**args))
         content = json.dumps(
             [{"url": doc.url, "content": doc.content} for doc in documents]
         )

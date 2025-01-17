@@ -1,0 +1,2 @@
+class ExtractorException(Exception):
+    pass
