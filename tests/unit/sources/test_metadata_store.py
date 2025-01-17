@@ -28,7 +28,6 @@ def metadata_store(
 ) -> SourceMetadataStore:
     return SourceMetadataStore(
         redis_client=mock_redis_client,
-        document_store=mock_document_store,
     )
 
 

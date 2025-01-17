@@ -11,11 +11,9 @@ from src.sources.service import SourceService
 
 def get_metadata_store(
     redis_client: RedisClient = Depends(get_redis_client),
-    document_store: DocumentStoreService = Depends(get_document_store),
 ) -> SourceMetadataStore:
     return SourceMetadataStore(
         redis_client=redis_client,
-        document_store=document_store,
     )
 
 

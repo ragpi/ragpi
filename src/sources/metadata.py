@@ -2,7 +2,6 @@ import json
 import logging
 from typing import Any
 
-from src.document_store.base import DocumentStoreService
 from src.extractors.extractor_type import ExtractorType
 from src.extractors.registry import ExtractorConfig, get_extractor_config_schema
 from src.common.redis import RedisClient
@@ -20,10 +19,8 @@ class SourceMetadataStore:
     def __init__(
         self,
         redis_client: RedisClient,
-        document_store: DocumentStoreService,
     ):
         self.client = redis_client
-        self.document_store = document_store
 
     def _get_metadata_key(self, source_name: str, should_exist: bool = True) -> str:
         key_name = f"metadata:{source_name}"

@@ -41,7 +41,6 @@ class SourceSyncService:
         )
         self.metadata_store = SourceMetadataStore(
             redis_client=self.redis_client,
-            document_store=self.document_store,
         )
         self.extractor_service = ExtractorService(self.settings)
         self.batch_size = self.settings.DOCUMENT_SYNC_BATCH_SIZE
