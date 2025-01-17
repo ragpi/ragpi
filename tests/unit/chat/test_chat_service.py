@@ -13,8 +13,8 @@ from src.chat.service import ChatService
 from src.chat.schemas import ChatMessage, ChatResponse, CreateChatInput
 from src.common.exceptions import ResourceNotFoundException, ResourceType
 from src.common.schemas import Document
-from src.source_manager.service import SourceManagerService
-from src.source_manager.schemas import SearchSourceInput
+from src.sources.service import SourceService
+from src.sources.schemas import SearchSourceInput
 
 
 @pytest.fixture
@@ -38,8 +38,8 @@ def sample_documents() -> list[Document]:
 
 
 @pytest.fixture
-def mock_source_manager(mocker: MockerFixture) -> SourceManagerService:
-    return mocker.Mock(spec=SourceManagerService)
+def mock_source_service(mocker: MockerFixture) -> SourceService:
+    return mocker.Mock(spec=SourceService)
 
 
 @pytest.fixture
@@ -52,11 +52,11 @@ def mock_openai_client(mocker: MockerFixture) -> OpenAI:
 
 @pytest.fixture
 def chat_service(
-    mock_source_manager: SourceManagerService,
+    mock_source_service: SourceService,
     mock_openai_client: OpenAI,
 ) -> ChatService:
     return ChatService(
-        source_manager=mock_source_manager,
+        source_service=mock_source_service,
         openai_client=mock_openai_client,
         base_system_prompt="You are a helpful assistant.",
         tool_definitions=[],
@@ -116,7 +116,7 @@ def test_generate_response_direct_answer(
 def test_generate_response_with_tool_calls(
     chat_service: ChatService,
     mock_openai_client: OpenAI,
-    mock_source_manager: SourceManagerService,
+    mock_source_service: SourceService,
     sample_chat_input: CreateChatInput,
     sample_documents: list[Document],
     mocker: MockerFixture,
@@ -175,7 +175,7 @@ def test_generate_response_with_tool_calls(
 
     # Mock source service search results
     mock_search_source = mocker.patch.object(
-        mock_source_manager,
+        mock_source_service,
         "search_source",
         return_value=sample_documents,
     )
@@ -193,7 +193,7 @@ def test_generate_response_with_tool_calls(
 def test_generate_response_max_attempts_exceeded(
     chat_service: ChatService,
     mock_openai_client: OpenAI,
-    mock_source_manager: SourceManagerService,
+    mock_source_service: SourceService,
     sample_chat_input: CreateChatInput,
     sample_documents: list[Document],
     mocker: MockerFixture,
@@ -234,7 +234,7 @@ def test_generate_response_max_attempts_exceeded(
 
     # Mock source service search results
     mocker.patch.object(
-        mock_source_manager,
+        mock_source_service,
         "search_source",
         return_value=sample_documents,
     )

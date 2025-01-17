@@ -4,17 +4,17 @@ from src.chat.service import ChatService
 from src.chat.tools import TOOL_DEFINITIONS
 from src.common.openai import get_chat_openai_client
 from src.config import Settings, get_settings
-from src.source_manager.dependencies import get_source_manager
-from src.source_manager.service import SourceManagerService
+from src.sources.dependencies import get_source_service
+from src.sources.service import SourceService
 
 
 def get_chat_service(
-    source_manager: SourceManagerService = Depends(get_source_manager),
+    source_service: SourceService = Depends(get_source_service),
     settings: Settings = Depends(get_settings),
     openai_client: OpenAI = Depends(get_chat_openai_client),
 ) -> ChatService:
     return ChatService(
-        source_manager=source_manager,
+        source_service=source_service,
         openai_client=openai_client,
         base_system_prompt=settings.BASE_SYSTEM_PROMPT,
         tool_definitions=TOOL_DEFINITIONS,

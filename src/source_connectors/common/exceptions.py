@@ -1,2 +1,0 @@
-class DocumentExtractorException(Exception):
-    pass

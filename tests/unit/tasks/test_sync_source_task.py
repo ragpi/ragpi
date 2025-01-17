@@ -8,9 +8,9 @@ from celery.exceptions import Ignore
 
 from src.config import Settings
 from src.common.redis import RedisClient
-from src.source_manager.sync import SourceSyncService
-from src.source_manager.schemas import SourceMetadata, SyncSourceOutput
-from src.task.sync_source import sync_source_documents_task
+from src.sources.sync import SourceSyncService
+from src.sources.schemas import SourceMetadata, SyncSourceOutput
+from src.tasks.sync_source import sync_source_documents_task
 
 
 @pytest.fixture
@@ -61,13 +61,13 @@ def common_setup(
     mock_sync_service: Mock,
     mock_current_task: Mock,
 ) -> None:
-    mocker.patch("src.task.sync_source.get_settings", return_value=mock_settings)
-    mocker.patch("src.task.sync_source.Redis.from_url", return_value=mock_redis_client)
-    mocker.patch("src.task.sync_source.LockService", return_value=mock_lock_service)
+    mocker.patch("src.tasks.sync_source.get_settings", return_value=mock_settings)
+    mocker.patch("src.tasks.sync_source.Redis.from_url", return_value=mock_redis_client)
+    mocker.patch("src.tasks.sync_source.LockService", return_value=mock_lock_service)
     mocker.patch(
-        "src.task.sync_source.SourceSyncService", return_value=mock_sync_service
+        "src.tasks.sync_source.SourceSyncService", return_value=mock_sync_service
     )
-    mocker.patch("src.task.sync_source.current_task", mock_current_task)
+    mocker.patch("src.tasks.sync_source.current_task", mock_current_task)
 
 
 def test_sync_source_documents_success(
@@ -83,7 +83,7 @@ def test_sync_source_documents_success(
 
     # Setup test data
     source_name = "test-source"
-    source_config = {
+    extractor_config = {
         "type": "sitemap",
         "sitemap_url": "https://example.com/sitemap.xml",
     }
@@ -101,7 +101,7 @@ def test_sync_source_documents_success(
     }
 
     # Execute task
-    result = sync_source_documents_task(source_name, source_config)
+    result = sync_source_documents_task(source_name, extractor_config)
 
     # Verify results
     assert result == {
@@ -141,7 +141,7 @@ def test_sync_source_documents_invalid_source_type(
         meta={
             "source": source_name,
             "message": "Failed to sync documents.",
-            "error": "Unsupported source type: invalid_type",
+            "error": "Invalid extractor config: 'invalid_type' is not a valid ExtractorType",
             "exc_type": "SyncSourceException",
         },
     )
@@ -161,7 +161,7 @@ def test_sync_source_documents_invalid_config(
 
     _, kwargs = mock_current_task.update_state.call_args
     assert kwargs["state"] == "FAILURE"
-    assert "Invalid source config" in kwargs["meta"]["error"]
+    assert "Invalid extractor config" in kwargs["meta"]["error"]
     assert kwargs["meta"]["source"] == source_name
     assert kwargs["meta"]["message"] == "Failed to sync documents."
     assert kwargs["meta"]["exc_type"] == "SyncSourceException"
@@ -176,10 +176,13 @@ def test_sync_source_documents_lock_failure(
     mock_lock_service.acquire_lock.side_effect = Exception("Lock acquisition failed")
 
     source_name = "test-source"
-    config = {"type": "sitemap", "sitemap_url": "https://example.com/sitemap.xml"}
+    extractor_config = {
+        "type": "sitemap",
+        "sitemap_url": "https://example.com/sitemap.xml",
+    }
 
     with pytest.raises(Ignore):
-        sync_source_documents_task(source_name, config)
+        sync_source_documents_task(source_name, extractor_config)
 
     mock_current_task.update_state.assert_called_with(
         state="FAILURE",
@@ -205,10 +208,13 @@ def test_sync_source_documents_sync_failure(
     mocker.patch("asyncio.new_event_loop", return_value=mock_loop)
 
     source_name = "test-source"
-    config = {"type": "sitemap", "sitemap_url": "https://example.com/sitemap.xml"}
+    extractor_config = {
+        "type": "sitemap",
+        "sitemap_url": "https://example.com/sitemap.xml",
+    }
 
     with pytest.raises(Ignore):
-        sync_source_documents_task(source_name, config)
+        sync_source_documents_task(source_name, extractor_config)
 
     mock_current_task.update_state.assert_called_with(
         state="FAILURE",
