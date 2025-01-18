@@ -26,7 +26,7 @@ class ConnectorRegistryEntry:
 
 ConnectorRegistryType = dict[ConnectorType, ConnectorRegistryEntry]
 
-EXTRACTOR_REGISTRY: ConnectorRegistryType = {
+CONNECTOR_REGISTRY: ConnectorRegistryType = {
     ConnectorType.SITEMAP: ConnectorRegistryEntry(
         config_schema=SitemapConfig,
         connector_class=SitemapConnector,
@@ -45,14 +45,14 @@ ConfigClassType = Type[Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConf
 
 
 def get_connector_config_schema(connector_type: ConnectorType) -> ConfigClassType:
-    registry_entry = EXTRACTOR_REGISTRY.get(connector_type)
+    registry_entry = CONNECTOR_REGISTRY.get(connector_type)
     if not registry_entry:
         raise ValueError(f"Unknown connector type: {connector_type}")
     return cast(ConfigClassType, registry_entry.config_schema)
 
 
 def get_connector_class(connector_type: ConnectorType) -> Type[BaseConnector]:
-    registry_entry = EXTRACTOR_REGISTRY.get(connector_type)
+    registry_entry = CONNECTOR_REGISTRY.get(connector_type)
     if not registry_entry:
         raise ValueError(f"Unknown connector type: {connector_type}")
     return registry_entry.connector_class
