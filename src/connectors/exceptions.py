@@ -1,0 +1,2 @@
+class ConnectorException(Exception):
+    pass

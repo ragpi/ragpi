@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.source.schemas import SearchSourceInput
+from src.sources.schemas import SearchSourceInput
 
 
 class ToolDefinition(BaseModel):

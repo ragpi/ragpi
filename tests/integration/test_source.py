@@ -2,7 +2,7 @@ import time
 from typing import Any
 import pytest
 from fastapi.testclient import TestClient
-from src.source.schemas import SourceStatus
+from src.sources.schemas import SourceStatus
 from tests.integration.utils import wait_for_task_status
 
 
@@ -13,7 +13,7 @@ class TestSource:
         return {
             "name": f"test-source-{time.time_ns()}",
             "description": "Test source description",
-            "config": {
+            "connector": {
                 "type": "sitemap",
                 "sitemap_url": "https://gateweaver.io/sitemap.xml",
                 "include_pattern": "https://gateweaver.io/docs/getting-started",
@@ -48,13 +48,12 @@ class TestSource:
             json={
                 "name": f"repo-issues-{time.time_ns()}",
                 "description": "Repository issues",
-                "config": {
+                "connector": {
                     "type": "github_issues",
                     "repo_owner": "fastapi",
                     "repo_name": "fastapi",
                     "state": "open",
                     "include_labels": ["bug"],
-                    "chunk_size": 500,
                 },
             },
         )
@@ -70,13 +69,12 @@ class TestSource:
             json={
                 "name": f"repo-docs-{time.time_ns()}",
                 "description": "Repository documentation",
-                "config": {
+                "connector": {
                     "type": "github_readme",
                     "repo_owner": "gateweaver",
                     "repo_name": "gateweaver",
                     "include_root": True,
                     "sub_dirs": ["packages/server"],
-                    "chunk_size": 500,
                 },
             },
         )
@@ -134,10 +132,9 @@ class TestSource:
         update_data: dict[str, Any] = {
             "description": "Updated description",
             "sync": True,
-            "config": {
+            "connector": {
                 "type": "sitemap",
                 "sitemap_url": "https://gateweaver.io/sitemap.xml",
-                "chunk_size": 1000,  # Changed chunk size
             },
         }
         response = test_client.put(f"/sources/{source_data['name']}", json=update_data)
@@ -150,7 +147,6 @@ class TestSource:
         assert response.status_code == 200
         source = response.json()
         assert source["description"] == update_data["description"]
-        assert source["config"]["chunk_size"] == update_data["config"]["chunk_size"]
 
     def test_delete_source(
         self, test_client: TestClient, source_data: dict[str, Any]
