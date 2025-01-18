@@ -19,8 +19,8 @@ from src.common.exceptions import (
     ResourceType,
 )
 from src.common.schemas import Document
-from src.source.schemas import SearchSourceInput, SourceMetadata
-from src.source.service import SourceService
+from src.sources.schemas import SearchSourceInput, SourceMetadata
+from src.sources.service import SourceService
 
 
 class ChatService:

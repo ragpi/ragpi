@@ -83,7 +83,7 @@ def mock_openai_embeddings(mocker: MockerFixture) -> Mock:
 @pytest.fixture(autouse=True)
 def patch_settings(test_settings: Settings, mocker: MockerFixture) -> None:
     mocker.patch("src.main.settings", test_settings)
-    mocker.patch("src.task.sync_source.get_settings", lambda: test_settings)
+    mocker.patch("src.tasks.sync_source.get_settings", lambda: test_settings)
 
 
 @pytest.fixture(scope="session")

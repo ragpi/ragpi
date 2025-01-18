@@ -41,8 +41,8 @@ class Settings(BaseSettings):
     # Document Processing Configuration
     DOCUMENT_STORE_NAMESPACE: str = "document_store"
     DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"
-    DEFAULT_CHUNK_SIZE: int = 512
-    DEFAULT_CHUNK_OVERLAP: int = 50
+    CHUNK_SIZE: int = 512
+    CHUNK_OVERLAP: int = 50
     DOCUMENT_SYNC_BATCH_SIZE: int = 500
 
     # OpenTelemetry Settings

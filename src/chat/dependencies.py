@@ -4,8 +4,8 @@ from src.chat.service import ChatService
 from src.chat.tools import TOOL_DEFINITIONS
 from src.common.openai import get_chat_openai_client
 from src.config import Settings, get_settings
-from src.source.dependencies import get_source_service
-from src.source.service import SourceService
+from src.sources.dependencies import get_source_service
+from src.sources.service import SourceService
 
 
 def get_chat_service(

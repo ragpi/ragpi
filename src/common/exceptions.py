@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from redis.exceptions import ConnectionError
 
-from src.source.config import SourceType
+from src.connectors.connector_type import ConnectorType
 
 logger = logging.getLogger(__name__)
 
@@ -114,12 +114,12 @@ def validation_exception_handler(request: Request, exc: RequestValidationError):
                 raise TypeError("Unexpected type")
         return path
 
-    def handle_source_type_error(error: dict[str, Any]) -> dict[str, Any]:
-        """Handle specific source type validation errors"""
+    def handle_connector_type_error(error: dict[str, Any]) -> dict[str, Any]:
+        """Handle specific connector type validation errors"""
         if error["ctx"]["discriminator"] != "'type'":
             return error
 
-        valid_types = ", ".join(SourceType._value2member_map_.keys())
+        valid_types = ", ".join(ConnectorType._value2member_map_.keys())
 
         if error["type"] == "union_tag_not_found":
             return {
@@ -144,7 +144,7 @@ def validation_exception_handler(request: Request, exc: RequestValidationError):
         error["loc"] = loc_to_dot_sep(error["loc"])
 
         if error["type"] in ("union_tag_not_found", "union_tag_invalid"):
-            error = handle_source_type_error(error)
+            error = handle_connector_type_error(error)
 
         return error
 
