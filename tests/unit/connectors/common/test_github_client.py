@@ -3,8 +3,8 @@ import pytest
 from aiohttp import ClientError, ClientResponse, ClientSession
 from pytest_mock import MockerFixture
 
-from src.extractors.exceptions import ExtractorException
-from src.extractors.common.github_client import GitHubClient
+from src.connectors.exceptions import ExtractorException
+from src.connectors.common.github_client import GitHubClient
 
 
 async def test_github_client_initialization() -> None:

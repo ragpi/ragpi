@@ -1,7 +1,7 @@
 from typing import Literal
 
-from src.extractors.base.config import BaseExtractorConfig
-from src.extractors.extractor_type import ExtractorType
+from src.connectors.base.config import BaseExtractorConfig
+from src.connectors.extractor_type import ExtractorType
 
 
 class GithubReadmeConfig(BaseExtractorConfig):

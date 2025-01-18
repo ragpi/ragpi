@@ -5,8 +5,8 @@ from typing import Any
 from src.common.exceptions import ResourceAlreadyExistsException, ResourceType
 from src.common.redis import RedisClient
 from src.document_store.base import DocumentStoreService
-from src.extractors.extractor_type import ExtractorType
-from src.extractors.sitemap.config import SitemapConfig
+from src.connectors.extractor_type import ExtractorType
+from src.connectors.sitemap.config import SitemapConfig
 from src.sources.metadata import SourceMetadataStore
 from src.sources.schemas import SourceMetadata, SourceStatus
 

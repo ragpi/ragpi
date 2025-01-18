@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 
 from src.common.schemas import Document
 from src.config import Settings
-from src.extractors.base.config import BaseExtractorConfig
+from src.connectors.base.config import BaseExtractorConfig
 
 
 class BaseExtractor(ABC):

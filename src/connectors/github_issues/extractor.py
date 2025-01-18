@@ -1,11 +1,11 @@
 from typing import AsyncGenerator
 
 from src.config import Settings
-from src.extractors.base.extractor import BaseExtractor
-from src.extractors.common.github_client import GitHubClient
-from src.extractors.github_issues.chunker import chunk_github_issue
-from src.extractors.github_issues.config import GithubIssuesConfig
-from src.extractors.github_issues.fetcher import GitHubIssuesFetcher
+from src.connectors.base.extractor import BaseExtractor
+from src.connectors.common.github_client import GitHubClient
+from src.connectors.github_issues.chunker import chunk_github_issue
+from src.connectors.github_issues.config import GithubIssuesConfig
+from src.connectors.github_issues.fetcher import GitHubIssuesFetcher
 from src.common.schemas import Document
 
 

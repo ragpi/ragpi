@@ -1,8 +1,8 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.common.schemas import Document
 from src.common.current_datetime import get_current_datetime
-from src.extractors.common.stable_id import generate_stable_id
-from src.extractors.github_issues.schemas import GithubIssue
+from src.connectors.common.stable_id import generate_stable_id
+from src.connectors.github_issues.schemas import GithubIssue
 
 
 def chunk_github_issue(

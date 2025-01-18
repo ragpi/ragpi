@@ -10,10 +10,10 @@ from src.common.schemas import Document
 from src.config import Settings
 from src.document_store.providers.redis.store import RedisDocumentStore
 from src.sources.exceptions import SyncSourceException
-from src.extractors.service import ExtractorService
-from src.extractors.extractor_type import ExtractorType
-from src.extractors.registry import ExtractorConfig
-from src.extractors.sitemap.config import SitemapConfig
+from src.connectors.service import ExtractorService
+from src.connectors.extractor_type import ExtractorType
+from src.connectors.registry import ExtractorConfig
+from src.connectors.sitemap.config import SitemapConfig
 from src.sources.metadata import SourceMetadataStore
 from src.sources.schemas import SourceMetadata, SourceStatus, SyncSourceOutput
 from src.sources.sync import SourceSyncService

@@ -3,8 +3,8 @@ from typing import AsyncIterator
 
 from src.config import Settings
 from src.common.schemas import Document
-from src.extractors.exceptions import ExtractorException
-from src.extractors.registry import ExtractorConfig, get_extractor_class
+from src.connectors.exceptions import ExtractorException
+from src.connectors.registry import ExtractorConfig, get_extractor_class
 
 logger = logging.getLogger(__name__)
 

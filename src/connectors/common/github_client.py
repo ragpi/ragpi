@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import Any, Type
 from aiohttp import ClientError, ClientSession
 
-from src.extractors.exceptions import ExtractorException
+from src.connectors.exceptions import ExtractorException
 
 
 logger = logging.getLogger(__name__)

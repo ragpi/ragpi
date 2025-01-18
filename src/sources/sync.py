@@ -3,11 +3,11 @@ import logging
 from src.common.openai import get_embedding_openai_client
 from src.common.redis import RedisClient
 from src.config import Settings
-from src.extractors.service import ExtractorService
+from src.connectors.service import ExtractorService
 from src.document_store.providers.redis.store import RedisDocumentStore
 from src.sources.exceptions import SyncSourceException
 from src.common.schemas import Document
-from src.extractors.registry import ExtractorConfig
+from src.connectors.registry import ExtractorConfig
 from src.sources.metadata import SourceMetadataStore
 from src.sources.schemas import SourceStatus, SyncSourceOutput
 from src.common.current_datetime import get_current_datetime

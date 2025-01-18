@@ -2,15 +2,15 @@ from dataclasses import dataclass
 from typing import Type, Annotated, Union, cast
 from pydantic import Field
 
-from src.extractors.base.config import BaseExtractorConfig
-from src.extractors.extractor_type import ExtractorType
-from src.extractors.sitemap.config import SitemapConfig
-from src.extractors.github_issues.config import GithubIssuesConfig
-from src.extractors.github_readme.config import GithubReadmeConfig
-from src.extractors.base.extractor import BaseExtractor
-from src.extractors.sitemap.extractor import SitemapExtractor
-from src.extractors.github_issues.extractor import GithubIssuesExtractor
-from src.extractors.github_readme.extractor import GithubReadmeExtractor
+from src.connectors.base.config import BaseExtractorConfig
+from src.connectors.extractor_type import ExtractorType
+from src.connectors.sitemap.config import SitemapConfig
+from src.connectors.github_issues.config import GithubIssuesConfig
+from src.connectors.github_readme.config import GithubReadmeConfig
+from src.connectors.base.extractor import BaseExtractor
+from src.connectors.sitemap.extractor import SitemapExtractor
+from src.connectors.github_issues.extractor import GithubIssuesExtractor
+from src.connectors.github_readme.extractor import GithubReadmeExtractor
 
 ExtractorConfig = Annotated[
     Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig],

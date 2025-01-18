@@ -4,10 +4,10 @@ import pytest
 from typing import Any
 from pytest_mock import MockerFixture
 
-from src.extractors.exceptions import ExtractorException
-from src.extractors.common.github_client import GitHubClient
-from src.extractors.common.schemas import MarkdownPage
-from src.extractors.github_readme.fetcher import GitHubReadmeFetcher
+from src.connectors.exceptions import ExtractorException
+from src.connectors.common.github_client import GitHubClient
+from src.connectors.common.schemas import MarkdownPage
+from src.connectors.github_readme.fetcher import GitHubReadmeFetcher
 
 
 @pytest.fixture

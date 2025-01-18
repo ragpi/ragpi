@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 import logging
 from typing import Any, AsyncGenerator
 
-from src.extractors.common.github_client import GitHubClient
-from src.extractors.github_issues.schemas import GithubIssue, GithubIssueComment
+from src.connectors.common.github_client import GitHubClient
+from src.connectors.github_issues.schemas import GithubIssue, GithubIssueComment
 
 logger = logging.getLogger(__name__)
 

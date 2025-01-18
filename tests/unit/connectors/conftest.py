@@ -2,7 +2,7 @@ from typing import AsyncGenerator
 
 import pytest
 
-from src.extractors.common.github_client import GitHubClient
+from src.connectors.common.github_client import GitHubClient
 
 
 @pytest.fixture

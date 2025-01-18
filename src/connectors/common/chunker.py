@@ -6,8 +6,8 @@ from langchain_text_splitters import (
 
 from src.common.schemas import Document
 from src.common.current_datetime import get_current_datetime
-from src.extractors.common.schemas import MarkdownPage
-from src.extractors.common.stable_id import generate_stable_id
+from src.connectors.common.schemas import MarkdownPage
+from src.connectors.common.stable_id import generate_stable_id
 
 
 def chunk_markdown_page(

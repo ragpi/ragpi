@@ -2,10 +2,10 @@ import logging
 from typing import AsyncGenerator
 from src.common.schemas import Document
 from src.config import Settings
-from src.extractors.base.extractor import BaseExtractor
-from src.extractors.common.chunker import chunk_markdown_page
-from src.extractors.sitemap.config import SitemapConfig
-from src.extractors.sitemap.crawler import SitemapCrawler
+from src.connectors.base.extractor import BaseExtractor
+from src.connectors.common.chunker import chunk_markdown_page
+from src.connectors.sitemap.config import SitemapConfig
+from src.connectors.sitemap.crawler import SitemapCrawler
 
 logger = logging.getLogger(__name__)
 

@@ -1,11 +1,11 @@
 from typing import AsyncGenerator
 from src.common.schemas import Document
 from src.config import Settings
-from src.extractors.base.extractor import BaseExtractor
-from src.extractors.common.chunker import chunk_markdown_page
-from src.extractors.common.github_client import GitHubClient
-from src.extractors.github_readme.config import GithubReadmeConfig
-from src.extractors.github_readme.fetcher import GitHubReadmeFetcher
+from src.connectors.base.extractor import BaseExtractor
+from src.connectors.common.chunker import chunk_markdown_page
+from src.connectors.common.github_client import GitHubClient
+from src.connectors.github_readme.config import GithubReadmeConfig
+from src.connectors.github_readme.fetcher import GitHubReadmeFetcher
 
 
 class GithubReadmeExtractor(BaseExtractor):

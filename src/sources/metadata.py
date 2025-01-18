@@ -2,8 +2,8 @@ import json
 import logging
 from typing import Any
 
-from src.extractors.extractor_type import ExtractorType
-from src.extractors.registry import ExtractorConfig, get_extractor_config_schema
+from src.connectors.extractor_type import ExtractorType
+from src.connectors.registry import ExtractorConfig, get_extractor_config_schema
 from src.common.redis import RedisClient
 from src.common.exceptions import (
     ResourceNotFoundException,

@@ -10,8 +10,8 @@ from src.config import get_settings
 from src.sources.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app
-from src.extractors.registry import get_extractor_config_schema
-from src.extractors.extractor_type import ExtractorType
+from src.connectors.registry import get_extractor_config_schema
+from src.connectors.extractor_type import ExtractorType
 from src.sources.sync import SourceSyncService
 
 

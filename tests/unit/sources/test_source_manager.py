@@ -9,8 +9,8 @@ from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceType,
 )
-from src.extractors.extractor_type import ExtractorType
-from src.extractors.sitemap.config import SitemapConfig
+from src.connectors.extractor_type import ExtractorType
+from src.connectors.sitemap.config import SitemapConfig
 from src.sources.schemas import (
     CreateSourceRequest,
     SearchSourceInput,

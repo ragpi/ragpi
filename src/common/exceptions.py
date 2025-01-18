@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from redis.exceptions import ConnectionError
 
-from src.extractors.extractor_type import ExtractorType
+from src.connectors.extractor_type import ExtractorType
 
 logger = logging.getLogger(__name__)
 
