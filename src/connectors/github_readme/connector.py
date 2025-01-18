@@ -31,8 +31,8 @@ class GithubReadmeConnector(BaseConnector):
             ):
                 chunks = chunk_markdown_page(
                     page_data=page,
-                    chunk_size=self.config.chunk_size,
-                    chunk_overlap=self.config.chunk_overlap,
+                    chunk_size=self.settings.CHUNK_SIZE,
+                    chunk_overlap=self.settings.CHUNK_OVERLAP,
                     uuid_namespace=self.settings.DOCUMENT_UUID_NAMESPACE,
                 )
                 for chunk in chunks:

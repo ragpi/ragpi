@@ -54,7 +54,6 @@ class TestSource:
                     "repo_name": "fastapi",
                     "state": "open",
                     "include_labels": ["bug"],
-                    "chunk_size": 500,
                 },
             },
         )
@@ -76,7 +75,6 @@ class TestSource:
                     "repo_name": "gateweaver",
                     "include_root": True,
                     "sub_dirs": ["packages/server"],
-                    "chunk_size": 500,
                 },
             },
         )
@@ -137,7 +135,6 @@ class TestSource:
             "connector": {
                 "type": "sitemap",
                 "sitemap_url": "https://gateweaver.io/sitemap.xml",
-                "chunk_size": 1000,  # Changed chunk size
             },
         }
         response = test_client.put(f"/sources/{source_data['name']}", json=update_data)
@@ -150,9 +147,6 @@ class TestSource:
         assert response.status_code == 200
         source = response.json()
         assert source["description"] == update_data["description"]
-        assert (
-            source["connector"]["chunk_size"] == update_data["connector"]["chunk_size"]
-        )
 
     def test_delete_source(
         self, test_client: TestClient, source_data: dict[str, Any]
