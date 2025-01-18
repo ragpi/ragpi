@@ -2,8 +2,8 @@ import json
 import logging
 from typing import Any
 
-from src.connectors.extractor_type import ExtractorType
-from src.connectors.registry import ExtractorConfig, get_extractor_config_schema
+from src.connectors.connector_type import ConnectorType
+from src.connectors.registry import ConnectorConfig, get_connector_config_schema
 from src.common.redis import RedisClient
 from src.common.exceptions import (
     ResourceNotFoundException,
@@ -35,21 +35,21 @@ class SourceMetadataStore:
 
         return key_name
 
-    def _serialize_extractor_config(self, config: ExtractorConfig) -> str:
+    def _serialize_connector_config(self, config: ConnectorConfig) -> str:
         return config.model_dump_json()
 
-    def _deserialize_extractor_config(self, config: str) -> ExtractorConfig:
+    def _deserialize_connector_config(self, config: str) -> ConnectorConfig:
         config_dict = json.loads(config)
 
-        extractor_type = config_dict.get("type")
-        if not extractor_type:
-            raise ValueError("Extractor type not found in config")
+        connector_type = config_dict.get("type")
+        if not connector_type:
+            raise ValueError("Connector type not found in config")
 
-        ExtractorConfigSchema = get_extractor_config_schema(
-            ExtractorType(extractor_type)
+        ConnectorConfigSchema = get_connector_config_schema(
+            ConnectorType(connector_type)
         )
 
-        return ExtractorConfigSchema(**config_dict)
+        return ConnectorConfigSchema(**config_dict)
 
     def metadata_exists(self, source_name: str) -> bool:
         try:
@@ -63,14 +63,14 @@ class SourceMetadataStore:
         source_name: str,
         description: str,
         status: SourceStatus,
-        extractor: ExtractorConfig,
+        connector: ConnectorConfig,
         id: str,
         created_at: str,
         updated_at: str,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name, should_exist=False)
 
-        extractor_config_json = self._serialize_extractor_config(extractor)
+        connector_config_json = self._serialize_connector_config(connector)
 
         self.client.hset(
             metadata_key,
@@ -80,7 +80,7 @@ class SourceMetadataStore:
                 "description": description,
                 "status": status,
                 "num_docs": 0,
-                "extractor": extractor_config_json,
+                "connector": connector_config_json,
                 "created_at": created_at,
                 "updated_at": updated_at,
             },
@@ -91,7 +91,7 @@ class SourceMetadataStore:
     def get_metadata(self, source_name: str) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name)
         metadata = self.client.hgetall(metadata_key)
-        extractor_config = self._deserialize_extractor_config(metadata["extractor"])
+        connector_config = self._deserialize_connector_config(metadata["connector"])
         status = SourceStatus(metadata["status"])
 
         return SourceMetadata(
@@ -102,7 +102,7 @@ class SourceMetadataStore:
             num_docs=int(metadata["num_docs"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
-            extractor=extractor_config,
+            connector=connector_config,
         )
 
     def delete_metadata(self, source_name: str) -> None:
@@ -123,7 +123,7 @@ class SourceMetadataStore:
         description: str | None,
         status: SourceStatus | None,
         num_docs: int | None,
-        extractor: ExtractorConfig | None,
+        connector: ConnectorConfig | None,
         timestamp: str,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(name)
@@ -139,9 +139,9 @@ class SourceMetadataStore:
         if num_docs is not None:
             update_mapping["num_docs"] = num_docs
 
-        if extractor is not None:
-            extractor_config_json = self._serialize_extractor_config(extractor)
-            update_mapping["extractor"] = extractor_config_json
+        if connector is not None:
+            connector_config_json = self._serialize_connector_config(connector)
+            update_mapping["connector"] = connector_config_json
 
         self.client.hset(metadata_key, mapping=update_mapping)  # type: ignore
 

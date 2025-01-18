@@ -1,11 +1,11 @@
 from typing import Literal
 
-from src.connectors.base.config import BaseExtractorConfig
-from src.connectors.extractor_type import ExtractorType
+from src.connectors.base.config import BaseConnectorConfig
+from src.connectors.connector_type import ConnectorType
 
 
-class GithubIssuesConfig(BaseExtractorConfig):
-    type: Literal[ExtractorType.GITHUB_ISSUES]
+class GithubIssuesConfig(BaseConnectorConfig):
+    type: Literal[ConnectorType.GITHUB_ISSUES]
     repo_owner: str
     repo_name: str
     state: Literal["all", "open", "closed"] = "all"

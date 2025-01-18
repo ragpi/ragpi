@@ -1,7 +1,7 @@
 from typing import AsyncGenerator
 
 from src.config import Settings
-from src.connectors.base.extractor import BaseExtractor
+from src.connectors.base.connector import BaseConnector
 from src.connectors.common.github_client import GitHubClient
 from src.connectors.github_issues.chunker import chunk_github_issue
 from src.connectors.github_issues.config import GithubIssuesConfig
@@ -9,7 +9,7 @@ from src.connectors.github_issues.fetcher import GitHubIssuesFetcher
 from src.common.schemas import Document
 
 
-class GithubIssuesExtractor(BaseExtractor):
+class GithubIssuesConnector(BaseConnector):
     config: GithubIssuesConfig
 
     def __init__(self, settings: Settings, config: GithubIssuesConfig):

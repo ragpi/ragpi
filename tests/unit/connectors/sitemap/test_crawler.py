@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 from typing import AsyncGenerator
 from urllib.robotparser import RobotFileParser
 
-from src.connectors.exceptions import ExtractorException
+from src.connectors.exceptions import ConnectorException
 from src.connectors.common.schemas import MarkdownPage
 from src.connectors.sitemap.crawler import SitemapCrawler, extract_markdown_page
 
@@ -115,7 +115,7 @@ async def test_parse_sitemap_not_found(
     mock_session = mocker.patch.object(sitemap_client.session, "get")
     mock_session.return_value.__aenter__.return_value = mock_response
 
-    with pytest.raises(ExtractorException):
+    with pytest.raises(ConnectorException):
         await sitemap_client.parse_sitemap("https://example.com/sitemap.xml")
 
 
@@ -206,7 +206,7 @@ async def test_fetch_sitemap_pages_no_matching_urls(
     mock_session = mocker.patch.object(sitemap_client.session, "get")
     mock_session.return_value.__aenter__.return_value = mock_response
 
-    with pytest.raises(ExtractorException):
+    with pytest.raises(ConnectorException):
         async for _ in sitemap_client.fetch_sitemap_pages(
             "https://example.com/sitemap.xml", include_pattern="page3"
         ):

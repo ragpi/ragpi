@@ -83,7 +83,7 @@ def test_sync_source_documents_success(
 
     # Setup test data
     source_name = "test-source"
-    extractor_config = {
+    connector_config = {
         "type": "sitemap",
         "sitemap_url": "https://example.com/sitemap.xml",
     }
@@ -101,7 +101,7 @@ def test_sync_source_documents_success(
     }
 
     # Execute task
-    result = sync_source_documents_task(source_name, extractor_config)
+    result = sync_source_documents_task(source_name, connector_config)
 
     # Verify results
     assert result == {
@@ -141,7 +141,7 @@ def test_sync_source_documents_invalid_source_type(
         meta={
             "source": source_name,
             "message": "Failed to sync documents.",
-            "error": "Invalid extractor config: 'invalid_type' is not a valid ExtractorType",
+            "error": "Invalid connector config: 'invalid_type' is not a valid ConnectorType",
             "exc_type": "SyncSourceException",
         },
     )
@@ -161,7 +161,7 @@ def test_sync_source_documents_invalid_config(
 
     _, kwargs = mock_current_task.update_state.call_args
     assert kwargs["state"] == "FAILURE"
-    assert "Invalid extractor config" in kwargs["meta"]["error"]
+    assert "Invalid connector config" in kwargs["meta"]["error"]
     assert kwargs["meta"]["source"] == source_name
     assert kwargs["meta"]["message"] == "Failed to sync documents."
     assert kwargs["meta"]["exc_type"] == "SyncSourceException"
@@ -176,13 +176,13 @@ def test_sync_source_documents_lock_failure(
     mock_lock_service.acquire_lock.side_effect = Exception("Lock acquisition failed")
 
     source_name = "test-source"
-    extractor_config = {
+    connector_config = {
         "type": "sitemap",
         "sitemap_url": "https://example.com/sitemap.xml",
     }
 
     with pytest.raises(Ignore):
-        sync_source_documents_task(source_name, extractor_config)
+        sync_source_documents_task(source_name, connector_config)
 
     mock_current_task.update_state.assert_called_with(
         state="FAILURE",
@@ -208,13 +208,13 @@ def test_sync_source_documents_sync_failure(
     mocker.patch("asyncio.new_event_loop", return_value=mock_loop)
 
     source_name = "test-source"
-    extractor_config = {
+    connector_config = {
         "type": "sitemap",
         "sitemap_url": "https://example.com/sitemap.xml",
     }
 
     with pytest.raises(Ignore):
-        sync_source_documents_task(source_name, extractor_config)
+        sync_source_documents_task(source_name, connector_config)
 
     mock_current_task.update_state.assert_called_with(
         state="FAILURE",

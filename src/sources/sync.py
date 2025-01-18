@@ -3,11 +3,11 @@ import logging
 from src.common.openai import get_embedding_openai_client
 from src.common.redis import RedisClient
 from src.config import Settings
-from src.connectors.service import ExtractorService
+from src.connectors.service import ConnectorService
 from src.document_store.providers.redis.store import RedisDocumentStore
 from src.sources.exceptions import SyncSourceException
 from src.common.schemas import Document
-from src.connectors.registry import ExtractorConfig
+from src.connectors.registry import ConnectorConfig
 from src.sources.metadata import SourceMetadataStore
 from src.sources.schemas import SourceStatus, SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
@@ -23,12 +23,12 @@ class SourceSyncService:
         *,
         redis_client: RedisClient,
         source_name: str,
-        extractor_config: ExtractorConfig,
+        connector_config: ConnectorConfig,
         settings: Settings,
     ):
         self.redis_client = redis_client
         self.source_name = source_name
-        self.extractor_config = extractor_config
+        self.connector_config = connector_config
         self.settings = settings
 
         self.openai_client = get_embedding_openai_client(settings=self.settings)
@@ -42,7 +42,7 @@ class SourceSyncService:
         self.metadata_store = SourceMetadataStore(
             redis_client=self.redis_client,
         )
-        self.extractor_service = ExtractorService(self.settings)
+        self.connector_service = ConnectorService(self.settings)
         self.batch_size = self.settings.DOCUMENT_SYNC_BATCH_SIZE
 
     async def sync_documents(self) -> SyncSourceOutput:
@@ -63,13 +63,13 @@ class SourceSyncService:
                 description=None,
                 status=SourceStatus.SYNCING,
                 num_docs=len(existing_doc_ids),
-                extractor=None,
+                connector=None,
                 timestamp=get_current_datetime(),
             )
 
             # Extract and sync documents
-            async for doc in self.extractor_service.extract_documents(
-                self.extractor_config
+            async for doc in self.connector_service.extract_documents(
+                self.connector_config
             ):
                 if doc.id in current_doc_ids:
                     continue
@@ -101,7 +101,7 @@ class SourceSyncService:
                 description=None,
                 status=SourceStatus.COMPLETED,
                 num_docs=len(current_doc_ids),
-                extractor=None,
+                connector=None,
                 timestamp=get_current_datetime(),
             )
 
@@ -117,7 +117,7 @@ class SourceSyncService:
                 description=None,
                 status=SourceStatus.FAILED,
                 num_docs=None,
-                extractor=None,
+                connector=None,
                 timestamp=get_current_datetime(),
             )
             raise e
@@ -134,7 +134,7 @@ class SourceSyncService:
                 description=None,
                 status=SourceStatus.SYNCING,
                 num_docs=current_doc_count,
-                extractor=None,
+                connector=None,
                 timestamp=get_current_datetime(),
             )
 
@@ -163,7 +163,7 @@ class SourceSyncService:
                 description=None,
                 status=SourceStatus.SYNCING,
                 num_docs=current_doc_count,
-                extractor=None,
+                connector=None,
                 timestamp=get_current_datetime(),
             )
 

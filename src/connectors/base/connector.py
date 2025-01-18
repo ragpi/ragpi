@@ -3,13 +3,13 @@ from typing import AsyncGenerator
 
 from src.common.schemas import Document
 from src.config import Settings
-from src.connectors.base.config import BaseExtractorConfig
+from src.connectors.base.config import BaseConnectorConfig
 
 
-class BaseExtractor(ABC):
-    """Base class for all extractors"""
+class BaseConnector(ABC):
+    """Base class for all connectors"""
 
-    def __init__(self, settings: Settings, config: BaseExtractorConfig):
+    def __init__(self, settings: Settings, config: BaseConnectorConfig):
         self.settings = settings
         self.config = config
 

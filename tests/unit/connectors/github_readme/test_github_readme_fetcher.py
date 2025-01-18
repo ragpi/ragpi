@@ -4,7 +4,7 @@ import pytest
 from typing import Any
 from pytest_mock import MockerFixture
 
-from src.connectors.exceptions import ExtractorException
+from src.connectors.exceptions import ConnectorException
 from src.connectors.common.github_client import GitHubClient
 from src.connectors.common.schemas import MarkdownPage
 from src.connectors.github_readme.fetcher import GitHubReadmeFetcher
@@ -139,7 +139,7 @@ async def test_fetch_readmes_no_directories(
     github_readme_fetcher: GitHubReadmeFetcher,
 ) -> None:
     with pytest.raises(
-        ExtractorException,
+        ConnectorException,
         match="No directories specified to fetch READMEs",
     ):
         async for _ in github_readme_fetcher.fetch_readmes(
@@ -158,7 +158,7 @@ async def test_fetch_readmes_request_failure(
     mock_request.return_value = (None, None)
 
     with pytest.raises(
-        ExtractorException,
+        ConnectorException,
         match="Failed to fetch README content at",
     ):
         async for _ in github_readme_fetcher.fetch_readmes(

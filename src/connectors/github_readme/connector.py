@@ -1,14 +1,14 @@
 from typing import AsyncGenerator
 from src.common.schemas import Document
 from src.config import Settings
-from src.connectors.base.extractor import BaseExtractor
+from src.connectors.base.connector import BaseConnector
 from src.connectors.common.chunker import chunk_markdown_page
 from src.connectors.common.github_client import GitHubClient
 from src.connectors.github_readme.config import GithubReadmeConfig
 from src.connectors.github_readme.fetcher import GitHubReadmeFetcher
 
 
-class GithubReadmeExtractor(BaseExtractor):
+class GithubReadmeConnector(BaseConnector):
     config: GithubReadmeConfig
 
     def __init__(self, settings: Settings, config: GithubReadmeConfig):

@@ -17,7 +17,7 @@ class TestTask:
                 json={
                     "name": f"task-test-{time.time_ns()}",
                     "description": "Test source for task",
-                    "extractor": {
+                    "connector": {
                         "type": "sitemap",
                         "sitemap_url": "https://gateweaver.io/sitemap.xml",
                         "include_pattern": "https://gateweaver.io/docs/getting-started",
@@ -68,7 +68,7 @@ class TestTask:
     #         json={
     #             "name": f"task-test-{time.time_ns()}",
     #             "description": "Test source for task",
-    #             "extractor": {
+    #             "connector": {
     #                 "type": "sitemap",
     #                 "sitemap_url": "https://fastapi.tiangolo.com/sitemap.xml",
     #             },

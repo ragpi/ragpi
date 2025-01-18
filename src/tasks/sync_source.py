@@ -10,15 +10,15 @@ from src.config import get_settings
 from src.sources.exceptions import SyncSourceException
 from src.lock.service import LockService
 from src.celery import celery_app
-from src.connectors.registry import get_extractor_config_schema
-from src.connectors.extractor_type import ExtractorType
+from src.connectors.registry import get_connector_config_schema
+from src.connectors.connector_type import ConnectorType
 from src.sources.sync import SourceSyncService
 
 
 @celery_app.task(name="Sync Source Documents")
 def sync_source_documents_task(
     source_name: str,
-    extractor_config_dict: dict[str, Any],
+    connector_config_dict: dict[str, Any],
 ) -> dict[str, Any]:
     """Celery task to sync documents for a given source."""
     settings = get_settings()
@@ -46,21 +46,21 @@ def sync_source_documents_task(
             lock_renewal_task = asyncio.create_task(lock_service.renew_lock(lock))
             try:
                 try:
-                    extractor_type = extractor_config_dict.get("type")
-                    if not extractor_type:
-                        raise SyncSourceException("Extractor type not found in config.")
+                    connector_type = connector_config_dict.get("type")
+                    if not connector_type:
+                        raise SyncSourceException("Connector type not found in config.")
 
-                    config_schema = get_extractor_config_schema(
-                        ExtractorType(extractor_type)
+                    config_schema = get_connector_config_schema(
+                        ConnectorType(connector_type)
                     )
-                    extractor_config = config_schema(**extractor_config_dict)
+                    connector_config = config_schema(**connector_config_dict)
                 except ValueError as e:
-                    raise SyncSourceException(f"Invalid extractor config: {e}")
+                    raise SyncSourceException(f"Invalid connector config: {e}")
 
                 sync_service = SourceSyncService(
                     redis_client=redis_client,
                     source_name=source_name,
-                    extractor_config=extractor_config,
+                    connector_config=connector_config,
                     settings=settings,
                 )
                 synced_source = await sync_service.sync_documents()

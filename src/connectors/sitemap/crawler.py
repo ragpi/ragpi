@@ -9,7 +9,7 @@ import html2text
 from urllib.parse import urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 
-from src.connectors.exceptions import ExtractorException
+from src.connectors.exceptions import ConnectorException
 from src.connectors.common.schemas import MarkdownPage
 
 
@@ -103,7 +103,7 @@ class SitemapCrawler:
     async def parse_sitemap(self, sitemap_url: str) -> list[str]:
         async with self.session.get(sitemap_url) as response:
             if response.status == 404:
-                raise ExtractorException(f"Sitemap not found at {sitemap_url}")
+                raise ConnectorException(f"Sitemap not found at {sitemap_url}")
 
             response.raise_for_status()
 
@@ -162,14 +162,14 @@ class SitemapCrawler:
         urls = await self.parse_sitemap(sitemap_url)
 
         if not urls:
-            raise ExtractorException(f"No URLs found in the sitemap at {sitemap_url}")
+            raise ConnectorException(f"No URLs found in the sitemap at {sitemap_url}")
 
         if include_pattern:
             include_regex = re.compile(include_pattern)
             urls = [url for url in urls if include_regex.search(url)]
 
             if not urls:
-                raise ExtractorException(
+                raise ConnectorException(
                     f"No URLs from the sitemap matched the include pattern {include_pattern}"
                 )
 
@@ -178,7 +178,7 @@ class SitemapCrawler:
             urls = [url for url in urls if not exclude_regex.search(url)]
 
             if not urls:
-                raise ExtractorException(
+                raise ConnectorException(
                     f"All URLs from the sitemap matched the exclude pattern {exclude_pattern}"
                 )
 

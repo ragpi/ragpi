@@ -9,7 +9,7 @@ from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceType,
 )
-from src.connectors.extractor_type import ExtractorType
+from src.connectors.connector_type import ConnectorType
 from src.connectors.sitemap.config import SitemapConfig
 from src.sources.schemas import (
     CreateSourceRequest,
@@ -65,8 +65,8 @@ def sample_source_metadata() -> SourceMetadata:
         name="test-source",
         description="Test source description",
         status=SourceStatus.PENDING,
-        extractor=SitemapConfig(
-            type=ExtractorType.SITEMAP,
+        connector=SitemapConfig(
+            type=ConnectorType.SITEMAP,
             sitemap_url="https://example.com/sitemap.xml",
         ),
         num_docs=0,
@@ -80,8 +80,8 @@ def sample_create_request() -> CreateSourceRequest:
     return CreateSourceRequest(
         name="test-source",
         description="Test source description",
-        extractor=SitemapConfig(
-            type=ExtractorType.SITEMAP,
+        connector=SitemapConfig(
+            type=ConnectorType.SITEMAP,
             sitemap_url="https://example.com/sitemap.xml",
         ),
     )
@@ -91,8 +91,8 @@ def sample_create_request() -> CreateSourceRequest:
 def sample_update_request() -> UpdateSourceRequest:
     return UpdateSourceRequest(
         description="Updated description",
-        extractor=SitemapConfig(
-            type=ExtractorType.SITEMAP,
+        connector=SitemapConfig(
+            type=ConnectorType.SITEMAP,
             sitemap_url="https://example.com/sitemap.xml",
         ),
         sync=True,
@@ -145,7 +145,7 @@ async def test_create_source_success(
         source_name=sample_create_request.name,
         description=sample_create_request.description,
         status=SourceStatus.PENDING,
-        extractor=sample_create_request.extractor,
+        connector=sample_create_request.connector,
         id=str(mock_uuid),
         created_at=mock_current_datetime,
         updated_at=mock_current_datetime,
@@ -244,11 +244,11 @@ async def test_update_source_success(
     assert result.source == sample_source_metadata
     assert result.message == "Source updated. Syncing documents..."
 
-    assert sample_update_request.extractor is not None  # For type checking
+    assert sample_update_request.connector is not None  # For type checking
 
     mock_sync_source.assert_called_once_with(
         source_name="test-source",
-        extractor_config_dict=sample_update_request.extractor.model_dump(),
+        connector_config_dict=sample_update_request.connector.model_dump(),
     )
 
     mock_update_metadata.assert_called_once_with(
@@ -256,7 +256,7 @@ async def test_update_source_success(
         description=sample_update_request.description,
         status=SourceStatus.PENDING,
         num_docs=None,
-        extractor=sample_update_request.extractor,
+        connector=sample_update_request.connector,
         timestamp=mock_current_datetime,
     )
 
@@ -286,8 +286,8 @@ async def test_update_source_no_sync(
 ) -> None:
     request_no_sync = UpdateSourceRequest(
         description="Updated description without sync",
-        extractor=SitemapConfig(
-            type=ExtractorType.SITEMAP,
+        connector=SitemapConfig(
+            type=ConnectorType.SITEMAP,
             sitemap_url="https://example.com/sitemap.xml",
         ),
         sync=False,
@@ -330,7 +330,7 @@ async def test_update_source_no_sync(
         description="Updated description without sync",
         status=None,
         num_docs=None,
-        extractor=request_no_sync.extractor,
+        connector=request_no_sync.connector,
         timestamp=mock_current_datetime,
     )
 
@@ -385,12 +385,12 @@ async def test_update_source_no_description_no_config(
         description=None,
         status=SourceStatus.PENDING,
         num_docs=None,
-        extractor=None,
+        connector=None,
         timestamp=mock_current_datetime,
     )
     mock_sync_task.assert_called_once_with(
         source_name="test-source",
-        extractor_config_dict=sample_source_metadata.extractor.model_dump(),
+        connector_config_dict=sample_source_metadata.connector.model_dump(),
     )
 
 

@@ -1,11 +1,11 @@
 from typing import Literal
 
-from src.connectors.base.config import BaseExtractorConfig
-from src.connectors.extractor_type import ExtractorType
+from src.connectors.base.config import BaseConnectorConfig
+from src.connectors.connector_type import ConnectorType
 
 
-class GithubReadmeConfig(BaseExtractorConfig):
-    type: Literal[ExtractorType.GITHUB_README]
+class GithubReadmeConfig(BaseConnectorConfig):
+    type: Literal[ConnectorType.GITHUB_README]
     repo_owner: str
     repo_name: str
     include_root: bool = True

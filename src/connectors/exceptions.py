@@ -1,2 +1,2 @@
-class ExtractorException(Exception):
+class ConnectorException(Exception):
     pass

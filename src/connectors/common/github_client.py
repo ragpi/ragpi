@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import Any, Type
 from aiohttp import ClientError, ClientSession
 
-from src.connectors.exceptions import ExtractorException
+from src.connectors.exceptions import ConnectorException
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class GitHubClient:
         github_token: str | None,
     ):
         if not github_token:
-            raise ExtractorException("GITHUB_TOKEN is required to access GitHub API")
+            raise ConnectorException("GITHUB_TOKEN is required to access GitHub API")
 
         self.session: ClientSession = ClientSession(
             headers={
@@ -102,15 +102,15 @@ class GitHubClient:
                             retry_count += 1
                             continue
                         elif response.status == 404:
-                            raise ExtractorException(f"Resource not found at {url}")
+                            raise ConnectorException(f"Resource not found at {url}")
                         elif response.status == 401:
-                            raise ExtractorException(
+                            raise ConnectorException(
                                 f"GITHUB_TOKEN is not authorized to access {url}"
                             )
                         response.raise_for_status()
                         data = await response.json()
                         return data, dict(response.headers)
-                except ExtractorException as e:
+                except ConnectorException as e:
                     raise e
                 except ClientError:
                     logger.exception("HTTP request failed")
@@ -120,7 +120,7 @@ class GitHubClient:
                     await asyncio.sleep(wait_time)
                 except Exception:
                     logger.exception("Unexpected error")
-                    raise ExtractorException(f"Unexpected error when fetching {url}")
+                    raise ConnectorException(f"Unexpected error when fetching {url}")
 
         logger.error(f"Failed to make request to {url} after {max_attempts} attempts.")
         return None, None

@@ -2,7 +2,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 import re
 
-from src.connectors.registry import ExtractorConfig
+from src.connectors.registry import ConnectorConfig
 
 
 class SourceStatus(str, Enum):
@@ -20,13 +20,13 @@ class SourceMetadata(BaseModel):
     num_docs: int
     created_at: str
     updated_at: str
-    extractor: ExtractorConfig
+    connector: ConnectorConfig
 
 
 class CreateSourceRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     description: str
-    extractor: ExtractorConfig
+    connector: ConnectorConfig
 
     @field_validator("name")
     def validate_name(cls, value: str):
@@ -40,7 +40,7 @@ class CreateSourceRequest(BaseModel):
 class UpdateSourceRequest(BaseModel):
     sync: bool = True
     description: str | None = None
-    extractor: ExtractorConfig | None = None
+    connector: ConnectorConfig | None = None
 
 
 class SourceTask(BaseModel):

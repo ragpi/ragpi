@@ -3,7 +3,7 @@ import pytest
 from aiohttp import ClientError, ClientResponse, ClientSession
 from pytest_mock import MockerFixture
 
-from src.connectors.exceptions import ExtractorException
+from src.connectors.exceptions import ConnectorException
 from src.connectors.common.github_client import GitHubClient
 
 
@@ -20,7 +20,7 @@ async def test_github_client_initialization() -> None:
     await client.session.close()
 
     # Test initialization without token
-    with pytest.raises(ExtractorException, match="GITHUB_TOKEN is required"):
+    with pytest.raises(ConnectorException, match="GITHUB_TOKEN is required"):
         GitHubClient(
             concurrent_requests=2,
             user_agent="test-agent",
@@ -97,7 +97,7 @@ async def test_request_404(github_client: GitHubClient, mocker: MockerFixture) -
     mock_session.return_value.__aenter__.return_value = mock_response
 
     with pytest.raises(
-        ExtractorException,
+        ConnectorException,
         match="Resource not found at https://api.github.com/test",
     ):
         await github_client.request("GET", "https://api.github.com/test")
@@ -110,7 +110,7 @@ async def test_request_401(github_client: GitHubClient, mocker: MockerFixture) -
     mock_session = mocker.patch.object(github_client.session, "request")
     mock_session.return_value.__aenter__.return_value = mock_response
 
-    with pytest.raises(ExtractorException, match="GITHUB_TOKEN is not authorized"):
+    with pytest.raises(ConnectorException, match="GITHUB_TOKEN is not authorized"):
         await github_client.request("GET", "https://api.github.com/test")
 
 
@@ -134,5 +134,5 @@ async def test_request_unexpected_error(
     mock_session = mocker.patch.object(github_client.session, "request")
     mock_session.return_value.__aenter__.side_effect = Exception("Unexpected error")
 
-    with pytest.raises(ExtractorException, match="Unexpected error"):
+    with pytest.raises(ConnectorException, match="Unexpected error"):
         await github_client.request("GET", "https://api.github.com/test")

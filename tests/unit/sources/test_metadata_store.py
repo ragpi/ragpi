@@ -5,7 +5,7 @@ from typing import Any
 from src.common.exceptions import ResourceAlreadyExistsException, ResourceType
 from src.common.redis import RedisClient
 from src.document_store.base import DocumentStoreService
-from src.connectors.extractor_type import ExtractorType
+from src.connectors.connector_type import ConnectorType
 from src.connectors.sitemap.config import SitemapConfig
 from src.sources.metadata import SourceMetadataStore
 from src.sources.schemas import SourceMetadata, SourceStatus
@@ -32,15 +32,15 @@ def metadata_store(
 
 
 @pytest.fixture
-def sample_extractor_config() -> SitemapConfig:
+def sample_connector_config() -> SitemapConfig:
     return SitemapConfig(
-        type=ExtractorType.SITEMAP, sitemap_url="https://example.com/sitemap.xml"
+        type=ConnectorType.SITEMAP, sitemap_url="https://example.com/sitemap.xml"
     )
 
 
 @pytest.fixture
 def sample_metadata_dict(
-    sample_extractor_config: SitemapConfig,
+    sample_connector_config: SitemapConfig,
 ) -> dict[str, Any]:
     return {
         "id": "test-id",
@@ -48,7 +48,7 @@ def sample_metadata_dict(
         "description": "Test description",
         "status": SourceStatus.PENDING,
         "num_docs": 0,
-        "extractor": sample_extractor_config.model_dump_json(),
+        "connector": sample_connector_config.model_dump_json(),
         "created_at": "2024-01-01T12:00:00",
         "updated_at": "2024-01-01T12:00:00",
     }
@@ -79,7 +79,7 @@ def test_metadata_exists_false(
 
 def test_create_metadata_success(
     metadata_store: SourceMetadataStore,
-    sample_extractor_config: SitemapConfig,
+    sample_connector_config: SitemapConfig,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
@@ -96,7 +96,7 @@ def test_create_metadata_success(
         source_name="test-source",
         description="Test description",
         status=SourceStatus.PENDING,
-        extractor=sample_extractor_config,
+        connector=sample_connector_config,
         id="test-id",
         created_at="2024-01-01T12:00:00",
         updated_at="2024-01-01T12:00:00",
@@ -112,13 +112,13 @@ def test_create_metadata_success(
     assert result.name == "test-source"
     assert result.description == "Test description"
     assert result.status == SourceStatus.PENDING
-    assert result.extractor == sample_extractor_config
+    assert result.connector == sample_connector_config
     assert result.num_docs == 0
 
 
 def test_create_metadata_already_exists(
     metadata_store: SourceMetadataStore,
-    sample_extractor_config: SitemapConfig,
+    sample_connector_config: SitemapConfig,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(metadata_store.client, "exists", return_value=True)
@@ -128,7 +128,7 @@ def test_create_metadata_already_exists(
             source_name="test-source",
             description="Test description",
             status=SourceStatus.PENDING,
-            extractor=sample_extractor_config,
+            connector=sample_connector_config,
             id="test-id",
             created_at="2024-01-01T12:00:00",
             updated_at="2024-01-01T12:00:00",
@@ -199,7 +199,7 @@ def test_list_metadata_success(
 
 def test_update_metadata_success(
     metadata_store: SourceMetadataStore,
-    sample_extractor_config: SitemapConfig,
+    sample_connector_config: SitemapConfig,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
@@ -216,7 +216,7 @@ def test_update_metadata_success(
         description="Updated description",
         status=SourceStatus.COMPLETED,
         num_docs=10,
-        extractor=sample_extractor_config,
+        connector=sample_connector_config,
         timestamp="2024-01-01T13:00:00",
     )
 
@@ -227,7 +227,7 @@ def test_update_metadata_success(
             "description": "Updated description",
             "status": SourceStatus.COMPLETED,
             "num_docs": 10,
-            "extractor": sample_extractor_config.model_dump_json(),
+            "connector": sample_connector_config.model_dump_json(),
             "updated_at": "2024-01-01T13:00:00",
         },
     )

@@ -2,57 +2,57 @@ from dataclasses import dataclass
 from typing import Type, Annotated, Union, cast
 from pydantic import Field
 
-from src.connectors.base.config import BaseExtractorConfig
-from src.connectors.extractor_type import ExtractorType
+from src.connectors.base.config import BaseConnectorConfig
+from src.connectors.connector_type import ConnectorType
 from src.connectors.sitemap.config import SitemapConfig
 from src.connectors.github_issues.config import GithubIssuesConfig
 from src.connectors.github_readme.config import GithubReadmeConfig
-from src.connectors.base.extractor import BaseExtractor
-from src.connectors.sitemap.extractor import SitemapExtractor
-from src.connectors.github_issues.extractor import GithubIssuesExtractor
-from src.connectors.github_readme.extractor import GithubReadmeExtractor
+from src.connectors.base.connector import BaseConnector
+from src.connectors.sitemap.connector import SitemapConnector
+from src.connectors.github_issues.connector import GithubIssuesConnector
+from src.connectors.github_readme.connector import GithubReadmeConnector
 
-ExtractorConfig = Annotated[
+ConnectorConfig = Annotated[
     Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig],
     Field(discriminator="type"),
 ]
 
 
 @dataclass(frozen=True)
-class ExtractorRegistryEntry:
-    config_schema: Type[BaseExtractorConfig]
-    extractor_class: Type[BaseExtractor]
+class ConnectorRegistryEntry:
+    config_schema: Type[BaseConnectorConfig]
+    connector_class: Type[BaseConnector]
 
 
-ExtractorRegistryType = dict[ExtractorType, ExtractorRegistryEntry]
+ConnectorRegistryType = dict[ConnectorType, ConnectorRegistryEntry]
 
-EXTRACTOR_REGISTRY: ExtractorRegistryType = {
-    ExtractorType.SITEMAP: ExtractorRegistryEntry(
+EXTRACTOR_REGISTRY: ConnectorRegistryType = {
+    ConnectorType.SITEMAP: ConnectorRegistryEntry(
         config_schema=SitemapConfig,
-        extractor_class=SitemapExtractor,
+        connector_class=SitemapConnector,
     ),
-    ExtractorType.GITHUB_ISSUES: ExtractorRegistryEntry(
+    ConnectorType.GITHUB_ISSUES: ConnectorRegistryEntry(
         config_schema=GithubIssuesConfig,
-        extractor_class=GithubIssuesExtractor,
+        connector_class=GithubIssuesConnector,
     ),
-    ExtractorType.GITHUB_README: ExtractorRegistryEntry(
+    ConnectorType.GITHUB_README: ConnectorRegistryEntry(
         config_schema=GithubReadmeConfig,
-        extractor_class=GithubReadmeExtractor,
+        connector_class=GithubReadmeConnector,
     ),
 }
 
 ConfigClassType = Type[Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig]]
 
 
-def get_extractor_config_schema(extractor_type: ExtractorType) -> ConfigClassType:
-    registry_entry = EXTRACTOR_REGISTRY.get(extractor_type)
+def get_connector_config_schema(connector_type: ConnectorType) -> ConfigClassType:
+    registry_entry = EXTRACTOR_REGISTRY.get(connector_type)
     if not registry_entry:
-        raise ValueError(f"Unknown extractor type: {extractor_type}")
+        raise ValueError(f"Unknown connector type: {connector_type}")
     return cast(ConfigClassType, registry_entry.config_schema)
 
 
-def get_extractor_class(extractor_type: ExtractorType) -> Type[BaseExtractor]:
-    registry_entry = EXTRACTOR_REGISTRY.get(extractor_type)
+def get_connector_class(connector_type: ConnectorType) -> Type[BaseConnector]:
+    registry_entry = EXTRACTOR_REGISTRY.get(connector_type)
     if not registry_entry:
-        raise ValueError(f"Unknown extractor type: {extractor_type}")
-    return registry_entry.extractor_class
+        raise ValueError(f"Unknown connector type: {connector_type}")
+    return registry_entry.connector_class

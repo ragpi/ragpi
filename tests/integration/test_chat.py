@@ -16,7 +16,7 @@ class TestChat:
                 json={
                     "name": name,
                     "description": "Test source for chat",
-                    "extractor": {
+                    "connector": {
                         "type": "sitemap",
                         "sitemap_url": "https://gateweaver.io/sitemap.xml",
                         "include_pattern": "https://gateweaver.io/docs/getting-started",

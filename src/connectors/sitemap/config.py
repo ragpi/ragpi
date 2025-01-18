@@ -3,8 +3,8 @@ from typing import Literal
 
 from pydantic import field_validator
 
-from src.connectors.base.config import BaseExtractorConfig
-from src.connectors.extractor_type import ExtractorType
+from src.connectors.base.config import BaseConnectorConfig
+from src.connectors.connector_type import ConnectorType
 
 
 def validate_regex(pattern: str | None) -> str | None:
@@ -17,8 +17,8 @@ def validate_regex(pattern: str | None) -> str | None:
     return pattern
 
 
-class SitemapConfig(BaseExtractorConfig):
-    type: Literal[ExtractorType.SITEMAP]
+class SitemapConfig(BaseConnectorConfig):
+    type: Literal[ConnectorType.SITEMAP]
     sitemap_url: str
     include_pattern: str | None = None
     exclude_pattern: str | None = None

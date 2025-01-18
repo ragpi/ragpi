@@ -13,7 +13,7 @@ class TestSource:
         return {
             "name": f"test-source-{time.time_ns()}",
             "description": "Test source description",
-            "extractor": {
+            "connector": {
                 "type": "sitemap",
                 "sitemap_url": "https://gateweaver.io/sitemap.xml",
                 "include_pattern": "https://gateweaver.io/docs/getting-started",
@@ -48,7 +48,7 @@ class TestSource:
             json={
                 "name": f"repo-issues-{time.time_ns()}",
                 "description": "Repository issues",
-                "extractor": {
+                "connector": {
                     "type": "github_issues",
                     "repo_owner": "fastapi",
                     "repo_name": "fastapi",
@@ -70,7 +70,7 @@ class TestSource:
             json={
                 "name": f"repo-docs-{time.time_ns()}",
                 "description": "Repository documentation",
-                "extractor": {
+                "connector": {
                     "type": "github_readme",
                     "repo_owner": "gateweaver",
                     "repo_name": "gateweaver",
@@ -134,7 +134,7 @@ class TestSource:
         update_data: dict[str, Any] = {
             "description": "Updated description",
             "sync": True,
-            "extractor": {
+            "connector": {
                 "type": "sitemap",
                 "sitemap_url": "https://gateweaver.io/sitemap.xml",
                 "chunk_size": 1000,  # Changed chunk size
@@ -151,7 +151,7 @@ class TestSource:
         source = response.json()
         assert source["description"] == update_data["description"]
         assert (
-            source["extractor"]["chunk_size"] == update_data["extractor"]["chunk_size"]
+            source["connector"]["chunk_size"] == update_data["connector"]["chunk_size"]
         )
 
     def test_delete_source(

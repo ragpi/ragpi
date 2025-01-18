@@ -45,17 +45,17 @@ class SourceService:
             source_name=source_input.name,
             description=source_input.description,
             status=SourceStatus.PENDING,
-            extractor=source_input.extractor,
+            connector=source_input.connector,
             id=str(uuid4()),
             created_at=timestamp,
             updated_at=timestamp,
         )
 
-        extractor_config_dict = source_input.extractor.model_dump()
+        connector_config_dict = source_input.connector.model_dump()
 
         task = sync_source_documents_task.delay(
             source_name=source_input.name,
-            extractor_config_dict=extractor_config_dict,
+            connector_config_dict=connector_config_dict,
         )
 
         return SourceTask(
@@ -87,8 +87,8 @@ class SourceService:
             if source_input and source_input.description
             else None
         )
-        extractor_config = (
-            source_input.extractor if source_input and source_input.extractor else None
+        connector_config = (
+            source_input.connector if source_input and source_input.connector else None
         )
 
         updated_source = self.metadata_store.update_metadata(
@@ -96,15 +96,15 @@ class SourceService:
             description=description,
             status=status,
             num_docs=None,
-            extractor=extractor_config,
+            connector=connector_config,
             timestamp=get_current_datetime(),
         )
 
         if source_input and source_input.sync:
-            extractor_config_dict = updated_source.extractor.model_dump()
+            connector_config_dict = updated_source.connector.model_dump()
             task_id = sync_source_documents_task.delay(
                 source_name=source_name,
-                extractor_config_dict=extractor_config_dict,
+                connector_config_dict=connector_config_dict,
             )
 
             return SourceTask(

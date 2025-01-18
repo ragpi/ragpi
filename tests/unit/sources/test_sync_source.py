@@ -10,9 +10,9 @@ from src.common.schemas import Document
 from src.config import Settings
 from src.document_store.providers.redis.store import RedisDocumentStore
 from src.sources.exceptions import SyncSourceException
-from src.connectors.service import ExtractorService
-from src.connectors.extractor_type import ExtractorType
-from src.connectors.registry import ExtractorConfig
+from src.connectors.service import ConnectorService
+from src.connectors.connector_type import ConnectorType
+from src.connectors.registry import ConnectorConfig
 from src.connectors.sitemap.config import SitemapConfig
 from src.sources.metadata import SourceMetadataStore
 from src.sources.schemas import SourceMetadata, SourceStatus, SyncSourceOutput
@@ -57,14 +57,14 @@ def mock_metadata_store(mocker: MockerFixture) -> SourceMetadataStore:
 
 
 @pytest.fixture
-def mock_extractor_service(mocker: MockerFixture) -> ExtractorService:
-    return mocker.Mock(spec=ExtractorService)
+def mock_connector_service(mocker: MockerFixture) -> ConnectorService:
+    return mocker.Mock(spec=ConnectorService)
 
 
 @pytest.fixture
-def sample_extractor_config() -> ExtractorConfig:
+def sample_connector_config() -> ConnectorConfig:
     return SitemapConfig(
-        type=ExtractorType.SITEMAP,
+        type=ConnectorType.SITEMAP,
         sitemap_url="https://example.com/sitemap.xml",
     )
 
@@ -101,12 +101,12 @@ def patch_extract_documents(mocker: MockerFixture):
     async def _extract_docs(
         source_sync_service: SourceSyncService, documents: list[Document]
     ):
-        async def _doc_generator(_: ExtractorConfig) -> AsyncIterator[Document]:
+        async def _doc_generator(_: ConnectorConfig) -> AsyncIterator[Document]:
             for doc in documents:
                 yield doc
 
         mocker.patch.object(
-            source_sync_service.extractor_service,
+            source_sync_service.connector_service,
             "extract_documents",
             side_effect=_doc_generator,
         )
@@ -121,7 +121,7 @@ def source_sync_service(
     mock_openai_client: OpenAI,
     mock_document_store: RedisDocumentStore,
     mock_metadata_store: SourceMetadataStore,
-    mock_extractor_service: ExtractorService,
+    mock_connector_service: ConnectorService,
     mocker: MockerFixture,
 ) -> SourceSyncService:
     # Mock the OpenAI client creation
@@ -136,10 +136,10 @@ def source_sync_service(
         return_value=mock_document_store,
     )
 
-    # Mock ExtractorService creation
+    # Mock ConnectorService creation
     mocker.patch(
-        "src.sources.sync.ExtractorService",
-        return_value=mock_extractor_service,
+        "src.sources.sync.ConnectorService",
+        return_value=mock_connector_service,
     )
 
     # Mock SourceMetadataStore creation
@@ -151,8 +151,8 @@ def source_sync_service(
     return SourceSyncService(
         redis_client=mock_redis_client,
         source_name="test-source",
-        extractor_config=SitemapConfig(
-            type=ExtractorType.SITEMAP,
+        connector_config=SitemapConfig(
+            type=ConnectorType.SITEMAP,
             sitemap_url="https://example.com/sitemap.xml",
         ),
         settings=mock_settings,
@@ -187,7 +187,7 @@ async def test_sync_documents_success(
         name="test-source",
         description="Test description",
         status=SourceStatus.COMPLETED,
-        extractor=source_sync_service.extractor_config,
+        connector=source_sync_service.connector_config,
         num_docs=3,
         created_at=mock_current_datetime,
         updated_at=mock_current_datetime,
@@ -216,7 +216,7 @@ async def test_sync_documents_success(
         description=None,
         status=SourceStatus.COMPLETED,
         num_docs=3,
-        extractor=None,
+        connector=None,
         timestamp=mock_current_datetime,
     )
 
@@ -253,7 +253,7 @@ async def test_sync_documents_with_existing_docs(
         name="test-source",
         description="Test description",
         status=SourceStatus.COMPLETED,
-        extractor=source_sync_service.extractor_config,
+        connector=source_sync_service.connector_config,
         num_docs=3,
         created_at=mock_current_datetime,
         updated_at=mock_current_datetime,
@@ -309,7 +309,7 @@ async def test_sync_documents_with_stale_docs(
         name="test-source",
         description="Test description",
         status=SourceStatus.COMPLETED,
-        extractor=source_sync_service.extractor_config,
+        connector=source_sync_service.connector_config,
         num_docs=3,
         created_at=mock_current_datetime,
         updated_at=mock_current_datetime,
@@ -353,7 +353,7 @@ async def test_sync_documents_failure_handling(
     mock_extract = AsyncMock()
     mock_extract.__aiter__.side_effect = Exception("Extraction failed")
     mocker.patch.object(
-        source_sync_service.extractor_service,
+        source_sync_service.connector_service,
         "extract_documents",
         return_value=mock_extract,
     )
@@ -364,7 +364,7 @@ async def test_sync_documents_failure_handling(
         name="test-source",
         description="Test description",
         status=SourceStatus.FAILED,
-        extractor=source_sync_service.extractor_config,
+        connector=source_sync_service.connector_config,
         num_docs=0,
         created_at=mock_current_datetime,
         updated_at=mock_current_datetime,
@@ -384,7 +384,7 @@ async def test_sync_documents_failure_handling(
         description=None,
         status=SourceStatus.FAILED,
         num_docs=None,
-        extractor=None,
+        connector=None,
         timestamp=mock_current_datetime,
     )
 
