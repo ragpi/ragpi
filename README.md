@@ -12,8 +12,6 @@ Ragpi is an AI assistant that allows users to chat with an LLM that references t
 - **Full-Featured Stack**: Built with FastAPI, Celery, and Redis Stack
 - **Simple Integration**: Easy-to-use REST API with basic OpenTelemetry observability support
 
----
-
 ## Providers
 
 Ragpi integrates with the following providers:
@@ -34,8 +32,6 @@ Configure providers using environment variables:
 CHAT_PROVIDER=openai|ollama
 EMBEDDING_PROVIDER=openai|ollama
 ```
-
----
 
 ## Connectors
 
@@ -63,8 +59,6 @@ Ragpi uses a flexible connector-based architecture to extract and process docume
   - Supports branch/ref selection
   - Processes multiple README files as needed
 
----
-
 ## Technical Components
 
 ### Core Services
@@ -88,8 +82,6 @@ Ragpi uses a flexible connector-based architecture to extract and process docume
   - Persistent storage for source metadata and task states
   - Can be deployed as managed service or self-hosted
   - Required for all deployment configurations
-
----
 
 ## Basic Usage
 
@@ -139,8 +131,6 @@ Ragpi provides a RESTful API for interacting with its features. Key endpoints in
        ]
      }
      ```
-
----
 
 ## Deployment
 
@@ -232,8 +222,6 @@ For users looking to simplify their deployment by avoiding the need to deploy Ce
 
 Supports deployment on Kubernetes or other container orchestration platforms. Configure components independently based on your infrastructure needs.
 
----
-
 ## Environment Variables
 
 ### Core Configuration
@@ -312,5 +300,3 @@ The default value for `BASE_SYSTEM_PROMPT` is:
 ```
 You are an AI assistant specialized in retrieving and synthesizing technical information to provide accurate and relevant answers to queries.
 ```
-
----
