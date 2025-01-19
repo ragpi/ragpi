@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     DEFAULT_CHAT_MODEL: str = "gpt-4o-mini"
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     EMBEDDING_DIMENSIONS: int = 1536
-    BASE_SYSTEM_PROMPT: str = "You are an AI assistant designed to retrieve and synthesize information from various sources to help users answer their queries."
+    BASE_SYSTEM_PROMPT: str = "You are an AI assistant specialized in retrieving and synthesizing technical information to provide accurate and relevant answers to queries."
 
     # Chat Settings
     CHAT_HISTORY_LIMIT: int = 20
