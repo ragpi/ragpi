@@ -63,7 +63,7 @@ class GitHubIssuesFetcher:
         state: str = "all",
         include_labels: list[str] | None = None,
         exclude_labels: list[str] | None = None,
-        max_age: int | None = None,
+        issue_age_limit: int | None = None,
     ) -> AsyncGenerator[GithubIssue, None]:
         logger.info(f"Fetching issues from repo: {repo_owner}/{repo_name}")
 
@@ -76,8 +76,10 @@ class GitHubIssuesFetcher:
             "direction": "desc",
         }
 
-        if max_age:
-            cutoff_datetime = datetime.now(timezone.utc) - timedelta(days=max_age)
+        if issue_age_limit:
+            cutoff_datetime = datetime.now(timezone.utc) - timedelta(
+                days=issue_age_limit
+            )
             cutoff_str = cutoff_datetime.strftime("%Y-%m-%d")
             assert params is not None, "params should not be None"
             params["since"] = cutoff_str

@@ -30,7 +30,7 @@ class GithubIssuesConnector(BaseConnector):
                 state=self.config.state,
                 include_labels=self.config.include_labels,
                 exclude_labels=self.config.exclude_labels,
-                max_age=self.config.max_age,
+                issue_age_limit=self.config.issue_age_limit,
             ):
                 chunks = chunk_github_issue(
                     issue=issue,

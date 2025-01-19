@@ -11,4 +11,4 @@ class GithubIssuesConfig(BaseConnectorConfig):
     state: Literal["all", "open", "closed"] = "all"
     include_labels: list[str] | None = None
     exclude_labels: list[str] | None = None
-    max_age: int | None = None  # Days
+    issue_age_limit: int | None = None  # Days
