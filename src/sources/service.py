@@ -11,9 +11,9 @@ from src.lock.service import LockService
 from src.sources.metadata import SourceMetadataStore
 from src.sources.schemas import (
     CreateSourceRequest,
+    MetadataUpdate,
     SearchSourceInput,
     SourceMetadata,
-    SourceStatus,
     SourceTask,
     UpdateSourceRequest,
 )
@@ -41,12 +41,11 @@ class SourceService:
 
         timestamp = get_current_datetime()
 
-        created_source = self.metadata_store.create_metadata(
+        self.metadata_store.create_metadata(
+            id=str(uuid4()),
             source_name=source_input.name,
             description=source_input.description,
-            status=SourceStatus.PENDING,
             connector=source_input.connector,
-            id=str(uuid4()),
             created_at=timestamp,
             updated_at=timestamp,
         )
@@ -58,9 +57,17 @@ class SourceService:
             connector_config_dict=connector_config_dict,
         )
 
+        source_metadata = self.metadata_store.update_metadata(
+            name=source_input.name,
+            updates=MetadataUpdate(
+                last_task_id=task.id,
+            ),
+            timestamp=timestamp,
+        )
+
         return SourceTask(
             task_id=task.id,
-            source=created_source,
+            source=source_metadata,
             message="Source created. Syncing documents...",
         )
 
@@ -81,7 +88,6 @@ class SourceService:
         if self.lock_service.lock_exists(source_name):
             raise ResourceLockedException(ResourceType.SOURCE, source_name)
 
-        status = SourceStatus.PENDING if source_input and source_input.sync else None
         description = (
             source_input.description
             if source_input and source_input.description
@@ -91,30 +97,39 @@ class SourceService:
             source_input.connector if source_input and source_input.connector else None
         )
 
-        updated_source = self.metadata_store.update_metadata(
-            name=source_name,
-            description=description,
-            status=status,
-            num_docs=None,
-            connector=connector_config,
-            timestamp=get_current_datetime(),
-        )
+        task_id = None
 
         if source_input and source_input.sync:
-            connector_config_dict = updated_source.connector.model_dump()
-            task_id = sync_source_documents_task.delay(
+            current_metadata = self.metadata_store.get_metadata(source_name)
+
+            connector_config_dict = (
+                connector_config or current_metadata.connector
+            ).model_dump()
+
+            task = sync_source_documents_task.delay(
                 source_name=source_name,
                 connector_config_dict=connector_config_dict,
             )
+            task_id = task.id
 
-            return SourceTask(
-                task_id=task_id.id,
-                source=updated_source,
-                message="Source updated. Syncing documents...",
-            )
+        updated_source = self.metadata_store.update_metadata(
+            name=source_name,
+            updates=MetadataUpdate(
+                description=description,
+                last_task_id=task_id,
+                connector=connector_config,
+            ),
+            timestamp=get_current_datetime(),
+        )
+
+        message = (
+            "Source updated. Syncing documents..." if task_id else "Source updated."
+        )
 
         return SourceTask(
-            task_id=None, source=updated_source, message="Source updated."
+            task_id=task_id,
+            source=updated_source,
+            message=message,
         )
 
     def delete_source(self, source_name: str):

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     API_SUMMARY: str = "Ragpi is an AI assistant designed to retrieve and synthesize information from various sources to help users answer their queries."
     API_KEYS: list[str] | None = None
     WORKERS_ENABLED: bool = True
+    TASK_RETENTION_DAYS: int = 7
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     USER_AGENT: str = "Ragpi"
     MAX_CONCURRENT_REQUESTS: int = 10

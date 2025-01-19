@@ -2,13 +2,17 @@ import pytest
 from pytest_mock import MockerFixture
 from typing import Any
 
-from src.common.exceptions import ResourceAlreadyExistsException, ResourceType
+from src.common.exceptions import (
+    ResourceAlreadyExistsException,
+    ResourceNotFoundException,
+    ResourceType,
+)
 from src.common.redis import RedisClient
 from src.document_store.base import DocumentStoreService
 from src.connectors.connector_type import ConnectorType
 from src.connectors.sitemap.config import SitemapConfig
 from src.sources.metadata import SourceMetadataStore
-from src.sources.schemas import SourceMetadata, SourceStatus
+from src.sources.schemas import SourceMetadata, MetadataUpdate
 
 
 @pytest.fixture
@@ -46,8 +50,8 @@ def sample_metadata_dict(
         "id": "test-id",
         "name": "test-source",
         "description": "Test description",
-        "status": SourceStatus.PENDING,
         "num_docs": 0,
+        "last_task_id": "",
         "connector": sample_connector_config.model_dump_json(),
         "created_at": "2024-01-01T12:00:00",
         "updated_at": "2024-01-01T12:00:00",
@@ -95,25 +99,37 @@ def test_create_metadata_success(
     result = metadata_store.create_metadata(
         source_name="test-source",
         description="Test description",
-        status=SourceStatus.PENDING,
         connector=sample_connector_config,
         id="test-id",
         created_at="2024-01-01T12:00:00",
         updated_at="2024-01-01T12:00:00",
     )
 
+    expected_mapping: dict[str, Any] = {
+        "id": "test-id",
+        "name": "test-source",
+        "description": "Test description",
+        "num_docs": 0,
+        "last_task_id": "",
+        "connector": sample_connector_config.model_dump_json(),
+        "created_at": "2024-01-01T12:00:00",
+        "updated_at": "2024-01-01T12:00:00",
+    }
+
     mock_redis_client_hset.assert_called_once_with(
         "metadata:test-source",
-        mapping=sample_metadata_dict,
+        mapping=expected_mapping,
     )
 
     assert isinstance(result, SourceMetadata)
     assert result.id == "test-id"
     assert result.name == "test-source"
     assert result.description == "Test description"
-    assert result.status == SourceStatus.PENDING
+    assert result.last_task_id == ""
     assert result.connector == sample_connector_config
     assert result.num_docs == 0
+    assert result.created_at == "2024-01-01T12:00:00"
+    assert result.updated_at == "2024-01-01T12:00:00"
 
 
 def test_create_metadata_already_exists(
@@ -127,7 +143,6 @@ def test_create_metadata_already_exists(
         metadata_store.create_metadata(
             source_name="test-source",
             description="Test description",
-            status=SourceStatus.PENDING,
             connector=sample_connector_config,
             id="test-id",
             created_at="2024-01-01T12:00:00",
@@ -154,8 +169,23 @@ def test_get_metadata_success(
     assert result.id == sample_metadata_dict["id"]
     assert result.name == sample_metadata_dict["name"]
     assert result.description == sample_metadata_dict["description"]
-    assert result.status == SourceStatus.PENDING
+    assert result.last_task_id == ""
     assert result.num_docs == 0
+    assert result.created_at == sample_metadata_dict["created_at"]
+    assert result.updated_at == sample_metadata_dict["updated_at"]
+
+
+def test_get_metadata_not_found(
+    metadata_store: SourceMetadataStore,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch.object(metadata_store.client, "exists", return_value=False)
+
+    with pytest.raises(ResourceNotFoundException) as exc:
+        metadata_store.get_metadata("test-source")
+
+    assert exc.value.resource_type == ResourceType.SOURCE
+    assert exc.value.identifier == "test-source"
 
 
 def test_delete_metadata_success(
@@ -176,14 +206,12 @@ def test_list_metadata_success(
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
-    # Mock self.client.keys
     mocker.patch.object(
         metadata_store.client,
         "keys",
         return_value=["metadata:source1", "metadata:source2"],
     )
 
-    # Mock calls in self.get_metadata
     mocker.patch.object(metadata_store.client, "exists", return_value=True)
     mock_hgetall = mocker.patch.object(
         metadata_store.client, "hgetall", return_value=sample_metadata_dict
@@ -195,6 +223,7 @@ def test_list_metadata_success(
     assert all(isinstance(metadata, SourceMetadata) for metadata in result)
     assert mock_hgetall.call_count == 2
     assert result[0].name == "test-source"
+    assert result[0].last_task_id == ""
 
 
 def test_update_metadata_success(
@@ -203,7 +232,6 @@ def test_update_metadata_success(
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
-    # Mock calls in self.get_metadata
     mocker.patch.object(metadata_store.client, "exists", return_value=True)
     mocker.patch.object(
         metadata_store.client, "hgetall", return_value=sample_metadata_dict
@@ -211,12 +239,16 @@ def test_update_metadata_success(
 
     mock_hset = mocker.patch.object(metadata_store.client, "hset")
 
-    result = metadata_store.update_metadata(
-        name="test-source",
+    updates = MetadataUpdate(
         description="Updated description",
-        status=SourceStatus.COMPLETED,
+        last_task_id="task-123",
         num_docs=10,
         connector=sample_connector_config,
+    )
+
+    result = metadata_store.update_metadata(
+        name="test-source",
+        updates=updates,
         timestamp="2024-01-01T13:00:00",
     )
 
@@ -225,7 +257,7 @@ def test_update_metadata_success(
         "metadata:test-source",
         mapping={
             "description": "Updated description",
-            "status": SourceStatus.COMPLETED,
+            "last_task_id": "task-123",
             "num_docs": 10,
             "connector": sample_connector_config.model_dump_json(),
             "updated_at": "2024-01-01T13:00:00",
