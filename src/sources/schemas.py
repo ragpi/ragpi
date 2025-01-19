@@ -15,6 +15,13 @@ class SourceMetadata(BaseModel):
     connector: ConnectorConfig
 
 
+class MetadataUpdate(BaseModel):
+    description: str | None = None
+    last_task_id: str | None = None
+    num_docs: int | None = None
+    connector: ConnectorConfig | None = None
+
+
 class CreateSourceRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     description: str

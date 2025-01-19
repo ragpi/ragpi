@@ -9,7 +9,7 @@ from src.sources.exceptions import SyncSourceException
 from src.common.schemas import Document
 from src.connectors.registry import ConnectorConfig
 from src.sources.metadata import SourceMetadataStore
-from src.sources.schemas import SyncSourceOutput
+from src.sources.schemas import MetadataUpdate, SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
 
 logger = logging.getLogger(__name__)
@@ -57,16 +57,6 @@ class SourceSyncService:
         added_doc_ids: set[str] = set()
 
         try:
-            # Mark source as SYNCING
-            self.metadata_store.update_metadata(
-                name=self.source_name,
-                description=None,
-                last_task_id=None,
-                num_docs=len(existing_doc_ids),
-                connector=None,
-                timestamp=get_current_datetime(),
-            )
-
             # Extract and sync documents
             async for doc in self.connector_service.extract_documents(
                 self.connector_config
@@ -98,10 +88,9 @@ class SourceSyncService:
             # Mark source as COMPLETED
             updated_source = self.metadata_store.update_metadata(
                 name=self.source_name,
-                description=None,
-                last_task_id=None,
-                num_docs=len(current_doc_ids),
-                connector=None,
+                updates=MetadataUpdate(
+                    num_docs=len(current_doc_ids),
+                ),
                 timestamp=get_current_datetime(),
             )
 
@@ -112,14 +101,7 @@ class SourceSyncService:
             )
 
         except Exception as e:
-            self.metadata_store.update_metadata(
-                name=self.source_name,
-                description=None,
-                last_task_id=None,
-                num_docs=None,
-                connector=None,
-                timestamp=get_current_datetime(),
-            )
+            logger.exception(f"Failed to sync documents for source {self.source_name}")
             raise e
 
     def _add_documents_batch(
@@ -131,10 +113,9 @@ class SourceSyncService:
 
             self.metadata_store.update_metadata(
                 name=self.source_name,
-                description=None,
-                last_task_id=None,
-                num_docs=current_doc_count,
-                connector=None,
+                updates=MetadataUpdate(
+                    num_docs=current_doc_count,
+                ),
                 timestamp=get_current_datetime(),
             )
 
@@ -160,10 +141,9 @@ class SourceSyncService:
 
             self.metadata_store.update_metadata(
                 name=self.source_name,
-                description=None,
-                last_task_id=None,
-                num_docs=current_doc_count,
-                connector=None,
+                updates=MetadataUpdate(
+                    num_docs=current_doc_count,
+                ),
                 timestamp=get_current_datetime(),
             )
 

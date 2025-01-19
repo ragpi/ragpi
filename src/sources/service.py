@@ -11,6 +11,7 @@ from src.lock.service import LockService
 from src.sources.metadata import SourceMetadataStore
 from src.sources.schemas import (
     CreateSourceRequest,
+    MetadataUpdate,
     SearchSourceInput,
     SourceMetadata,
     SourceTask,
@@ -58,10 +59,9 @@ class SourceService:
 
         source_metadata = self.metadata_store.update_metadata(
             name=source_input.name,
-            description=None,
-            last_task_id=task.id,
-            num_docs=None,
-            connector=None,
+            updates=MetadataUpdate(
+                last_task_id=task.id,
+            ),
             timestamp=timestamp,
         )
 
@@ -114,11 +114,12 @@ class SourceService:
 
         updated_source = self.metadata_store.update_metadata(
             name=source_name,
-            description=description,
-            num_docs=None,
-            connector=connector_config,
+            updates=MetadataUpdate(
+                description=description,
+                last_task_id=task_id,
+                connector=connector_config,
+            ),
             timestamp=get_current_datetime(),
-            last_task_id=task_id,
         )
 
         message = (

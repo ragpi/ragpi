@@ -10,7 +10,7 @@ from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceType,
 )
-from src.sources.schemas import SourceMetadata
+from src.sources.schemas import MetadataUpdate, SourceMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -118,27 +118,24 @@ class SourceMetadataStore:
     def update_metadata(
         self,
         name: str,
-        description: str | None,
-        last_task_id: str | None,
-        num_docs: int | None,
-        connector: ConnectorConfig | None,
+        updates: MetadataUpdate,
         timestamp: str,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(name)
 
         update_mapping: dict[str, Any] = {"updated_at": timestamp}
 
-        if description is not None:
-            update_mapping["description"] = description
+        if updates.description is not None:
+            update_mapping["description"] = updates.description
 
-        if last_task_id is not None:
-            update_mapping["last_task_id"] = last_task_id
+        if updates.last_task_id is not None:
+            update_mapping["last_task_id"] = updates.last_task_id
 
-        if num_docs is not None:
-            update_mapping["num_docs"] = num_docs
+        if updates.num_docs is not None:
+            update_mapping["num_docs"] = updates.num_docs
 
-        if connector is not None:
-            connector_config_json = self._serialize_connector_config(connector)
+        if updates.connector is not None:
+            connector_config_json = self._serialize_connector_config(updates.connector)
             update_mapping["connector"] = connector_config_json
 
         self.client.hset(metadata_key, mapping=update_mapping)  # type: ignore
