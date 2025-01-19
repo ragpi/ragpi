@@ -2,7 +2,6 @@ import time
 from typing import Any
 import pytest
 from fastapi.testclient import TestClient
-from src.sources.schemas import SourceStatus
 from tests.integration.utils import wait_for_task_status
 
 
@@ -27,7 +26,6 @@ class TestSource:
         response = test_client.post("/sources", json=source_data)
         assert response.status_code == 202
         data = response.json()
-        assert data["source"]["status"] == SourceStatus.PENDING
         assert "task_id" in data
 
         task_result = wait_for_task_status(test_client, data["task_id"], "SUCCESS")
@@ -37,7 +35,6 @@ class TestSource:
         response = test_client.get(f"/sources/{source_data['name']}")
         assert response.status_code == 200
         source = response.json()
-        assert source["status"] == SourceStatus.COMPLETED
         assert source["name"] == source_data["name"]
         assert source["description"] == source_data["description"]
 

@@ -15,7 +15,7 @@ from src.connectors.connector_type import ConnectorType
 from src.connectors.registry import ConnectorConfig
 from src.connectors.sitemap.config import SitemapConfig
 from src.sources.metadata import SourceMetadataStore
-from src.sources.schemas import SourceMetadata, SourceStatus, SyncSourceOutput
+from src.sources.schemas import MetadataUpdate, SourceMetadata, SyncSourceOutput
 from src.sources.sync import SourceSyncService
 
 
@@ -186,7 +186,7 @@ async def test_sync_documents_success(
         id="test-id",
         name="test-source",
         description="Test description",
-        status=SourceStatus.COMPLETED,
+        last_task_id="test-task-id",
         connector=source_sync_service.connector_config,
         num_docs=3,
         created_at=mock_current_datetime,
@@ -210,13 +210,11 @@ async def test_sync_documents_success(
     assert result.docs_removed == 0
 
     # Verify metadata updates
-    assert mock_update_metadata.call_count == 2
     mock_update_metadata.assert_called_with(
         name="test-source",
-        description=None,
-        status=SourceStatus.COMPLETED,
-        num_docs=3,
-        connector=None,
+        updates=MetadataUpdate(
+            num_docs=3,
+        ),
         timestamp=mock_current_datetime,
     )
 
@@ -252,7 +250,7 @@ async def test_sync_documents_with_existing_docs(
         id="test-id",
         name="test-source",
         description="Test description",
-        status=SourceStatus.COMPLETED,
+        last_task_id="test-task-id",
         connector=source_sync_service.connector_config,
         num_docs=3,
         created_at=mock_current_datetime,
@@ -308,7 +306,7 @@ async def test_sync_documents_with_stale_docs(
         id="test-id",
         name="test-source",
         description="Test description",
-        status=SourceStatus.COMPLETED,
+        last_task_id="test-task-id",
         connector=source_sync_service.connector_config,
         num_docs=3,
         created_at=mock_current_datetime,
@@ -358,35 +356,10 @@ async def test_sync_documents_failure_handling(
         return_value=mock_extract,
     )
 
-    # Mock metadata updates
-    mock_metadata = SourceMetadata(
-        id="test-id",
-        name="test-source",
-        description="Test description",
-        status=SourceStatus.FAILED,
-        connector=source_sync_service.connector_config,
-        num_docs=0,
-        created_at=mock_current_datetime,
-        updated_at=mock_current_datetime,
-    )
-    mock_update_metadata = mocker.patch.object(
-        source_sync_service.metadata_store,
-        "update_metadata",
-        return_value=mock_metadata,
-    )
-
     with pytest.raises(Exception) as exc:
         await source_sync_service.sync_documents()
 
     assert str(exc.value) == "Extraction failed"
-    mock_update_metadata.assert_called_with(
-        name="test-source",
-        description=None,
-        status=SourceStatus.FAILED,
-        num_docs=None,
-        connector=None,
-        timestamp=mock_current_datetime,
-    )
 
 
 async def test_add_documents_batch_failure(

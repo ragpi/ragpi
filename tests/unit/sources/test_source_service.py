@@ -13,9 +13,9 @@ from src.connectors.connector_type import ConnectorType
 from src.connectors.sitemap.config import SitemapConfig
 from src.sources.schemas import (
     CreateSourceRequest,
+    MetadataUpdate,
     SearchSourceInput,
     SourceMetadata,
-    SourceStatus,
     SourceTask,
     UpdateSourceRequest,
 )
@@ -64,7 +64,7 @@ def sample_source_metadata() -> SourceMetadata:
         id="test-id",
         name="test-source",
         description="Test source description",
-        status=SourceStatus.PENDING,
+        last_task_id="test-task-id",
         connector=SitemapConfig(
             type=ConnectorType.SITEMAP,
             sitemap_url="https://example.com/sitemap.xml",
@@ -133,6 +133,11 @@ async def test_create_source_success(
         "create_metadata",
         return_value=sample_source_metadata,
     )
+    mock_update_metadata = mocker.patch.object(
+        source_service.metadata_store,
+        "update_metadata",
+        return_value=sample_source_metadata,
+    )
 
     result = source_service.create_source(sample_create_request)
 
@@ -142,13 +147,20 @@ async def test_create_source_success(
     assert result.message == "Source created. Syncing documents..."
 
     mock_create_metadata.assert_called_once_with(
+        id=str(mock_uuid),
         source_name=sample_create_request.name,
         description=sample_create_request.description,
-        status=SourceStatus.PENDING,
         connector=sample_create_request.connector,
-        id=str(mock_uuid),
         created_at=mock_current_datetime,
         updated_at=mock_current_datetime,
+    )
+
+    mock_update_metadata.assert_called_once_with(
+        name="test-source",
+        updates=MetadataUpdate(
+            last_task_id="task-id",
+        ),
+        timestamp=mock_current_datetime,
     )
 
 
@@ -253,10 +265,11 @@ async def test_update_source_success(
 
     mock_update_metadata.assert_called_once_with(
         name="test-source",
-        description=sample_update_request.description,
-        status=SourceStatus.PENDING,
-        num_docs=None,
-        connector=sample_update_request.connector,
+        updates=MetadataUpdate(
+            description=sample_update_request.description,
+            last_task_id="task-id",
+            connector=sample_update_request.connector,
+        ),
         timestamp=mock_current_datetime,
     )
 
@@ -327,10 +340,10 @@ async def test_update_source_no_sync(
 
     mock_update_metadata.assert_called_once_with(
         name="test-source",
-        description="Updated description without sync",
-        status=None,
-        num_docs=None,
-        connector=request_no_sync.connector,
+        updates=MetadataUpdate(
+            description="Updated description without sync",
+            connector=request_no_sync.connector,
+        ),
         timestamp=mock_current_datetime,
     )
 
@@ -359,7 +372,12 @@ async def test_update_source_no_description_no_config(
     mocker.patch.object(
         source_service.metadata_store, "metadata_exists", return_value=True
     )
-    mock_update_metadata = mocker.patch.object(
+    mocker.patch.object(
+        source_service.metadata_store,
+        "get_metadata",
+        return_value=sample_source_metadata,
+    )
+    mocker.patch.object(
         source_service.metadata_store,
         "update_metadata",
         return_value=sample_source_metadata,
@@ -380,14 +398,6 @@ async def test_update_source_no_description_no_config(
     assert result.source == sample_source_metadata
     assert result.message == "Source updated. Syncing documents..."
 
-    mock_update_metadata.assert_called_once_with(
-        name="test-source",
-        description=None,
-        status=SourceStatus.PENDING,
-        num_docs=None,
-        connector=None,
-        timestamp=mock_current_datetime,
-    )
     mock_sync_task.assert_called_once_with(
         source_name="test-source",
         connector_config_dict=sample_source_metadata.connector.model_dump(),
