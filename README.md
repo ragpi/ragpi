@@ -2,8 +2,6 @@
 
 Ragpi is an AI assistant that allows users to chat with an LLM that references technical sources such as documentation websites, GitHub Issues, and repository README files. By retrieving and processing information from these sources, Ragpi provides responses grounded in relevant content. With a simple API, it integrates seamlessly into a wide range of workflows, making it easy to chat with an AI that references the right technical information.
 
----
-
 ## Features
 
 - **Smart Information Retrieval**: Combines semantic search and keyword-based search to find the most relevant documents
