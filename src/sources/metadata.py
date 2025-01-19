@@ -10,7 +10,7 @@ from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceType,
 )
-from src.sources.schemas import SourceMetadata, SourceStatus
+from src.sources.schemas import SourceMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +60,10 @@ class SourceMetadataStore:
 
     def create_metadata(
         self,
+        id: str,
         source_name: str,
         description: str,
-        status: SourceStatus,
         connector: ConnectorConfig,
-        id: str,
         created_at: str,
         updated_at: str,
     ) -> SourceMetadata:
@@ -78,9 +77,9 @@ class SourceMetadataStore:
                 "id": id,
                 "name": source_name,
                 "description": description,
-                "status": status,
                 "num_docs": 0,
                 "connector": connector_config_json,
+                "last_task_id": "",
                 "created_at": created_at,
                 "updated_at": updated_at,
             },
@@ -92,13 +91,12 @@ class SourceMetadataStore:
         metadata_key = self._get_metadata_key(source_name)
         metadata = self.client.hgetall(metadata_key)
         connector_config = self._deserialize_connector_config(metadata["connector"])
-        status = SourceStatus(metadata["status"])
 
         return SourceMetadata(
             id=metadata["id"],
             name=metadata["name"],
             description=metadata["description"],
-            status=status,
+            last_task_id=metadata["last_task_id"],
             num_docs=int(metadata["num_docs"]),
             created_at=metadata["created_at"],
             updated_at=metadata["updated_at"],
@@ -121,7 +119,7 @@ class SourceMetadataStore:
         self,
         name: str,
         description: str | None,
-        status: SourceStatus | None,
+        last_task_id: str | None,
         num_docs: int | None,
         connector: ConnectorConfig | None,
         timestamp: str,
@@ -133,8 +131,8 @@ class SourceMetadataStore:
         if description is not None:
             update_mapping["description"] = description
 
-        if status is not None:
-            update_mapping["status"] = status
+        if last_task_id is not None:
+            update_mapping["last_task_id"] = last_task_id
 
         if num_docs is not None:
             update_mapping["num_docs"] = num_docs

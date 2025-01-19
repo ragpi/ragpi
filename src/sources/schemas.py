@@ -1,23 +1,15 @@
-from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 import re
 
 from src.connectors.registry import ConnectorConfig
 
 
-class SourceStatus(str, Enum):
-    PENDING = "pending"
-    SYNCING = "syncing"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-
 class SourceMetadata(BaseModel):
     id: str
     name: str
     description: str
-    status: SourceStatus
     num_docs: int
+    last_task_id: str
     created_at: str
     updated_at: str
     connector: ConnectorConfig

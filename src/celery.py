@@ -1,3 +1,4 @@
+from datetime import timedelta
 import logging
 from typing import Any
 from celery import Celery, signals
@@ -16,6 +17,7 @@ celery_app = Celery(
     backend=redis_url,
     broker_connection_retry_on_startup=True,
     include=["src.tasks.sync_source"],
+    result_expires=timedelta(days=settings.TASK_RETENTION_DAYS),
 )
 
 

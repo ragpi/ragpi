@@ -9,7 +9,7 @@ from src.sources.exceptions import SyncSourceException
 from src.common.schemas import Document
 from src.connectors.registry import ConnectorConfig
 from src.sources.metadata import SourceMetadataStore
-from src.sources.schemas import SourceStatus, SyncSourceOutput
+from src.sources.schemas import SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class SourceSyncService:
             self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
-                status=SourceStatus.SYNCING,
+                last_task_id=None,
                 num_docs=len(existing_doc_ids),
                 connector=None,
                 timestamp=get_current_datetime(),
@@ -99,7 +99,7 @@ class SourceSyncService:
             updated_source = self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
-                status=SourceStatus.COMPLETED,
+                last_task_id=None,
                 num_docs=len(current_doc_ids),
                 connector=None,
                 timestamp=get_current_datetime(),
@@ -115,7 +115,7 @@ class SourceSyncService:
             self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
-                status=SourceStatus.FAILED,
+                last_task_id=None,
                 num_docs=None,
                 connector=None,
                 timestamp=get_current_datetime(),
@@ -132,7 +132,7 @@ class SourceSyncService:
             self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
-                status=SourceStatus.SYNCING,
+                last_task_id=None,
                 num_docs=current_doc_count,
                 connector=None,
                 timestamp=get_current_datetime(),
@@ -161,7 +161,7 @@ class SourceSyncService:
             self.metadata_store.update_metadata(
                 name=self.source_name,
                 description=None,
-                status=SourceStatus.SYNCING,
+                last_task_id=None,
                 num_docs=current_doc_count,
                 connector=None,
                 timestamp=get_current_datetime(),
