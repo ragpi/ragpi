@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     MAX_CONCURRENT_REQUESTS: int = 10
 
     # Provider Configuration
-    VECTOR_STORE_PROVIDER: Literal["redis"] = "redis"
     CHAT_PROVIDER: Literal["openai", "ollama"] = "openai"
     EMBEDDING_PROVIDER: Literal["openai", "ollama"] = "openai"
     OLLAMA_BASE_URL: str | None = None
