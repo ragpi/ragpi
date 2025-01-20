@@ -1,16 +1,66 @@
 # Ragpi
 
-Ragpi is an AI assistant that allows users to chat with an LLM that references technical sources such as documentation websites, GitHub Issues, and repository README files. By retrieving and processing information from these sources, Ragpi provides responses grounded in relevant content. With a simple API, it integrates seamlessly into a wide range of workflows, making it easy to chat with an AI that references the right technical information.
+Ragpi is an AI assistant that allows users to chat with an LLM that references knowledge bases created from technical sources such as documentation websites, GitHub Issues, and repository README files. These knowledge bases are stored in a vector store, enabling efficient retrieval of relevant technical content. Using an Agentic RAG approach, Ragpi dynamically retrieves documents from these sources to provide responses grounded in up-to-date information. With a simple API, it integrates seamlessly into a wide range of workflows, making it easy to chat with an AI that references the right sources to provide relevant answers.
 
 ## Features
 
-- **Smart Information Retrieval**: Combines semantic search and keyword-based search to find the most relevant documents
-- **Flexible Data Sources**: Connect to documentation websites, GitHub issues, and repository README files through standardized connectors
-- **AI-Powered Responses**: Generates clear answers from sources using large language models
-- **Full-Featured Stack**: Built with FastAPI, Celery, and Redis Stack
-- **Simple Integration**: Easy-to-use REST API with basic OpenTelemetry observability support
+- **Agentic RAG System** – Dynamically retrieves and processes relevant source documents based on query requirements.
+- **Hybrid Search** – Uses semantic and keyword-based search with Reciprocal Rank Fusion (RRF) for improved document retrieval.
+- **Connector-Based Ingestion** – Supports documentation websites, GitHub issues, and repository README files for building knowledge bases.
+- **AI-Powered Responses** – Generates responses based on retrieved documents using large language models.
+- **API-Based Integration** – Provides a REST API for interacting with the AI assistant and managing source synchronization.
+- **Observability** – Supports basic tracing using OpenTelemetry.
 
-## Providers
+## Basic Usage
+
+### API Endpoints
+
+Ragpi provides a RESTful API for interacting with the AI assistant and managing source synchronization tasks. The following endpoints are available:
+
+- **/sources**: Manage and configure sources with connectors.
+- **/chat**: Interact with the AI assistant using configured sources.
+- **/tasks**: Monitor and manage source synchronization tasks.
+- **/healthcheck**: Check the health status of the application and its dependencies.
+
+### Workflow Example
+
+1. **Set up a Source with a Connector**:
+
+   - Use the `/sources` endpoint to configure a source with your chosen connector.
+   - Each connector type has its own configuration parameters.
+
+   Example using the Sitemap connector:
+
+   ```json
+   {
+     "name": "my-docs",
+     "description": "Documentation website",
+     "connector": {
+       "type": "sitemap",
+       "sitemap_url": "https://docs.example.com/sitemap.xml"
+     }
+   }
+   ```
+
+2. **Monitor Source Synchronization**:
+
+   - After adding a source, documents will be synced automatically. You can monitor the sync process through the `/tasks` endpoint.
+
+3. **Chat with the AI Assistant**:
+
+   - Use the `/chat` endpoint to query the AI assistant using the configured sources.
+   - If no sources are specified in the payload, all available sources will be used.
+   - Example payload:
+     ```json
+     {
+       "sources": ["my-docs"],
+       "messages": [
+         { "role": "user", "content": "What are the deployment options?" }
+       ]
+     }
+     ```
+
+## LLM Providers
 
 Ragpi integrates with the following providers:
 
@@ -31,7 +81,7 @@ CHAT_PROVIDER=openai|ollama
 EMBEDDING_PROVIDER=openai|ollama
 ```
 
-## Connectors
+## Source Connectors
 
 Ragpi uses a flexible connector-based architecture to extract and process documents from various sources. Each connector is designed to handle specific types of data sources and implements common chunking and processing logic.
 
@@ -63,72 +113,22 @@ Ragpi uses a flexible connector-based architecture to extract and process docume
 
 - **API Service**: FastAPI application handling HTTP requests
 
-  - Supports horizontal scaling
   - Configurable through environment variables
-  - Container image: `ragpi/ragpi`
+  - Container image: [ragpi/ragpi](https://hub.docker.com/r/ragpi/ragpi)
 
 - **Task Workers**: Background task processing with Celery
 
   - Handles source synchronization
   - Configurable through environment variables
-  - Container image: `ragpi/ragpi` (with Celery command)
+  - Container image: [ragpi/ragpi](https://hub.docker.com/r/ragpi/ragpi) (with Celery command)
 
 - **Redis Stack**: Provides multiple storage functions:
 
   - Task queue for Celery workers
-  - Vector storage for similarity search
+  - Vector storage for document embeddings
   - Persistent storage for source metadata and task states
   - Can be deployed as managed service or self-hosted
   - Required for all deployment configurations
-
-## Basic Usage
-
-### API Endpoints
-
-Ragpi provides a RESTful API for interacting with its features. Key endpoints include:
-
-- **/sources**: Manage sources (create, update, list, and delete).
-- **/chat**: Interact with the AI assistant using configured sources.
-- **/tasks**: Monitor and manage background tasks.
-- **/healthcheck**: Check the health status of the application and its dependencies.
-
-### Workflow Example
-
-1. **Set up a Source with a Connector**:
-
-   - Use the `/sources` endpoint to configure a source with your chosen connector.
-   - Each connector type has its own configuration parameters.
-
-   Example using the Sitemap connector:
-
-   ```json
-   {
-     "name": "my-docs",
-     "description": "Documentation website",
-     "connector": {
-       "type": "sitemap",
-       "sitemap_url": "https://docs.example.com/sitemap.xml"
-     }
-   }
-   ```
-
-2. **Sync Documents**:
-
-   - After adding a source, documents will be synced automatically. You can monitor the sync process through the `/tasks` endpoint.
-
-3. **Ask Questions**:
-
-   - Use the `/chat` endpoint to query the AI assistant using the configured sources.
-   - If no sources are specified in the payload, all available sources will be used.
-   - Example payload:
-     ```json
-     {
-       "sources": ["my-docs"],
-       "messages": [
-         { "role": "user", "content": "What are the deployment options?" }
-       ]
-     }
-     ```
 
 ## Deployment
 
@@ -186,7 +186,7 @@ For users looking to simplify their deployment by avoiding the need to deploy Ce
 
 2. **Deploy API**:
 
-   - Deploy the API using the `ragpi/ragpi` Docker image.
+   - Deploy the API using the [ragpi/ragpi](https://hub.docker.com/r/ragpi/ragpi) Docker image.
    - Set the `REDIS_URL` environment variable to point to your Redis instance.
    - Ensure the `WORKERS_ENABLED` environment variable is set to `False` in the deployed environment to disable endpoints requiring Celery workers.
    - The deployed API will connect to the Redis instance for all operations.
