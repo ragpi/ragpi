@@ -153,7 +153,7 @@ cp .env.example .env
 Then, run the following command:
 
 ```bash
-docker compose -f docker-compose.prod.yml --profile local-redis up -d
+docker compose -f docker-compose.prod.yml --profile internal-redis up -d
 ```
 
 ### 2. Remote Docker Deployment
@@ -170,7 +170,7 @@ cd ragpi
 Use the production `docker-compose.prod.yml` file:
 
 ```bash
-docker compose -f docker-compose.prod.yml --profile local-redis up -d
+docker compose -f docker-compose.prod.yml --profile internal-redis up -d
 ```
 
 ### 3. API-Only Deployment

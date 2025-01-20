@@ -1,3 +1,4 @@
+# TODO: Create separate compose files for local redis and non-local redis
 services:
   redis:
     container_name: redis
@@ -9,7 +10,7 @@ services:
     environment:
       - REDIS_ARGS=--appendonly yes
     profiles:
-      - local-redis
+      - internal-redis
 
   api:
     container_name: api
