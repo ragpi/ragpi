@@ -19,4 +19,5 @@ def get_chat_service(
         base_system_prompt=settings.BASE_SYSTEM_PROMPT,
         tool_definitions=TOOL_DEFINITIONS,
         chat_history_limit=settings.CHAT_HISTORY_LIMIT,
+        max_iterations=settings.MAX_CHAT_ITERATIONS,
     )

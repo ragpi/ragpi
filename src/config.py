@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Application Configuration
     API_NAME: str = "Ragpi"
-    API_SUMMARY: str = "Ragpi is an AI assistant designed to retrieve and synthesize information from various sources to help users answer their queries."
+    API_SUMMARY: str = "Ragpi is an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
     API_KEYS: list[str] | None = None
     WORKERS_ENABLED: bool = True
     TASK_RETENTION_DAYS: int = 7
@@ -32,11 +32,11 @@ class Settings(BaseSettings):
     DEFAULT_CHAT_MODEL: str = "gpt-4o-mini"
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     EMBEDDING_DIMENSIONS: int = 1536
-    BASE_SYSTEM_PROMPT: str = "You are an AI assistant specialized in retrieving and synthesizing technical information to provide accurate and relevant answers to queries."
+    BASE_SYSTEM_PROMPT: str = "You are an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
 
     # Chat Settings
     CHAT_HISTORY_LIMIT: int = 20
-    MAX_CHAT_ATTEMPTS: int = 5
+    MAX_CHAT_ITERATIONS: int = 5
 
     # Document Processing Configuration
     DOCUMENT_STORE_NAMESPACE: str = "document_store"

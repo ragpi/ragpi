@@ -15,7 +15,7 @@ Ragpi is an AI assistant that allows users to chat with an LLM that references k
 
 ### API Endpoints
 
-Ragpi provides a RESTful API for interacting with the AI assistant and managing source synchronization tasks. The following endpoints are available:
+Ragpi provides a RESTful API for interacting with the AI assistant and managing sources. The following endpoints are available:
 
 - **/sources**: Manage and configure sources with connectors.
 - **/chat**: Interact with the AI assistant using configured sources.
@@ -33,8 +33,8 @@ Ragpi provides a RESTful API for interacting with the AI assistant and managing 
 
    ```json
    {
-     "name": "my-docs",
-     "description": "Documentation website",
+     "name": "example-docs",
+     "description": "Documentation for example project. It contains information about deployment, configuration, and usage.",
      "connector": {
        "type": "sitemap",
        "sitemap_url": "https://docs.example.com/sitemap.xml"
@@ -260,10 +260,10 @@ Supports deployment on Kubernetes or other container orchestration platforms. Co
 
 ### Chat Settings
 
-| Variable             | Description                                | Default |
-| -------------------- | ------------------------------------------ | ------- |
-| `CHAT_HISTORY_LIMIT` | Maximum number of messages in chat history | `20`    |
-| `MAX_CHAT_ATTEMPTS`  | Maximum number of retry attempts for chat  | `5`     |
+| Variable              | Description                                     | Default |
+| --------------------- | ----------------------------------------------- | ------- |
+| `CHAT_HISTORY_LIMIT`  | Maximum number of messages in chat history      | `20`    |
+| `MAX_CHAT_ITERATIONS` | Maximum steps allowed for generating a response | `5`     |
 
 ### Document Processing
 
@@ -296,5 +296,5 @@ Supports deployment on Kubernetes or other container orchestration platforms. Co
 The default value for `BASE_SYSTEM_PROMPT` is:
 
 ```
-You are an AI assistant specialized in retrieving and synthesizing technical information to provide accurate and relevant answers to queries.
+You are an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries.
 ```
