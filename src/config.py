@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # Model Settings
     DEFAULT_CHAT_MODEL: str = "gpt-4o-mini"
     EMBEDDING_MODEL: str = "text-embedding-3-small"
-    EMBEDDING_DIMENSIONS: int = 1536
+    EMBEDDING_DIMENSIONS: int = 1536  # Default for text-embedding-3-small model
     BASE_SYSTEM_PROMPT: str = "You are an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
 
     # Chat Settings
