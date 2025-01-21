@@ -1,15 +1,15 @@
 # Ragpi
 
-Ragpi is an AI assistant that allows users to chat with an LLM that references knowledge bases created from technical sources such as documentation websites, GitHub Issues, and repository README files. These knowledge bases are stored in a vector store, enabling efficient retrieval of relevant technical content. Using an Agentic RAG approach, Ragpi dynamically retrieves documents from these sources to provide responses grounded in up-to-date information. With a simple API, it integrates seamlessly into a wide range of workflows, making it easy to chat with an AI that references the right sources to provide relevant answers.
+Ragpi is an API-first AI assistant that leverages LLMs to search and answer questions using technical sources. It builds knowledge bases from documentation websites, GitHub Issues, and repository README files, storing them in a vector database for efficient retrieval. Using an Agentic RAG approach, it dynamically retrieves relevant documents to answer queries through its REST API.
 
 ## Features
 
-- **Agentic RAG System** – Dynamically retrieves and processes relevant source documents based on query requirements.
-- **Hybrid Search** – Uses semantic and keyword-based search with Reciprocal Rank Fusion (RRF) for improved document retrieval.
-- **Connector-Based Ingestion** – Supports documentation websites, GitHub issues, and repository README files for building knowledge bases.
-- **AI-Powered Responses** – Generates responses based on retrieved documents using large language models.
-- **API-Based Integration** – Provides a REST API for interacting with the AI assistant and managing source synchronization.
-- **Observability** – Supports basic tracing using OpenTelemetry.
+- **API-First Design** - REST API for all functionality
+- **Agentic RAG System** - Dynamic document retrieval based on queries
+- **Hybrid Search** - Combines semantic and keyword search using Reciprocal Rank Fusion (RRF)
+- **Flexible Connectors** - Support for docs, GitHub issues, and READMEs
+- **LLM Integration** - Response generation using selected LLM providers
+- **Observability** - Basic OpenTelemetry tracing support
 
 ## Basic Usage
 
@@ -107,29 +107,6 @@ Ragpi uses a flexible connector-based architecture to extract and process docume
   - Supports branch/ref selection
   - Processes multiple README files as needed
 
-## Technical Components
-
-### Core Services
-
-- **API Service**: FastAPI application handling HTTP requests
-
-  - Configurable through environment variables
-  - Container image: [ragpi/ragpi](https://hub.docker.com/r/ragpi/ragpi)
-
-- **Task Workers**: Background task processing with Celery
-
-  - Handles source synchronization
-  - Configurable through environment variables
-  - Container image: [ragpi/ragpi](https://hub.docker.com/r/ragpi/ragpi) (with Celery command)
-
-- **Redis Stack**: Provides multiple storage functions:
-
-  - Task queue for Celery workers
-  - Vector storage for document embeddings
-  - Persistent storage for source metadata and task states
-  - Can be deployed as managed service or self-hosted
-  - Required for all deployment configurations
-
 ## Deployment
 
 Ragpi supports several deployment options to suit your infrastructure and requirements:
@@ -218,7 +195,9 @@ For users looking to simplify their deployment by avoiding the need to deploy Ce
 
 ### 4. Custom Deployment
 
-Supports deployment on Kubernetes or other container orchestration platforms. Configure components independently based on your infrastructure needs.
+Supports deployment on Kubernetes or other container orchestration platforms using the [ragpi/ragpi](https://hub.docker.com/r/ragpi/ragpi) Docker image. Configure components independently based on your infrastructure needs. The Docker image contains both the API service and worker components, which can be controlled via environment variables.
+
+For reference on how to configure the API and worker services, see the service definitions in `docker-compose.prod.yml` in the repository root.
 
 ## Environment Variables
 
@@ -290,6 +269,8 @@ Supports deployment on Kubernetes or other container orchestration platforms. Co
 | `OTEL_SERVICE_NAME`           | Service name for OpenTelemetry  | `ragpi` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OpenTelemetry exporter endpoint | None    |
 | `OTEL_EXPORTER_OTLP_HEADERS`  | OpenTelemetry exporter headers  | None    |
+
+When enabled, Ragpi provides basic tracing capabilities through OpenTelemetry instrumentation. This includes automatic tracing of FastAPI endpoints and OpenAI/Ollama API calls, with spans exported to the endpoint specified in `OTEL_EXPORTER_OTLP_ENDPOINT`.
 
 ### Default System Prompt
 
