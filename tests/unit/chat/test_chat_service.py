@@ -61,6 +61,7 @@ def chat_service(
         base_system_prompt="You are a helpful assistant.",
         tool_definitions=[],
         chat_history_limit=10,
+        max_iterations=3,
     )
 
 
@@ -74,7 +75,6 @@ def sample_chat_input() -> CreateChatInput:
         ],
         chat_model="test-model",
         sources=["source1", "source2"],
-        max_attempts=3,
     )
 
 
@@ -190,7 +190,7 @@ def test_generate_response_with_tool_calls(
     )
 
 
-def test_generate_response_max_attempts_exceeded(
+def test_generate_response_max_iterations_exceeded(
     chat_service: ChatService,
     mock_openai_client: OpenAI,
     mock_source_service: SourceService,
@@ -246,7 +246,7 @@ def test_generate_response_max_attempts_exceeded(
         response.message
         == "I'm sorry, but I don't have the information you're looking for."
     )
-    assert mock_create_completion.call_count == sample_chat_input.max_attempts
+    assert mock_create_completion.call_count == 3
 
 
 def test_generate_response_model_not_found(
