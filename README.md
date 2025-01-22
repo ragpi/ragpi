@@ -2,6 +2,17 @@
 
 Ragpi is an API-first AI assistant that leverages LLMs to search and answer questions using technical sources. It builds knowledge bases from documentation websites, GitHub Issues, and repository README files, storing them in a vector database for efficient retrieval. Using an Agentic RAG approach, it dynamically retrieves relevant documents to answer queries through its REST API.
 
+📚 [API Reference](https://docs.ragpi.io)
+
+## Table of Contents
+
+- [Features](#features)
+- [Basic Usage](#basic-usage)
+- [LLM Providers](#llm-providers)
+- [Source Connectors](#source-connectors)
+- [Deployment](#deployment)
+- [Environment Variables](#environment-variables)
+
 ## Features
 
 - **API-First Design** - REST API for all functionality
@@ -11,22 +22,11 @@ Ragpi is an API-first AI assistant that leverages LLMs to search and answer ques
 - **LLM Integration** - Response generation using selected LLM providers
 - **Observability** - Basic OpenTelemetry tracing support
 
-## Basic Usage
-
-### API Endpoints
-
-Ragpi provides a RESTful API for interacting with the AI assistant and managing sources. The following endpoints are available:
-
-- **/sources**: Manage and configure sources with connectors.
-- **/chat**: Interact with the AI assistant using configured sources.
-- **/tasks**: Monitor and manage source synchronization tasks.
-- **/healthcheck**: Check the health status of the application and its dependencies.
-
-### Workflow Example
+## Example Workflow
 
 1. **Set up a Source with a Connector**:
 
-   - Use the `/sources` endpoint to configure a source with your chosen connector.
+   - Use the [/sources](https://docs.ragpi.io/#tag/sources/POST/sources) endpoint to configure a source with your chosen connector.
    - Each connector type has its own configuration parameters.
 
    Example using the Sitemap connector:
@@ -44,11 +44,11 @@ Ragpi provides a RESTful API for interacting with the AI assistant and managing 
 
 2. **Monitor Source Synchronization**:
 
-   - After adding a source, documents will be synced automatically. You can monitor the sync process through the `/tasks` endpoint.
+   - After adding a source, documents will be synced automatically. You can monitor the sync process through the [/tasks](https://docs.ragpi.io/#tag/tasks/GET/tasks/{task_id}) endpoint.
 
 3. **Chat with the AI Assistant**:
 
-   - Use the `/chat` endpoint to query the AI assistant using the configured sources.
+   - Use the [/chat](https://docs.ragpi.io/#tag/chat/POST/chat) endpoint to query the AI assistant using the configured sources.
    - If no sources are specified in the payload, all available sources will be used.
    - Example payload:
      ```json
