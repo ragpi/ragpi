@@ -7,7 +7,7 @@ Ragpi is an API-first AI assistant that leverages LLMs to search and answer ques
 ## Table of Contents
 
 - [Features](#features)
-- [Basic Usage](#basic-usage)
+- [Example Workflow](#example-workflow)
 - [LLM Providers](#llm-providers)
 - [Source Connectors](#source-connectors)
 - [Deployment](#deployment)
