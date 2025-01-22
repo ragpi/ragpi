@@ -17,13 +17,13 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      - API_KEYS=${API_KEYS}
+      - API_KEYS=${API_KEYS:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - OTEL_ENABLED=true
-      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
-      - OTEL_EXPORTER_OTLP_HEADERS=${OTEL_EXPORTER_OTLP_HEADERS}
+      - OTEL_ENABLED=${OTEL_ENABLED:-false}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - OTEL_EXPORTER_OTLP_HEADERS=${OTEL_EXPORTER_OTLP_HEADERS:-}
 
   task-worker:
     container_name: task-worker

@@ -152,13 +152,13 @@ docker compose -f docker-compose.prod.yml --profile internal-redis up -d
 
 ### 3. API-Only Deployment
 
-For users looking to simplify their deployment by avoiding the need to deploy Celery workers alongside the API, this option provides a streamlined workflow:
+For users looking to simplify their deployment by avoiding the need to deploy Celery workers alongside the API:
 
 1. **Redis-Stack Server Setup**:
 
    - Use a Redis Stack server instance with data persistence. You can either:
-     - Obtain a managed instance from Redis Cloud, or
-     - Deploy and manage your own Redis stack server instance.
+     - Get a managed instance from [Redis Cloud](https://redis.io/cloud/), or
+       Self-host Redis Stack by following the [official installation guide](https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/)
    - Note down the `REDIS_URL` for connecting to the Redis instance.
 
 2. **Deploy API**:
