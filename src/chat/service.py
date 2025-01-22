@@ -11,7 +11,7 @@ from openai.types.chat import (
 
 from src.chat.exceptions import ChatException
 from src.chat.prompts import get_system_prompt
-from src.chat.schemas import ChatResponse, CreateChatInput
+from src.chat.schemas import ChatResponse, CreateChatRequest
 from src.chat.tools import ToolDefinition
 from src.common.exceptions import (
     KnownException,
@@ -95,7 +95,7 @@ class ChatService:
             role="tool",
         ), documents
 
-    def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
+    def generate_response(self, chat_input: CreateChatRequest) -> ChatResponse:
         """Generate a response based on chat input."""
         try:
             # Initialize chat context

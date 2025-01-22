@@ -10,7 +10,7 @@ from openai.types.chat.chat_completion import Choice
 from openai.types.chat.chat_completion_message_tool_call import Function
 
 from src.chat.service import ChatService
-from src.chat.schemas import ChatMessage, ChatResponse, CreateChatInput
+from src.chat.schemas import ChatMessage, ChatResponse, CreateChatRequest
 from src.common.exceptions import ResourceNotFoundException, ResourceType
 from src.common.schemas import Document
 from src.sources.service import SourceService
@@ -66,8 +66,8 @@ def chat_service(
 
 
 @pytest.fixture
-def sample_chat_input() -> CreateChatInput:
-    return CreateChatInput(
+def sample_chat_input() -> CreateChatRequest:
+    return CreateChatRequest(
         messages=[
             ChatMessage(role="user", content="Hello"),
             ChatMessage(role="assistant", content="Hi there!"),
@@ -81,7 +81,7 @@ def sample_chat_input() -> CreateChatInput:
 def test_generate_response_direct_answer(
     chat_service: ChatService,
     mock_openai_client: OpenAI,
-    sample_chat_input: CreateChatInput,
+    sample_chat_input: CreateChatRequest,
     mocker: MockerFixture,
 ) -> None:
     mock_completion = ChatCompletion(
@@ -117,7 +117,7 @@ def test_generate_response_with_tool_calls(
     chat_service: ChatService,
     mock_openai_client: OpenAI,
     mock_source_service: SourceService,
-    sample_chat_input: CreateChatInput,
+    sample_chat_input: CreateChatRequest,
     sample_documents: list[Document],
     mocker: MockerFixture,
 ) -> None:
@@ -194,7 +194,7 @@ def test_generate_response_max_iterations_exceeded(
     chat_service: ChatService,
     mock_openai_client: OpenAI,
     mock_source_service: SourceService,
-    sample_chat_input: CreateChatInput,
+    sample_chat_input: CreateChatRequest,
     sample_documents: list[Document],
     mocker: MockerFixture,
 ) -> None:
@@ -252,7 +252,7 @@ def test_generate_response_max_iterations_exceeded(
 def test_generate_response_model_not_found(
     chat_service: ChatService,
     mock_openai_client: OpenAI,
-    sample_chat_input: CreateChatInput,
+    sample_chat_input: CreateChatRequest,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(
