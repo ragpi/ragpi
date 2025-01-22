@@ -1,6 +1,6 @@
 # Ragpi
 
-Ragpi is an API-first AI assistant that leverages LLMs to search and answer questions using technical sources. It builds knowledge bases from documentation websites, GitHub Issues, and repository README files, storing them in a vector database for efficient retrieval. Using an Agentic RAG approach, it dynamically retrieves relevant documents to answer queries through its REST API.
+Ragpi is an API-first, open-source AI assistant that leverages LLMs to search and answer questions using technical sources. It builds knowledge bases from documentation websites, GitHub Issues, and repository README files, storing them in a vector database for efficient retrieval. Using an Agentic RAG approach, it dynamically retrieves relevant documents to answer queries through its REST API.
 
 📚 [API Reference](https://docs.ragpi.io)
 
@@ -15,7 +15,7 @@ Ragpi is an API-first AI assistant that leverages LLMs to search and answer ques
 
 ## Features
 
-- **API-First Design** - REST API for all functionality
+- **REST API** - Simple API for interacting with the AI assistant and managing sources
 - **Agentic RAG System** - Dynamic document retrieval based on queries
 - **Hybrid Search** - Combines semantic and keyword search using Reciprocal Rank Fusion (RRF)
 - **Flexible Connectors** - Support for docs, GitHub issues, and READMEs
@@ -53,9 +53,9 @@ Ragpi is an API-first AI assistant that leverages LLMs to search and answer ques
    - Example payload:
      ```json
      {
-       "sources": ["my-docs"],
+       "sources": ["example-docs"],
        "messages": [
-         { "role": "user", "content": "What are the deployment options?" }
+         { "role": "user", "content": "How do I deploy the example project?" }
        ]
      }
      ```
@@ -158,7 +158,7 @@ For users looking to simplify their deployment by avoiding the need to deploy Ce
 
    - Use a Redis Stack server instance with data persistence. You can either:
      - Get a managed instance from [Redis Cloud](https://redis.io/cloud/), or
-       Self-host Redis Stack by following the [official installation guide](https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/)
+     - Self-host Redis Stack by following the [official installation guide](https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/)
    - Note down the `REDIS_URL` for connecting to the Redis instance.
 
 2. **Deploy API**:
@@ -178,9 +178,8 @@ For users looking to simplify their deployment by avoiding the need to deploy Ce
    - Set up the environment variables in a `.env` file:
      ```bash
      cp .env.example .env
-     # Edit the .env file to include the following:
-     REDIS_URL=<your-redis-url>
-     WORKERS_ENABLED=True
+     # Edit the .env file and configure the necessary environment variables,
+     # including setting REDIS_URL to your Redis instance.
      ```
    - Start the local API and workers using Docker Compose:
      ```bash
