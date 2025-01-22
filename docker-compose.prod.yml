@@ -7,19 +7,19 @@ services:
     volumes:
       - redis-data:/data
     environment:
-      - REDIS_ARGS=--appendonly yes --requirepass ${REDIS_PASSWORD}
+      - REDIS_ARGS=--appendonly yes
+    profiles:
+      - internal-redis
 
   api:
     container_name: api
     image: ragpi/ragpi:${API_VERSION:-latest}
     ports:
       - "127.0.0.1:8000:8000"
-    depends_on:
-      - redis
     environment:
       - API_KEYS=${API_KEYS}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - OTEL_ENABLED=true
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
@@ -29,11 +29,9 @@ services:
     container_name: task-worker
     image: ragpi/ragpi:${API_VERSION:-latest}
     command: celery --app=src.celery.celery_app worker --concurrency=2 --max-tasks-per-child=1 --loglevel=INFO
-    depends_on:
-      - redis
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
 
 volumes:

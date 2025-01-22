@@ -191,7 +191,7 @@ async def test_fetch_issues_with_label_filtering(
     assert issues[0].id == "2"
 
 
-async def test_fetch_issues_with_max_age(
+async def test_fetch_issues_with_issue_age_limit(
     github_issue_fetcher: GitHubIssuesFetcher,
     mocker: MockerFixture,
 ) -> None:
@@ -203,7 +203,7 @@ async def test_fetch_issues_with_max_age(
         async for issue in github_issue_fetcher.fetch_issues(
             repo_owner="test",
             repo_name="repo",
-            max_age=30,
+            issue_age_limit=30,
         )
     ]
 

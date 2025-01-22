@@ -11,7 +11,7 @@ from openai.types.chat import (
 
 from src.chat.exceptions import ChatException
 from src.chat.prompts import get_system_prompt
-from src.chat.schemas import ChatResponse, CreateChatInput
+from src.chat.schemas import ChatResponse, CreateChatRequest
 from src.chat.tools import ToolDefinition
 from src.common.exceptions import (
     KnownException,
@@ -32,11 +32,13 @@ class ChatService:
         base_system_prompt: str,
         tool_definitions: list[ToolDefinition],
         chat_history_limit: int,
+        max_iterations: int,
     ):
         self.chat_client = openai_client
         self.source_service = source_service
         self.base_system_prompt = base_system_prompt
         self.chat_history_limit = chat_history_limit
+        self.max_iterations = max_iterations
         self.tools = [
             pydantic_function_tool(
                 model=tool.model,
@@ -93,13 +95,13 @@ class ChatService:
             role="tool",
         ), documents
 
-    def generate_response(self, chat_input: CreateChatInput) -> ChatResponse:
+    def generate_response(self, chat_input: CreateChatRequest) -> ChatResponse:
         """Generate a response based on chat input."""
         try:
             # Initialize chat context
             sources = self._get_sources(chat_input.sources)
             system_prompt = get_system_prompt(
-                self.base_system_prompt, sources, chat_input.max_attempts
+                self.base_system_prompt, sources, self.max_iterations
             )
 
             # Prepare chat history
@@ -120,8 +122,8 @@ class ChatService:
 
             retrieved_documents: list[Document] = []
 
-            # Generate response with retry logic
-            for _ in range(chat_input.max_attempts):
+            # Generate response
+            for _ in range(self.max_iterations):
                 response = self.chat_client.chat.completions.create(
                     model=chat_input.chat_model,
                     messages=messages,
