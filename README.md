@@ -113,21 +113,21 @@ Ragpi supports several deployment options to suit your infrastructure and requir
 
 ### 1. Local Docker Deployment
 
-Clone the repository:
+Clone the repository to your local machine:
 
 ```bash
 git clone https://github.com/ragpi/ragpi.git
 cd ragpi
 ```
 
-Before running the production `docker-compose.prod.yml` file locally, configure the `.env` file with the necessary environment variables:
+Copy the `.env.example` file to `.env` and configure the necessary environment variables:
 
 ```bash
 cp .env.example .env
-# Edit the .env file to set your API keys and other configuration
+# Edit the .env file to configure the necessary environment variables
 ```
 
-Then, run the following command:
+Then, run the following command to start the API, workers, and Redis containers:
 
 ```bash
 docker compose -f docker-compose.prod.yml --profile internal-redis up -d
@@ -135,7 +135,7 @@ docker compose -f docker-compose.prod.yml --profile internal-redis up -d
 
 ### 2. Remote Docker Deployment
 
-**Note:** Ensure that the necessary configuration and security measures are implemented on your remote server to protect the deployment environment. Additionally, securely configure environment variables (e.g., API keys, tokens) on the server. You can use the `.env` file or set them directly in the server's environment using a method that best suits your security requirements.
+**Note:** Ensure that the necessary configuration and security measures are implemented on your remote server to protect the deployment environment.
 
 Clone the repository to your remote server (VM, VPS, or similar):
 
@@ -144,7 +144,14 @@ git clone https://github.com/ragpi/ragpi.git
 cd ragpi
 ```
 
-Use the production `docker-compose.prod.yml` file:
+Copy the `.env.example` file to `.env` and configure the necessary environment variables:
+
+```bash
+cp .env.example .env
+# Edit the .env file and configure the necessary environment variables
+```
+
+Start the API, workers, and Redis containers using Docker Compose:
 
 ```bash
 docker compose -f docker-compose.prod.yml --profile internal-redis up -d

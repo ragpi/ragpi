@@ -20,9 +20,8 @@ services:
     depends_on:
       - redis
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    env_file: .env
     
   task-worker:
     container_name: task-worker
@@ -33,14 +32,13 @@ services:
     depends_on:
       - redis
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    env_file: .env
 
   task-monitor:
     container_name: task-monitor
     image: mher/flower:latest
-    command: celery --broker=redis://redis:6379/0 flower
+    command: celery --broker=redis://redis:6379 flower
     ports:
       - "127.0.0.1:5555:5555"
     depends_on:
