@@ -83,7 +83,7 @@ def healthcheck(
                 {"status": "ok", "active_workers": worker_count}
             )
         except Exception as e:
-            health_status["worker"].update({"status": "error", "message": str(e)})
+            health_status["workers"].update({"status": "error", "message": str(e)})
             has_error = True
 
     if has_error:
