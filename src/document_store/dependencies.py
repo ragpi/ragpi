@@ -9,6 +9,7 @@ from src.document_store.providers.postgres.store import PostgresDocumentStore
 from src.document_store.providers.redis.store import RedisDocumentStore
 
 
+# TODO: Move to service.py file
 # Factory that can be used outside of FastAPI. e.g. SourceSyncService
 def get_document_store_service(
     redis_client: RedisClient,

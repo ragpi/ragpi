@@ -9,7 +9,7 @@ from src.sources.exceptions import SyncSourceException
 from src.common.schemas import Document
 from src.connectors.registry import ConnectorConfig
 from src.sources.metadata.schemas import MetadataUpdate
-from src.sources.metadata.store import SourceMetadataStore
+from src.sources.metadata.service import get_metadata_store_service
 from src.sources.schemas import SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
 
@@ -38,8 +38,9 @@ class SourceSyncService:
             openai_client=self.openai_client,
             settings=self.settings,
         )
-        self.metadata_store = SourceMetadataStore(
+        self.metadata_store = get_metadata_store_service(
             redis_client=self.redis_client,
+            settings=self.settings,
         )
         self.connector_service = ConnectorService(self.settings)
         self.batch_size = self.settings.DOCUMENT_SYNC_BATCH_SIZE

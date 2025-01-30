@@ -11,6 +11,7 @@ from src.document_store.providers.postgres.model import create_document_model, B
 from src.document_store.ranking import reciprocal_rank_fusion
 
 
+# TODO: Use with statement for session?
 class PostgresDocumentStore(DocumentStoreService):
     def __init__(
         self,

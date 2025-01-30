@@ -1,21 +1,21 @@
-import json
-import logging
 from typing import Any
 
-from src.connectors.connector_type import ConnectorType
-from src.connectors.registry import ConnectorConfig, get_connector_config_schema
+from src.connectors.registry import ConnectorConfig
 from src.common.redis import RedisClient
 from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceAlreadyExistsException,
     ResourceType,
 )
+from src.sources.metadata.base import SourceMetadataStore
 from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
+from src.sources.metadata.utils import (
+    deserialize_connector_config,
+    serialize_connector_config,
+)
 
-logger = logging.getLogger(__name__)
 
-
-class SourceMetadataStore:
+class RedisMetadataStore(SourceMetadataStore):
     def __init__(
         self,
         redis_client: RedisClient,
@@ -35,22 +35,6 @@ class SourceMetadataStore:
 
         return key_name
 
-    def _serialize_connector_config(self, config: ConnectorConfig) -> str:
-        return config.model_dump_json()
-
-    def _deserialize_connector_config(self, config: str) -> ConnectorConfig:
-        config_dict = json.loads(config)
-
-        connector_type = config_dict.get("type")
-        if not connector_type:
-            raise ValueError("Connector type not found in config")
-
-        ConnectorConfigSchema = get_connector_config_schema(
-            ConnectorType(connector_type)
-        )
-
-        return ConnectorConfigSchema(**config_dict)
-
     def metadata_exists(self, source_name: str) -> bool:
         try:
             self._get_metadata_key(source_name)
@@ -69,7 +53,7 @@ class SourceMetadataStore:
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name, should_exist=False)
 
-        connector_config_json = self._serialize_connector_config(connector)
+        connector_config_json = serialize_connector_config(connector)
 
         self.client.hset(
             metadata_key,
@@ -90,7 +74,7 @@ class SourceMetadataStore:
     def get_metadata(self, source_name: str) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name)
         metadata = self.client.hgetall(metadata_key)
-        connector_config = self._deserialize_connector_config(metadata["connector"])
+        connector_config = deserialize_connector_config(metadata["connector"])
 
         return SourceMetadata(
             id=metadata["id"],
@@ -135,7 +119,7 @@ class SourceMetadataStore:
             update_mapping["num_docs"] = updates.num_docs
 
         if updates.connector is not None:
-            connector_config_json = self._serialize_connector_config(updates.connector)
+            connector_config_json = serialize_connector_config(updates.connector)
             update_mapping["connector"] = connector_config_json
 
         self.client.hset(metadata_key, mapping=update_mapping)  # type: ignore

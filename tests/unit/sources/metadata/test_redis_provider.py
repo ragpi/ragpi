@@ -11,7 +11,7 @@ from src.common.redis import RedisClient
 from src.document_store.base import DocumentStoreService
 from src.connectors.connector_type import ConnectorType
 from src.connectors.sitemap.config import SitemapConfig
-from src.sources.metadata.store import SourceMetadataStore
+from src.sources.metadata.providers.redis.store import RedisMetadataStore
 from src.sources.metadata.schemas import SourceMetadata, MetadataUpdate
 
 
@@ -29,8 +29,8 @@ def mock_document_store(mocker: MockerFixture) -> DocumentStoreService:
 def metadata_store(
     mock_redis_client: RedisClient,
     mock_document_store: DocumentStoreService,
-) -> SourceMetadataStore:
-    return SourceMetadataStore(
+) -> RedisMetadataStore:
+    return RedisMetadataStore(
         redis_client=mock_redis_client,
     )
 
@@ -59,7 +59,7 @@ def sample_metadata_dict(
 
 
 def test_metadata_exists_true(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     mocker: MockerFixture,
 ) -> None:
     mock_redis_client_exists = mocker.patch.object(
@@ -71,7 +71,7 @@ def test_metadata_exists_true(
 
 
 def test_metadata_exists_false(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     mocker: MockerFixture,
 ) -> None:
     mock_redis_client_exists = mocker.patch.object(
@@ -82,7 +82,7 @@ def test_metadata_exists_false(
 
 
 def test_create_metadata_success(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     sample_connector_config: SitemapConfig,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
@@ -133,7 +133,7 @@ def test_create_metadata_success(
 
 
 def test_create_metadata_already_exists(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     sample_connector_config: SitemapConfig,
     mocker: MockerFixture,
 ) -> None:
@@ -154,7 +154,7 @@ def test_create_metadata_already_exists(
 
 
 def test_get_metadata_success(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
@@ -176,7 +176,7 @@ def test_get_metadata_success(
 
 
 def test_get_metadata_not_found(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(metadata_store.client, "exists", return_value=False)
@@ -189,7 +189,7 @@ def test_get_metadata_not_found(
 
 
 def test_delete_metadata_success(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(metadata_store.client, "exists", return_value=True)
@@ -202,7 +202,7 @@ def test_delete_metadata_success(
 
 
 def test_list_metadata_success(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
@@ -227,7 +227,7 @@ def test_list_metadata_success(
 
 
 def test_update_metadata_success(
-    metadata_store: SourceMetadataStore,
+    metadata_store: RedisMetadataStore,
     sample_connector_config: SitemapConfig,
     sample_metadata_dict: dict[str, Any],
     mocker: MockerFixture,

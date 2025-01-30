@@ -19,7 +19,7 @@ from src.sources.schemas import (
     UpdateSourceRequest,
 )
 from src.sources.service import SourceService
-from src.sources.metadata.store import SourceMetadataStore
+from src.sources.metadata.base import SourceMetadataStore
 from src.document_store.base import DocumentStoreService
 from src.lock.service import LockService
 

@@ -9,6 +9,7 @@ Base = declarative_base()
 _model_registry: dict[str, Any] = {}
 
 
+# TODO: Just use normal model without class and get embedding dimensions from settings directly
 def create_document_model(table_name: str, embedding_dimensions: int):
     if table_name in _model_registry:
         return _model_registry[table_name]
@@ -16,6 +17,7 @@ def create_document_model(table_name: str, embedding_dimensions: int):
     class DocumentModel(Base):
         __tablename__ = table_name
 
+        # TODO: Change nullable to False for all columns
         id = Column(String, primary_key=True)
         source = Column(String, index=True)
         content = Column(String)
