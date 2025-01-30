@@ -4,7 +4,7 @@ from src.common.openai import get_embedding_openai_client
 from src.common.redis import RedisClient
 from src.config import Settings
 from src.connectors.service import ConnectorService
-from src.document_store.providers.redis.store import RedisDocumentStore
+from src.document_store.dependencies import get_document_store_service
 from src.sources.exceptions import SyncSourceException
 from src.common.schemas import Document
 from src.connectors.registry import ConnectorConfig
@@ -32,12 +32,10 @@ class SourceSyncService:
         self.settings = settings
 
         self.openai_client = get_embedding_openai_client(settings=self.settings)
-        self.document_store = RedisDocumentStore(
-            index_name=self.settings.DOCUMENT_STORE_NAMESPACE,
+        self.document_store = get_document_store_service(
             redis_client=self.redis_client,
             openai_client=self.openai_client,
-            embedding_model=self.settings.EMBEDDING_MODEL,
-            embedding_dimensions=self.settings.EMBEDDING_DIMENSIONS,
+            settings=self.settings,
         )
         self.metadata_store = SourceMetadataStore(
             redis_client=self.redis_client,

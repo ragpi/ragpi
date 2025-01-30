@@ -15,11 +15,15 @@ class Settings(BaseSettings):
     USER_AGENT: str = "Ragpi"
     MAX_CONCURRENT_REQUESTS: int = 10
 
-    # Provider Configuration
+    # LLM Provider Configuration
     CHAT_PROVIDER: Literal["openai", "ollama"] = "openai"
     EMBEDDING_PROVIDER: Literal["openai", "ollama"] = "openai"
     OLLAMA_BASE_URL: str | None = None
     OPENAI_API_KEY: str | None = None
+
+    # Document Store Configuration
+    DOCUMENT_STORE_PROVIDER: Literal["postgres", "redis"] = "postgres"
+    POSTGRES_URL: str = "postgresql://localhost:5432/ragpi"
 
     # Redis Configuration
     REDIS_URL: str = "redis://localhost:6379"
@@ -29,7 +33,7 @@ class Settings(BaseSettings):
     GITHUB_API_VERSION: str = "2022-11-28"
 
     # Model Settings
-    DEFAULT_CHAT_MODEL: str = "gpt-4o-mini"
+    DEFAULT_CHAT_MODEL: str = "gpt-4o"
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     EMBEDDING_DIMENSIONS: int = 1536  # Default for text-embedding-3-small model
     BASE_SYSTEM_PROMPT: str = "You are an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
@@ -39,7 +43,7 @@ class Settings(BaseSettings):
     MAX_CHAT_ITERATIONS: int = 5
 
     # Document Processing Configuration
-    DOCUMENT_STORE_NAMESPACE: str = "document_store"
+    DOCUMENT_STORE_NAMESPACE: str = "documents"
     DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"
     CHUNK_SIZE: int = 512
     CHUNK_OVERLAP: int = 50

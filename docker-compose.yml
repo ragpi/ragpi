@@ -9,6 +9,18 @@ services:
     environment:
       - REDIS_ARGS=--appendonly yes
 
+  postgres:
+    container_name: postgres
+    image: pgvector/pgvector:pg17
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-ragpi}
+
   api:
     container_name: api
     build: .
@@ -19,8 +31,10 @@ services:
       - "127.0.0.1:8000:8000"
     depends_on:
       - redis
+      - postgres
     environment:
       - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}
     env_file: .env
     
   task-worker:
@@ -31,20 +45,12 @@ services:
       - .:/app
     depends_on:
       - redis
+      - postgres
     environment:
       - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}
     env_file: .env
-
-  task-monitor:
-    container_name: task-monitor
-    image: mher/flower:latest
-    command: celery --broker=redis://redis:6379 flower
-    ports:
-      - "127.0.0.1:5555:5555"
-    depends_on:
-      - redis
-    environment:
-      - FLOWER_UNAUTHENTICATED_API=true
 
 volumes:
   redis-data:
+  postgres-data:
