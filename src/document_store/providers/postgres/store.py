@@ -11,7 +11,6 @@ from src.document_store.providers.postgres.model import create_document_model, B
 from src.document_store.ranking import reciprocal_rank_fusion
 
 
-# TODO: Use with statement for session?
 class PostgresDocumentStore(DocumentStoreService):
     def __init__(
         self,
@@ -62,21 +61,18 @@ class PostgresDocumentStore(DocumentStoreService):
             for doc, embedding_data in zip(documents, embeddings_result.data)
         ]
 
-        session = self.Session()
-        try:
-            session.bulk_save_objects(docs_to_add)
-            session.commit()
-        except SQLAlchemyError:
-            session.rollback()
-            raise
-        finally:
-            session.close()
+        with self.Session() as session:
+            try:
+                session.bulk_save_objects(docs_to_add)
+                session.commit()
+            except SQLAlchemyError:
+                session.rollback()
+                raise
 
     def get_documents(
         self, source_name: str, limit: int, offset: int
     ) -> list[Document]:
-        session = self.Session()
-        try:
+        with self.Session() as session:
             results = (
                 session.query(self.DocumentModel)
                 .filter_by(source=source_name)
@@ -85,36 +81,25 @@ class PostgresDocumentStore(DocumentStoreService):
                 .all()
             )
             return [self._map_document(doc) for doc in results]
-        finally:
-            session.close()
 
     def get_document_ids(self, source_name: str) -> list[str]:
-        session = self.Session()
-        try:
+        with self.Session() as session:
             results = (
                 session.query(self.DocumentModel.id).filter_by(source=source_name).all()
             )
             return [row[0] for row in results]
-        finally:
-            session.close()
 
     def delete_all_documents(self, source_name: str) -> None:
-        session = self.Session()
-        try:
+        with self.Session() as session:
             session.query(self.DocumentModel).filter_by(source=source_name).delete()
             session.commit()
-        finally:
-            session.close()
 
     def delete_documents(self, source_name: str, doc_ids: list[str]) -> None:
-        session = self.Session()
-        try:
+        with self.Session() as session:
             session.query(self.DocumentModel).filter(
                 self.DocumentModel.id.in_(doc_ids)
             ).delete(synchronize_session=False)
             session.commit()
-        finally:
-            session.close()
 
     def vector_based_search(
         self, source_name: str, query: str, top_k: int
@@ -129,8 +114,7 @@ class PostgresDocumentStore(DocumentStoreService):
             .embedding
         )
 
-        session = self.Session()
-        try:
+        with self.Session() as session:
             results = (
                 session.query(self.DocumentModel)
                 .filter_by(source=source_name)
@@ -139,14 +123,11 @@ class PostgresDocumentStore(DocumentStoreService):
                 .all()
             )
             return [self._map_document(doc) for doc in results]
-        finally:
-            session.close()
 
     def full_text_search(
         self, source_name: str, query: str, top_k: int
     ) -> list[Document]:
-        session = self.Session()
-        try:
+        with self.Session() as session:
             ts_query = func.websearch_to_tsquery("english", query)
             results = (
                 session.query(self.DocumentModel)
@@ -159,8 +140,6 @@ class PostgresDocumentStore(DocumentStoreService):
                 .all()
             )
             return [self._map_document(doc) for doc in results]
-        finally:
-            session.close()
 
     def search_documents(
         self, source_name: str, query: str, top_k: int
