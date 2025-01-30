@@ -7,7 +7,7 @@ from openai import OpenAI
 
 from src.common.schemas import Document
 from src.document_store.base import DocumentStoreService
-from src.document_store.providers.postgres.model import create_document_model, Base
+from src.document_store.providers.postgres.model import DocumentStoreModel, Base
 from src.document_store.ranking import reciprocal_rank_fusion
 
 
@@ -26,7 +26,7 @@ class PostgresDocumentStore(DocumentStoreService):
         self.embedding_client = openai_client.embeddings
         self.embedding_model = embedding_model
         self.embedding_dimensions = embedding_dimensions
-        self.DocumentModel = create_document_model(table_name, embedding_dimensions)
+        self.DocumentModel = DocumentStoreModel
 
         with self.engine.begin() as conn:
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))

@@ -23,8 +23,6 @@ class PostgresMetadataStore(SourceMetadataStore):
         self.Session = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
-    # TODO: Move this to a utils
-
     def metadata_exists(self, source_name: str) -> bool:
         with self.Session() as session:
             return session.query(

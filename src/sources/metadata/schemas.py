@@ -8,7 +8,7 @@ class SourceMetadata(BaseModel):
     name: str
     description: str
     num_docs: int
-    last_task_id: str  # TODO: Make nullable?
+    last_task_id: str
     created_at: str  # TODO: Change to DateTime?
     updated_at: str
     connector: ConnectorConfig

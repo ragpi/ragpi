@@ -1,53 +1,69 @@
 from typing import Any
-from sqlalchemy import Column, Computed, String, Index
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Computed, String, Index
+from sqlalchemy.orm import declarative_base, Mapped, mapped_column
 from pgvector.sqlalchemy import Vector  # type: ignore
 from sqlalchemy_utils import TSVectorType  # type: ignore
 
+from src.config import get_settings  # type: ignore
+
+
+settings = get_settings()
+
 Base = declarative_base()
 
-_model_registry: dict[str, Any] = {}
 
+class DocumentStoreModel(Base):
+    __tablename__ = settings.DOCUMENT_STORE_NAMESPACE
 
-# TODO: Just use normal model without class and get embedding dimensions from settings directly
-def create_document_model(table_name: str, embedding_dimensions: int):
-    if table_name in _model_registry:
-        return _model_registry[table_name]
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    source: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    content: Mapped[str] = mapped_column(String, nullable=False)
+    url: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String, nullable=False
+    )  # TODO: Change to DateTime?
+    embedding: Mapped[Any] = mapped_column(
+        Vector(settings.EMBEDDING_DIMENSIONS), nullable=False
+    )
+    fts_vector: Mapped[Any] = mapped_column(
+        TSVectorType("content", "title", regconfig="english"),
+        Computed(
+            "to_tsvector('english', title) || to_tsvector('english', content)",
+            persisted=True,
+        ),
+    )
 
-    class DocumentModel(Base):
-        __tablename__ = table_name
+    __table_args__ = (
+        Index(
+            "embedding_idx",
+            "embedding",
+            postgresql_using="ivfflat",
+            postgresql_with={"lists": 100},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+        Index(
+            "fts_vector_idx",
+            "fts_vector",
+            postgresql_using="gin",
+        ),
+        {"extend_existing": True},
+    )
 
-        # TODO: Change nullable to False for all columns
-        id = Column(String, primary_key=True)
-        source = Column(String, index=True)
-        content = Column(String)
-        url = Column(String)
-        created_at = Column(String)  # TODO: Change to DateTime?
-        title = Column(String)
-        embedding = Column(Vector(embedding_dimensions))  # type: ignore
-        fts_vector = Column(  # type: ignore
-            TSVectorType("content", "title", regconfig="english"),
-            Computed(
-                "to_tsvector('english', title) || to_tsvector('english', content)",
-                persisted=True,
-            ),
-        )
-
-        __table_args__ = (
-            Index(
-                "embedding_idx",
-                "embedding",
-                postgresql_using="ivfflat",
-                postgresql_with={"lists": 100},
-                postgresql_ops={"embedding": "vector_cosine_ops"},
-            ),
-            Index(
-                "fts_vector_idx",
-                "fts_vector",
-                postgresql_using="gin",
-            ),
-            {"extend_existing": True},
-        )
-
-    _model_registry[table_name] = DocumentModel
-    return DocumentModel
+    def __init__(
+        self,
+        id: str,
+        source: str,
+        title: str,
+        content: str,
+        url: str,
+        created_at: str,
+        embedding: Any,
+    ):
+        self.id = id
+        self.source = source
+        self.title = title
+        self.content = content
+        self.url = url
+        self.created_at = created_at
+        self.embedding = embedding

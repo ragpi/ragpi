@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     # Store Configuration
     DOCUMENT_STORE_PROVIDER: Literal["postgres", "redis"] = "postgres"
     METADATA_STORE_PROVIDER: Literal["postgres", "redis"] = "postgres"
+    DOCUMENT_STORE_NAMESPACE: str = "documents"
+    METADATA_STORE_NAMESPACE: str = "metadata"
 
     # GitHub Configuration
     GITHUB_TOKEN: str | None = None
@@ -44,7 +46,6 @@ class Settings(BaseSettings):
     MAX_CHAT_ITERATIONS: int = 5
 
     # Document Processing Configuration
-    DOCUMENT_STORE_NAMESPACE: str = "documents"  # TODO: Remove and hardcode in document store. Or deprecate and create separate configs for each provider
     DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"
     CHUNK_SIZE: int = 512
     CHUNK_OVERLAP: int = 50
