@@ -8,12 +8,11 @@ from src.common.exceptions import (
 )
 from src.document_store.base import DocumentStoreService
 from src.lock.service import LockService
-from src.sources.metadata import SourceMetadataStore
+from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
+from src.sources.metadata.store import SourceMetadataStore
 from src.sources.schemas import (
     CreateSourceRequest,
-    MetadataUpdate,
     SearchSourceInput,
-    SourceMetadata,
     SourceTask,
     UpdateSourceRequest,
 )

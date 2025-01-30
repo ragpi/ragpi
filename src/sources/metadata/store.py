@@ -10,7 +10,7 @@ from src.common.exceptions import (
     ResourceAlreadyExistsException,
     ResourceType,
 )
-from src.sources.schemas import MetadataUpdate, SourceMetadata
+from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
 
 logger = logging.getLogger(__name__)
 

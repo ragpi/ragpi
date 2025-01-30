@@ -14,8 +14,9 @@ from src.connectors.service import ConnectorService
 from src.connectors.connector_type import ConnectorType
 from src.connectors.registry import ConnectorConfig
 from src.connectors.sitemap.config import SitemapConfig
-from src.sources.metadata import SourceMetadataStore
-from src.sources.schemas import MetadataUpdate, SourceMetadata, SyncSourceOutput
+from src.sources.metadata.store import SourceMetadataStore
+from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
+from src.sources.schemas import SyncSourceOutput
 from src.sources.sync import SourceSyncService
 
 

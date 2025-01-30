@@ -19,7 +19,8 @@ from src.common.exceptions import (
     ResourceType,
 )
 from src.common.schemas import Document
-from src.sources.schemas import SearchSourceInput, SourceMetadata
+from src.sources.metadata.schemas import SourceMetadata
+from src.sources.schemas import SearchSourceInput
 from src.sources.service import SourceService
 
 

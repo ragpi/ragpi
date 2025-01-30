@@ -11,8 +11,8 @@ from src.common.redis import RedisClient
 from src.document_store.base import DocumentStoreService
 from src.connectors.connector_type import ConnectorType
 from src.connectors.sitemap.config import SitemapConfig
-from src.sources.metadata import SourceMetadataStore
-from src.sources.schemas import SourceMetadata, MetadataUpdate
+from src.sources.metadata.store import SourceMetadataStore
+from src.sources.metadata.schemas import SourceMetadata, MetadataUpdate
 
 
 @pytest.fixture

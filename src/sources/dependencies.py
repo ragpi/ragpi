@@ -5,7 +5,7 @@ from src.document_store.base import DocumentStoreService
 from src.document_store.dependencies import get_document_store
 from src.lock.dependencies import get_lock_service
 from src.lock.service import LockService
-from src.sources.metadata import SourceMetadataStore
+from src.sources.metadata.store import SourceMetadataStore
 from src.sources.service import SourceService
 
 

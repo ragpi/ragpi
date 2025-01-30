@@ -8,8 +8,9 @@ from src.document_store.dependencies import get_document_store_service
 from src.sources.exceptions import SyncSourceException
 from src.common.schemas import Document
 from src.connectors.registry import ConnectorConfig
-from src.sources.metadata import SourceMetadataStore
-from src.sources.schemas import MetadataUpdate, SyncSourceOutput
+from src.sources.metadata.schemas import MetadataUpdate
+from src.sources.metadata.store import SourceMetadataStore
+from src.sources.schemas import SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
 
 logger = logging.getLogger(__name__)
