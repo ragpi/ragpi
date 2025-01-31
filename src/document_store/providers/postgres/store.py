@@ -1,4 +1,3 @@
-from typing import Any
 from sqlalchemy import create_engine, text, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
@@ -32,7 +31,7 @@ class PostgresDocumentStore(DocumentStoreService):
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             Base.metadata.create_all(conn)
 
-    def _map_document(self, doc: Any) -> Document:
+    def _map_document(self, doc: DocumentStoreModel) -> Document:
         return Document(
             id=doc.id,
             content=doc.content,

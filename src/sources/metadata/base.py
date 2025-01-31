@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
 from src.connectors.registry import ConnectorConfig
@@ -16,8 +17,8 @@ class SourceMetadataStore(ABC):
         source_name: str,
         description: str,
         connector: ConnectorConfig,
-        created_at: str,
-        updated_at: str,
+        created_at: datetime,
+        updated_at: datetime,
     ) -> SourceMetadata:
         pass
 
@@ -30,7 +31,7 @@ class SourceMetadataStore(ABC):
         self,
         name: str,
         updates: MetadataUpdate,
-        timestamp: str,
+        timestamp: datetime,
     ) -> SourceMetadata:
         pass
 

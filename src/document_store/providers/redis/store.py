@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 import numpy as np
 from typing import Any
@@ -60,13 +61,13 @@ class RedisDocumentStore(DocumentStoreService):
     def _extract_real_doc_id(self, source_name: str, key: str) -> str:
         return key.split(f"{source_name}:")[1]
 
-    def _map_document(self, source_name: str, doc: dict[str, Any]):
+    def _map_document(self, source_name: str, doc: dict[str, str]):
         return Document(
             id=self._extract_real_doc_id(source_name, doc["id"]),
             content=doc["content"],
             title=doc["title"],
             url=doc["url"],
-            created_at=doc["created_at"],
+            created_at=datetime.fromisoformat(doc["created_at"]),
         )
 
     def add_documents(self, source_name: str, documents: list[Document]) -> None:
@@ -83,7 +84,7 @@ class RedisDocumentStore(DocumentStoreService):
                 "content": doc.content,
                 "title": doc.title,
                 "url": doc.url,
-                "created_at": doc.created_at,
+                "created_at": doc.created_at.isoformat(),
                 "embedding": np.array(
                     embedding_data.embedding, dtype=np.float32
                 ).tobytes(),

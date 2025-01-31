@@ -1,5 +1,6 @@
+from datetime import datetime
 from typing import Any
-from sqlalchemy import Computed, String, Index
+from sqlalchemy import Computed, DateTime, String, Index
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column
 from pgvector.sqlalchemy import Vector  # type: ignore
 from sqlalchemy_utils import TSVectorType  # type: ignore
@@ -20,9 +21,9 @@ class DocumentStoreModel(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     content: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[str] = mapped_column(
-        String, nullable=False
-    )  # TODO: Change to DateTime?
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     embedding: Mapped[Any] = mapped_column(
         Vector(settings.EMBEDDING_DIMENSIONS), nullable=False
     )
@@ -57,7 +58,7 @@ class DocumentStoreModel(Base):
         title: str,
         content: str,
         url: str,
-        created_at: str,
+        created_at: datetime,
         embedding: Any,
     ):
         self.id = id

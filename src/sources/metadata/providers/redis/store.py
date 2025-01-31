@@ -1,4 +1,5 @@
-from typing import Any
+from datetime import datetime
+from typing import TypedDict
 
 from src.connectors.registry import ConnectorConfig
 from src.common.redis import RedisClient
@@ -13,6 +14,14 @@ from src.sources.metadata.utils import (
     deserialize_connector_config,
     serialize_connector_config,
 )
+
+
+class UpdateMapping(TypedDict, total=False):
+    updated_at: str
+    description: str
+    last_task_id: str
+    num_docs: int
+    connector: str
 
 
 class RedisMetadataStore(SourceMetadataStore):
@@ -48,8 +57,8 @@ class RedisMetadataStore(SourceMetadataStore):
         source_name: str,
         description: str,
         connector: ConnectorConfig,
-        created_at: str,
-        updated_at: str,
+        created_at: datetime,
+        updated_at: datetime,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name, should_exist=False)
 
@@ -64,8 +73,8 @@ class RedisMetadataStore(SourceMetadataStore):
                 "num_docs": 0,
                 "connector": connector_config_json,
                 "last_task_id": "",
-                "created_at": created_at,
-                "updated_at": updated_at,
+                "created_at": created_at.isoformat(),
+                "updated_at": updated_at.isoformat(),
             },
         )
 
@@ -82,8 +91,8 @@ class RedisMetadataStore(SourceMetadataStore):
             description=metadata["description"],
             last_task_id=metadata["last_task_id"],
             num_docs=int(metadata["num_docs"]),
-            created_at=metadata["created_at"],
-            updated_at=metadata["updated_at"],
+            created_at=datetime.fromisoformat(metadata["created_at"]),
+            updated_at=datetime.fromisoformat(metadata["updated_at"]),
             connector=connector_config,
         )
 
@@ -103,11 +112,11 @@ class RedisMetadataStore(SourceMetadataStore):
         self,
         name: str,
         updates: MetadataUpdate,
-        timestamp: str,
+        timestamp: datetime,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(name)
 
-        update_mapping: dict[str, Any] = {"updated_at": timestamp}
+        update_mapping: UpdateMapping = {"updated_at": timestamp.isoformat()}
 
         if updates.description is not None:
             update_mapping["description"] = updates.description

@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
@@ -35,8 +36,8 @@ class PostgresMetadataStore(SourceMetadataStore):
         source_name: str,
         description: str,
         connector: ConnectorConfig,
-        created_at: str,
-        updated_at: str,
+        created_at: datetime,
+        updated_at: datetime,
     ) -> SourceMetadata:
         with self.Session() as session:
             if self.metadata_exists(source_name):
@@ -89,7 +90,7 @@ class PostgresMetadataStore(SourceMetadataStore):
         self,
         name: str,
         updates: MetadataUpdate,
-        timestamp: str,
+        timestamp: datetime,
     ) -> SourceMetadata:
         with self.Session() as session:
             metadata = session.query(SourceMetadataModel).filter_by(name=name).first()

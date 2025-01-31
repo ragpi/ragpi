@@ -1,4 +1,5 @@
-from sqlalchemy import String, Integer, Text
+from datetime import datetime
+from sqlalchemy import String, Integer, Text, DateTime
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column
 
 Base = declarative_base()
@@ -13,8 +14,12 @@ class SourceMetadataModel(Base):
     last_task_id: Mapped[str] = mapped_column(String, nullable=False)
     num_docs: Mapped[int] = mapped_column(Integer, default=0)
     connector: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[str] = mapped_column(String, nullable=False)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     def __init__(
         self,
@@ -22,8 +27,8 @@ class SourceMetadataModel(Base):
         name: str,
         description: str,
         connector: str,
-        created_at: str,
-        updated_at: str,
+        created_at: datetime,
+        updated_at: datetime,
         last_task_id: str = "",
         num_docs: int = 0,
     ):

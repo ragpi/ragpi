@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 from src.connectors.registry import ConnectorConfig
@@ -9,8 +10,8 @@ class SourceMetadata(BaseModel):
     description: str
     num_docs: int
     last_task_id: str
-    created_at: str  # TODO: Change to DateTime?
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
     connector: ConnectorConfig
 
 
