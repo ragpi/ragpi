@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from testcontainers.redis import RedisContainer  # type: ignore
+from testcontainers.postgres import PostgresContainer  # type: ignore
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice
 from openai.types.embedding import Embedding
@@ -31,17 +32,40 @@ def redis_container() -> Generator[RedisContainer, None, None]:
 
 
 @pytest.fixture(scope="session")
-def test_settings(redis_container: RedisContainer) -> Settings:
-    return Settings(
-        REDIS_URL=(
-            f"redis://{redis_container.get_container_host_ip()}:"
-            f"{redis_container.get_exposed_port(6379)}"
-        ),
-        OPENAI_API_KEY="test-key",
-        GITHUB_TOKEN=os.getenv("GITHUB_TOKEN", ""),
-        API_KEYS=None,
-        OTEL_ENABLED=False,
-    )
+def postgres_container() -> Generator[PostgresContainer, None, None]:
+    with PostgresContainer("pgvector/pgvector:pg17") as postgres:
+        yield postgres
+
+
+@pytest.fixture(scope="session", params=["redis", "postgres"])
+def test_settings(
+    request: pytest.FixtureRequest,
+    redis_container: RedisContainer,
+    postgres_container: PostgresContainer,
+) -> Settings:
+    backend: str = request.param
+    common_settings: dict[str, Any] = {
+        "OPENAI_API_KEY": "test-key",
+        "GITHUB_TOKEN": os.getenv("GITHUB_TOKEN", ""),
+        "API_KEYS": None,
+        "OTEL_ENABLED": False,
+        "REDIS_URL": f"redis://{redis_container.get_container_host_ip()}:{redis_container.get_exposed_port(6379)}",
+    }
+    if backend == "redis":
+        return Settings(
+            DOCUMENT_STORE_BACKEND="redis",
+            SOURCE_METADATA_BACKEND="redis",
+            **common_settings,
+        )
+    elif backend == "postgres":
+        return Settings(
+            POSTGRES_URL=postgres_container.get_connection_url(),
+            DOCUMENT_STORE_BACKEND="postgres",
+            SOURCE_METADATA_BACKEND="postgres",
+            **common_settings,
+        )
+    else:
+        raise ValueError(f"Unknown backend: {backend}")
 
 
 @pytest.fixture

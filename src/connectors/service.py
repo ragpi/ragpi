@@ -2,7 +2,7 @@ import logging
 from typing import AsyncIterator
 
 from src.config import Settings
-from src.common.schemas import Document
+from src.connectors.common.schemas import ExtractedDocument
 from src.connectors.exceptions import ConnectorException
 from src.connectors.registry import ConnectorConfig, get_connector_class
 
@@ -16,7 +16,7 @@ class ConnectorService:
     async def extract_documents(
         self,
         connector_config: ConnectorConfig,
-    ) -> AsyncIterator[Document]:
+    ) -> AsyncIterator[ExtractedDocument]:
         try:
             connector_class = get_connector_class(connector_config.type)
             connector = connector_class(self.settings, connector_config)

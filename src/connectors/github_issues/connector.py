@@ -3,10 +3,10 @@ from typing import AsyncGenerator
 from src.config import Settings
 from src.connectors.base.connector import BaseConnector
 from src.connectors.common.github_client import GitHubClient
+from src.connectors.common.schemas import ExtractedDocument
 from src.connectors.github_issues.chunker import chunk_github_issue
 from src.connectors.github_issues.config import GithubIssuesConfig
 from src.connectors.github_issues.fetcher import GitHubIssuesFetcher
-from src.common.schemas import Document
 
 
 class GithubIssuesConnector(BaseConnector):
@@ -15,7 +15,7 @@ class GithubIssuesConnector(BaseConnector):
     def __init__(self, settings: Settings, config: GithubIssuesConfig):
         super().__init__(settings, config)
 
-    async def extract(self) -> AsyncGenerator[Document, None]:
+    async def extract(self) -> AsyncGenerator[ExtractedDocument, None]:
         async with GitHubClient(
             concurrent_requests=self.settings.MAX_CONCURRENT_REQUESTS,
             user_agent=self.settings.USER_AGENT,
@@ -36,7 +36,6 @@ class GithubIssuesConnector(BaseConnector):
                     issue=issue,
                     chunk_size=self.settings.CHUNK_SIZE,
                     chunk_overlap=self.settings.CHUNK_OVERLAP,
-                    uuid_namespace=self.settings.DOCUMENT_UUID_NAMESPACE,
                 )
                 for chunk in chunks:
                     yield chunk

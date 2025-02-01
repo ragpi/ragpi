@@ -1,9 +1,9 @@
 from typing import AsyncGenerator
-from src.common.schemas import Document
 from src.config import Settings
 from src.connectors.base.connector import BaseConnector
 from src.connectors.common.chunker import chunk_markdown_page
 from src.connectors.common.github_client import GitHubClient
+from src.connectors.common.schemas import ExtractedDocument
 from src.connectors.github_readme.config import GithubReadmeConfig
 from src.connectors.github_readme.fetcher import GitHubReadmeFetcher
 
@@ -14,7 +14,7 @@ class GithubReadmeConnector(BaseConnector):
     def __init__(self, settings: Settings, config: GithubReadmeConfig):
         super().__init__(settings, config)
 
-    async def extract(self) -> AsyncGenerator[Document, None]:
+    async def extract(self) -> AsyncGenerator[ExtractedDocument, None]:
         async with GitHubClient(
             concurrent_requests=1,
             user_agent=self.settings.USER_AGENT,
@@ -33,7 +33,6 @@ class GithubReadmeConnector(BaseConnector):
                     page_data=page,
                     chunk_size=self.settings.CHUNK_SIZE,
                     chunk_overlap=self.settings.CHUNK_OVERLAP,
-                    uuid_namespace=self.settings.DOCUMENT_UUID_NAMESPACE,
                 )
                 for chunk in chunks:
                     yield chunk

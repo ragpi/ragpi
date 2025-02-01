@@ -1,4 +1,4 @@
-from src.sources.schemas import SourceMetadata
+from src.sources.metadata.schemas import SourceMetadata
 
 
 def get_system_prompt(

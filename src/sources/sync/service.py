@@ -4,13 +4,15 @@ from src.common.openai import get_embedding_openai_client
 from src.common.redis import RedisClient
 from src.config import Settings
 from src.connectors.service import ConnectorService
-from src.document_store.providers.redis.store import RedisDocumentStore
+from src.document_store.backend import get_document_store_backend
 from src.sources.exceptions import SyncSourceException
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 from src.connectors.registry import ConnectorConfig
-from src.sources.metadata import SourceMetadataStore
-from src.sources.schemas import MetadataUpdate, SyncSourceOutput
+from src.sources.metadata.schemas import MetadataUpdate
+from src.sources.metadata.backend import get_metadata_store_backend
+from src.sources.schemas import SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
+from src.sources.stable_id import generate_stable_id
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +34,14 @@ class SourceSyncService:
         self.settings = settings
 
         self.openai_client = get_embedding_openai_client(settings=self.settings)
-        self.document_store = RedisDocumentStore(
-            index_name=self.settings.DOCUMENT_STORE_NAMESPACE,
+        self.document_store = get_document_store_backend(
             redis_client=self.redis_client,
             openai_client=self.openai_client,
-            embedding_model=self.settings.EMBEDDING_MODEL,
-            embedding_dimensions=self.settings.EMBEDDING_DIMENSIONS,
+            settings=self.settings,
         )
-        self.metadata_store = SourceMetadataStore(
+        self.metadata_store = get_metadata_store_backend(
             redis_client=self.redis_client,
+            settings=self.settings,
         )
         self.connector_service = ConnectorService(self.settings)
         self.batch_size = self.settings.DOCUMENT_SYNC_BATCH_SIZE
@@ -58,9 +59,22 @@ class SourceSyncService:
 
         try:
             # Extract and sync documents
-            async for doc in self.connector_service.extract_documents(
+            async for extracted_doc in self.connector_service.extract_documents(
                 self.connector_config
             ):
+                stable_id = generate_stable_id(
+                    uuid_namespace=self.settings.DOCUMENT_UUID_NAMESPACE,
+                    source=self.source_name,
+                    title=extracted_doc.title,
+                    content=extracted_doc.content,
+                )
+                doc = Document(
+                    id=stable_id,
+                    url=extracted_doc.url,
+                    title=extracted_doc.title,
+                    content=extracted_doc.content,
+                    created_at=get_current_datetime(),
+                )
                 if doc.id in current_doc_ids:
                     continue
 

@@ -6,13 +6,13 @@ from src.common.exceptions import (
     resource_locked_response,
     resource_not_found_response,
 )
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 from src.common.workers_enabled_check import workers_enabled_check
 from src.sources.dependencies import get_source_service
+from src.sources.metadata.schemas import SourceMetadata
 from src.sources.schemas import (
     SearchSourceInput,
     CreateSourceRequest,
-    SourceMetadata,
     SourceTask,
     UpdateSourceRequest,
 )

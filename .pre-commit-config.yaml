@@ -5,7 +5,7 @@ repos:
       - id: mypy
         name: run mypy
         args: [--ignore-missing-imports, --check-untyped-defs]
-        additional_dependencies: [pydantic, types-redis, redis]
+        additional_dependencies: [pydantic, types-redis, redis, sqlalchemy]
         files: "(src/|tests/)"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

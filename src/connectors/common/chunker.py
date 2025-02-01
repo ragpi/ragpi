@@ -3,16 +3,12 @@ from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
 )
 
-
-from src.common.schemas import Document
-from src.common.current_datetime import get_current_datetime
-from src.connectors.common.schemas import MarkdownPage
-from src.connectors.common.stable_id import generate_stable_id
+from src.connectors.common.schemas import ExtractedDocument, MarkdownPage
 
 
 def chunk_markdown_page(
-    *, page_data: MarkdownPage, chunk_size: int, chunk_overlap: int, uuid_namespace: str
-) -> list[Document]:
+    *, page_data: MarkdownPage, chunk_size: int, chunk_overlap: int
+) -> list[ExtractedDocument]:
     headers_to_split_on = [
         ("#", "header_1"),
         ("##", "header_2"),
@@ -31,7 +27,7 @@ def chunk_markdown_page(
 
     chunks = text_splitter.split_documents(header_chunks)
 
-    docs: list[Document] = []
+    docs: list[ExtractedDocument] = []
 
     for chunk in chunks:
         metadata = chunk.metadata  # type: ignore
@@ -44,14 +40,10 @@ def chunk_markdown_page(
         if "header_3" in metadata:
             title += f" - {metadata['header_3']}"
 
-        created_at = get_current_datetime()
-
-        doc = Document(
-            id=generate_stable_id(uuid_namespace, page_data.url, chunk.page_content),
+        doc = ExtractedDocument(
             content=chunk.page_content,
             title=title,
             url=page_data.url,
-            created_at=created_at,
         )
 
         docs.append(doc)

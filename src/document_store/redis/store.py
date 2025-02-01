@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 import numpy as np
 from typing import Any
@@ -9,16 +10,16 @@ from redisvl.query.filter import Tag  # type: ignore
 from redis.commands.search.query import Query
 
 from src.common.redis import RedisClient
-from src.common.schemas import Document
-from src.document_store.base import DocumentStoreService
-from src.document_store.providers.redis.fields import (
+from src.document_store.schemas import Document
+from src.document_store.base import DocumentStoreBackend
+from src.document_store.redis.fields import (
     DOCUMENT_FIELDS,
     get_index_schema_fields,
 )
 from src.document_store.ranking import reciprocal_rank_fusion
 
 
-class RedisDocumentStore(DocumentStoreService):
+class RedisDocumentStore(DocumentStoreBackend):
     def __init__(
         self,
         *,
@@ -60,13 +61,13 @@ class RedisDocumentStore(DocumentStoreService):
     def _extract_real_doc_id(self, source_name: str, key: str) -> str:
         return key.split(f"{source_name}:")[1]
 
-    def _map_document(self, source_name: str, doc: dict[str, Any]):
+    def _map_document(self, source_name: str, doc: dict[str, str]):
         return Document(
             id=self._extract_real_doc_id(source_name, doc["id"]),
             content=doc["content"],
             title=doc["title"],
             url=doc["url"],
-            created_at=doc["created_at"],
+            created_at=datetime.fromisoformat(doc["created_at"]),
         )
 
     def add_documents(self, source_name: str, documents: list[Document]) -> None:
@@ -83,7 +84,7 @@ class RedisDocumentStore(DocumentStoreService):
                 "content": doc.content,
                 "title": doc.title,
                 "url": doc.url,
-                "created_at": doc.created_at,
+                "created_at": doc.created_at.isoformat(),
                 "embedding": np.array(
                     embedding_data.embedding, dtype=np.float32
                 ).tobytes(),
