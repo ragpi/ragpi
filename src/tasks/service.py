@@ -18,7 +18,7 @@ class TaskService:
         return Task(
             id=task.get("task_id"),
             status=task.get("status"),
-            date_done=task.get("date_done"),
+            completed_at=task.get("date_done"),
             metadata=task.get("result"),
         )
 

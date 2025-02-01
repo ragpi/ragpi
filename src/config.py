@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     # Database Configuration
     REDIS_URL: str = "redis://localhost:6379"
-    POSTGRES_URL: str = "postgresql://localhost:5432/ragpi"
+    POSTGRES_URL: str = "postgresql://localhost:5432/ragpi"  # Assumes a local Postgres db named 'ragpi' exists
 
     # Store Configuration
     DOCUMENT_STORE_BACKEND: Literal["postgres", "redis"] = "postgres"
