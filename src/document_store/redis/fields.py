@@ -16,7 +16,7 @@ def get_index_schema_fields(embedding_dimensions: int) -> dict[str, Any]:
                 "attrs": {
                     "dims": embedding_dimensions,
                     "distance_metric": "cosine",
-                    "algorithm": "flat",
+                    "algorithm": "hnsw",
                     "datatype": "float32",
                 },
             },

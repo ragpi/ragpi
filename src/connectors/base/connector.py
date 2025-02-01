@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator
 
-from src.common.schemas import Document
 from src.config import Settings
 from src.connectors.base.config import BaseConnectorConfig
+from src.connectors.common.schemas import ExtractedDocument
 
 
 class BaseConnector(ABC):
@@ -14,6 +14,6 @@ class BaseConnector(ABC):
         self.config = config
 
     @abstractmethod
-    def extract(self) -> AsyncGenerator[Document, None]:
+    def extract(self) -> AsyncGenerator[ExtractedDocument, None]:
         """Extract and yield documents"""
         pass

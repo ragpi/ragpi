@@ -18,8 +18,9 @@ from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceType,
 )
-from src.common.schemas import Document
-from src.sources.schemas import SearchSourceInput, SourceMetadata
+from src.document_store.schemas import Document
+from src.sources.metadata.schemas import SourceMetadata
+from src.sources.schemas import SearchSourceInput
 from src.sources.service import SourceService
 
 

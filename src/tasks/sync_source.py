@@ -12,7 +12,7 @@ from src.lock.service import LockService
 from src.celery import celery_app
 from src.connectors.registry import get_connector_config_schema
 from src.connectors.connector_type import ConnectorType
-from src.sources.sync import SourceSyncService
+from src.sources.sync.service import SourceSyncService
 
 
 @celery_app.task(name="Sync Source Documents")

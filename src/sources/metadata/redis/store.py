@@ -1,29 +1,36 @@
-import json
-import logging
-from typing import Any
+from datetime import datetime
+from typing import TypedDict
 
-from src.connectors.connector_type import ConnectorType
-from src.connectors.registry import ConnectorConfig, get_connector_config_schema
+from src.connectors.registry import ConnectorConfig
 from src.common.redis import RedisClient
 from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceAlreadyExistsException,
     ResourceType,
 )
-from src.sources.schemas import MetadataUpdate, SourceMetadata
+from src.sources.metadata.base import SourceMetadataStore
+from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
+from src.sources.metadata.utils import (
+    deserialize_connector_config,
+    serialize_connector_config,
+)
 
-logger = logging.getLogger(__name__)
+
+class UpdateMapping(TypedDict, total=False):
+    updated_at: str
+    description: str
+    last_task_id: str
+    num_docs: int
+    connector: str
 
 
-class SourceMetadataStore:
-    def __init__(
-        self,
-        redis_client: RedisClient,
-    ):
+class RedisMetadataStore(SourceMetadataStore):
+    def __init__(self, *, redis_client: RedisClient, key_prefix: str):
         self.client = redis_client
+        self.key_prefix = key_prefix
 
     def _get_metadata_key(self, source_name: str, should_exist: bool = True) -> str:
-        key_name = f"metadata:{source_name}"
+        key_name = f"{self.key_prefix}:{source_name}"
 
         source_exists = self.client.exists(key_name)
 
@@ -34,22 +41,6 @@ class SourceMetadataStore:
             raise ResourceAlreadyExistsException(ResourceType.SOURCE, source_name)
 
         return key_name
-
-    def _serialize_connector_config(self, config: ConnectorConfig) -> str:
-        return config.model_dump_json()
-
-    def _deserialize_connector_config(self, config: str) -> ConnectorConfig:
-        config_dict = json.loads(config)
-
-        connector_type = config_dict.get("type")
-        if not connector_type:
-            raise ValueError("Connector type not found in config")
-
-        ConnectorConfigSchema = get_connector_config_schema(
-            ConnectorType(connector_type)
-        )
-
-        return ConnectorConfigSchema(**config_dict)
 
     def metadata_exists(self, source_name: str) -> bool:
         try:
@@ -64,12 +55,11 @@ class SourceMetadataStore:
         source_name: str,
         description: str,
         connector: ConnectorConfig,
-        created_at: str,
-        updated_at: str,
+        timestamp: datetime,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name, should_exist=False)
 
-        connector_config_json = self._serialize_connector_config(connector)
+        connector_config_json = serialize_connector_config(connector)
 
         self.client.hset(
             metadata_key,
@@ -80,8 +70,8 @@ class SourceMetadataStore:
                 "num_docs": 0,
                 "connector": connector_config_json,
                 "last_task_id": "",
-                "created_at": created_at,
-                "updated_at": updated_at,
+                "created_at": timestamp.isoformat(),
+                "updated_at": timestamp.isoformat(),
             },
         )
 
@@ -90,7 +80,7 @@ class SourceMetadataStore:
     def get_metadata(self, source_name: str) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name)
         metadata = self.client.hgetall(metadata_key)
-        connector_config = self._deserialize_connector_config(metadata["connector"])
+        connector_config = deserialize_connector_config(metadata["connector"])
 
         return SourceMetadata(
             id=metadata["id"],
@@ -98,8 +88,8 @@ class SourceMetadataStore:
             description=metadata["description"],
             last_task_id=metadata["last_task_id"],
             num_docs=int(metadata["num_docs"]),
-            created_at=metadata["created_at"],
-            updated_at=metadata["updated_at"],
+            created_at=datetime.fromisoformat(metadata["created_at"]),
+            updated_at=datetime.fromisoformat(metadata["updated_at"]),
             connector=connector_config,
         )
 
@@ -108,7 +98,7 @@ class SourceMetadataStore:
         self.client.delete(metadata_key)
 
     def list_metadata(self) -> list[SourceMetadata]:
-        metadata_keys = self.client.keys("metadata:*")
+        metadata_keys = self.client.keys(f"{self.key_prefix}:*")
         metadata: list[SourceMetadata] = []
         for key in metadata_keys:
             source_name = key.split(":")[1]
@@ -119,11 +109,11 @@ class SourceMetadataStore:
         self,
         name: str,
         updates: MetadataUpdate,
-        timestamp: str,
+        timestamp: datetime,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(name)
 
-        update_mapping: dict[str, Any] = {"updated_at": timestamp}
+        update_mapping: UpdateMapping = {"updated_at": timestamp.isoformat()}
 
         if updates.description is not None:
             update_mapping["description"] = updates.description
@@ -135,7 +125,7 @@ class SourceMetadataStore:
             update_mapping["num_docs"] = updates.num_docs
 
         if updates.connector is not None:
-            connector_config_json = self._serialize_connector_config(updates.connector)
+            connector_config_json = serialize_connector_config(updates.connector)
             update_mapping["connector"] = connector_config_json
 
         self.client.hset(metadata_key, mapping=update_mapping)  # type: ignore
