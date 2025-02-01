@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 
 
 class DocumentStoreBackend(ABC):

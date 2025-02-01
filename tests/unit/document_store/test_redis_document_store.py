@@ -7,7 +7,7 @@ from openai.types.create_embedding_response import Usage, CreateEmbeddingRespons
 from redis.commands.search.document import Document as RedisDocument
 
 from src.document_store.redis.store import RedisDocumentStore
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 
 TEST_INDEX_NAME = "test_index"
 TEST_SOURCE = "test_source"

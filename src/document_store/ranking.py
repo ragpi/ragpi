@@ -1,4 +1,4 @@
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 
 
 def reciprocal_rank_fusion(

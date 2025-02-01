@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from src.document_store.postgres.store import PostgresDocumentStore
 from src.document_store.postgres.model import DocumentStoreModel
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 
 TEST_DATABASE_URL = "postgresql://test:test@localhost:5432/test"
 TEST_SOURCE = "test_source"

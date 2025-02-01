@@ -1,7 +1,7 @@
 from typing import Literal
 from pydantic import BaseModel
 
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 from src.config import get_settings
 
 settings = get_settings()

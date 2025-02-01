@@ -12,7 +12,7 @@ from openai.types.chat.chat_completion_message_tool_call import Function
 from src.chat.service import ChatService
 from src.chat.schemas import ChatMessage, ChatResponse, CreateChatRequest
 from src.common.exceptions import ResourceNotFoundException, ResourceType
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 from src.sources.service import SourceService
 from src.sources.schemas import SearchSourceInput
 

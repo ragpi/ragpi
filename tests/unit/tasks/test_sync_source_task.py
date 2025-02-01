@@ -9,7 +9,7 @@ from celery.exceptions import Ignore
 from src.config import Settings
 from src.common.redis import RedisClient
 from src.sources.metadata.schemas import SourceMetadata
-from src.sources.sync import SourceSyncService
+from src.sources.sync.service import SourceSyncService
 from src.sources.schemas import SyncSourceOutput
 from src.tasks.sync_source import sync_source_documents_task
 

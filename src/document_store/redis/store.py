@@ -10,7 +10,7 @@ from redisvl.query.filter import Tag  # type: ignore
 from redis.commands.search.query import Query
 
 from src.common.redis import RedisClient
-from src.common.schemas import Document
+from src.document_store.schemas import Document
 from src.document_store.base import DocumentStoreBackend
 from src.document_store.redis.fields import (
     DOCUMENT_FIELDS,
