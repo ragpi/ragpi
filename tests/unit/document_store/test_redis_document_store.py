@@ -353,9 +353,8 @@ def test_search_documents(
     mock_text_search.assert_called_once_with(TEST_SOURCE, TEST_QUERY, TOP_K)
 
     assert len(combined_results) == TOP_K
-
     # search_documents uses a reciprocal rank fusion algorithm to combine results
-    # doc2 and doc3 appear in both vector and text results, so they should be top-ranked,
+    # doc2 and doc3 appear in both vector and text results, so they should be ranked highest
     # with doc2 ranked higher than doc3.
     assert combined_results[0].id == "doc2"
     assert combined_results[1].id == "doc3"

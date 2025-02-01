@@ -15,7 +15,6 @@ def get_document_store_backend(
     if settings.DOCUMENT_STORE_BACKEND == "postgres":
         return PostgresDocumentStore(
             database_url=settings.POSTGRES_URL,
-            table_name=settings.DOCUMENT_STORE_NAMESPACE,
             openai_client=openai_client,
             embedding_model=settings.EMBEDDING_MODEL,
             embedding_dimensions=settings.EMBEDDING_DIMENSIONS,

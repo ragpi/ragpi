@@ -15,7 +15,6 @@ class PostgresDocumentStore(DocumentStoreBackend):
         self,
         *,
         database_url: str,
-        table_name: str,
         openai_client: OpenAI,
         embedding_model: str,
         embedding_dimensions: int,
