@@ -28,10 +28,10 @@ opentelemetry-exporter-otlp-proto-http = "^1.29.0"
 opentelemetry-instrumentation = "^0.50b0"
 opentelemetry-instrumentation-openai = "^0.34.1"
 opentelemetry-instrumentation-fastapi = "^0.50b0"
-sqlalchemy = {extras = ["mypy"], version = "^2.0.37"}
 pgvector = "^0.3.6"
 sqlalchemy-utils = "^0.41.2"
 psycopg2-binary = "^2.9.10"
+sqlalchemy = "^2.0.37"
 
 
 [tool.poetry.group.dev.dependencies]
