@@ -6,7 +6,7 @@ from openai.types.embedding import Embedding
 from openai.types.create_embedding_response import Usage, CreateEmbeddingResponse
 from redis.commands.search.document import Document as RedisDocument
 
-from src.document_store.providers.redis.store import RedisDocumentStore
+from src.document_store.redis.store import RedisDocumentStore
 from src.common.schemas import Document
 
 TEST_INDEX_NAME = "test_index"
@@ -25,14 +25,14 @@ def sample_documents() -> list[Document]:
             content="Test content 1",
             title="Test title 1",
             url="http://test1.com",
-            created_at=datetime.now().isoformat(),
+            created_at=datetime.now(),
         ),
         Document(
             id="doc2",
             content="Test content 2",
             title="Test title 2",
             url="http://test2.com",
-            created_at=datetime.now().isoformat(),
+            created_at=datetime.now(),
         ),
     ]
 
@@ -59,9 +59,7 @@ def document_store(
     mock_openai_client: Mock,
     mock_index: Mock,
 ) -> RedisDocumentStore:
-    mocker.patch(
-        "src.document_store.providers.redis.store.SearchIndex", return_value=mock_index
-    )
+    mocker.patch("src.document_store.redis.store.SearchIndex", return_value=mock_index)
     return RedisDocumentStore(
         index_name=TEST_INDEX_NAME,
         redis_client=mock_redis_client,
@@ -124,7 +122,7 @@ def test_get_documents(
             "Test content 1",
             "http://test1.com",
             "Test title 1",
-            sample_documents[0].created_at,
+            sample_documents[0].created_at.isoformat(),
         ],
         [
             TEST_SOURCE,
@@ -132,7 +130,7 @@ def test_get_documents(
             "Test content 2",
             "http://test2.com",
             "Test title 2",
-            sample_documents[1].created_at,
+            sample_documents[1].created_at.isoformat(),
         ],
     ]
 
@@ -298,21 +296,21 @@ def test_search_documents(
             content="Test content 1",
             title="Title 1",
             url="http://test1.com",
-            created_at="2024-01-01T00:00:00",
+            created_at=datetime.fromisoformat("2024-01-01T00:00:00"),
         ),
         Document(
             id="doc2",
             content="Test content 2",
             title="Title 2",
             url="http://test2.com",
-            created_at="2024-01-02T00:00:00",
+            created_at=datetime.fromisoformat("2024-01-02T00:00:00"),
         ),
         Document(
             id="doc3",
             content="Test content 3",
             title="Title 3",
             url="http://test3.com",
-            created_at="2024-01-03T00:00:00",
+            created_at=datetime.fromisoformat("2024-01-03T00:00:00"),
         ),
     ]
 
@@ -322,21 +320,21 @@ def test_search_documents(
             content="Test content 2",
             title="Title 2",
             url="http://test2.com",
-            created_at="2024-01-02T00:00:00",
+            created_at=datetime.fromisoformat("2024-01-02T00:00:00"),
         ),
         Document(
             id="doc3",
             content="Test content 3",
             title="Title 3",
             url="http://test3.com",
-            created_at="2024-01-03T00:00:00",
+            created_at=datetime.fromisoformat("2024-01-03T00:00:00"),
         ),
         Document(
             id="doc4",
             content="Test content 4",
             title="Title 4",
             url="http://test4.com",
-            created_at="2024-01-04T00:00:00",
+            created_at=datetime.fromisoformat("2024-01-04T00:00:00"),
         ),
     ]
 

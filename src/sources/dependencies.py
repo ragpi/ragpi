@@ -1,6 +1,6 @@
 from fastapi import Depends
 
-from src.document_store.base import DocumentStoreService
+from src.document_store.base import DocumentStoreBackend
 from src.document_store.dependencies import get_document_store
 from src.lock.dependencies import get_lock_service
 from src.lock.service import LockService
@@ -11,7 +11,7 @@ from src.sources.service import SourceService
 
 def get_source_service(
     metadata_store: SourceMetadataStore = Depends(get_metadata_store),
-    document_store: DocumentStoreService = Depends(get_document_store),
+    document_store: DocumentStoreBackend = Depends(get_document_store),
     lock_service: LockService = Depends(get_lock_service),
 ) -> SourceService:
     return SourceService(

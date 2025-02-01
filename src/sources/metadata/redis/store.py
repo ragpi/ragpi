@@ -25,14 +25,12 @@ class UpdateMapping(TypedDict, total=False):
 
 
 class RedisMetadataStore(SourceMetadataStore):
-    def __init__(
-        self,
-        redis_client: RedisClient,
-    ):
+    def __init__(self, *, redis_client: RedisClient, key_prefix: str):
         self.client = redis_client
+        self.key_prefix = key_prefix
 
     def _get_metadata_key(self, source_name: str, should_exist: bool = True) -> str:
-        key_name = f"metadata:{source_name}"
+        key_name = f"{self.key_prefix}:{source_name}"
 
         source_exists = self.client.exists(key_name)
 
@@ -57,8 +55,7 @@ class RedisMetadataStore(SourceMetadataStore):
         source_name: str,
         description: str,
         connector: ConnectorConfig,
-        created_at: datetime,
-        updated_at: datetime,
+        timestamp: datetime,
     ) -> SourceMetadata:
         metadata_key = self._get_metadata_key(source_name, should_exist=False)
 
@@ -73,8 +70,8 @@ class RedisMetadataStore(SourceMetadataStore):
                 "num_docs": 0,
                 "connector": connector_config_json,
                 "last_task_id": "",
-                "created_at": created_at.isoformat(),
-                "updated_at": updated_at.isoformat(),
+                "created_at": timestamp.isoformat(),
+                "updated_at": timestamp.isoformat(),
             },
         )
 
@@ -101,7 +98,7 @@ class RedisMetadataStore(SourceMetadataStore):
         self.client.delete(metadata_key)
 
     def list_metadata(self) -> list[SourceMetadata]:
-        metadata_keys = self.client.keys("metadata:*")
+        metadata_keys = self.client.keys(f"{self.key_prefix}:*")
         metadata: list[SourceMetadata] = []
         for key in metadata_keys:
             source_name = key.split(":")[1]

@@ -11,7 +11,7 @@ from src.common.exceptions import (
 )
 from src.sources.metadata.base import SourceMetadataStore
 from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
-from src.sources.metadata.providers.postgres.model import Base, SourceMetadataModel
+from src.sources.metadata.postgres.model import Base, SourceMetadataModel
 from src.sources.metadata.utils import (
     deserialize_connector_config,
     serialize_connector_config,
@@ -36,8 +36,7 @@ class PostgresMetadataStore(SourceMetadataStore):
         source_name: str,
         description: str,
         connector: ConnectorConfig,
-        created_at: datetime,
-        updated_at: datetime,
+        timestamp: datetime,
     ) -> SourceMetadata:
         with self.Session() as session:
             if self.metadata_exists(source_name):
@@ -49,8 +48,8 @@ class PostgresMetadataStore(SourceMetadataStore):
                 name=source_name,
                 description=description,
                 connector=connector_json,
-                created_at=created_at,
-                updated_at=updated_at,
+                created_at=timestamp,
+                updated_at=timestamp,
             )
 
             try:

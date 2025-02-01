@@ -8,7 +8,7 @@ from typing import AsyncIterator, Set
 from src.common.redis import RedisClient
 from src.common.schemas import Document
 from src.config import Settings
-from src.document_store.providers.redis.store import RedisDocumentStore
+from src.document_store.base import DocumentStoreBackend
 from src.sources.exceptions import SyncSourceException
 from src.connectors.service import ConnectorService
 from src.connectors.connector_type import ConnectorType
@@ -38,8 +38,8 @@ def mock_settings(mocker: MockerFixture) -> Settings:
 
 
 @pytest.fixture
-def mock_current_datetime() -> str:
-    return datetime(2024, 1, 1, 12, 0, 0).isoformat()
+def mock_current_datetime() -> datetime:
+    return datetime(2024, 1, 1, 12, 0, 0)
 
 
 @pytest.fixture
@@ -48,8 +48,8 @@ def mock_openai_client(mocker: MockerFixture) -> OpenAI:
 
 
 @pytest.fixture
-def mock_document_store(mocker: MockerFixture) -> RedisDocumentStore:
-    return mocker.Mock(spec=RedisDocumentStore)
+def mock_document_store(mocker: MockerFixture) -> DocumentStoreBackend:
+    return mocker.Mock(spec=DocumentStoreBackend)
 
 
 @pytest.fixture
@@ -71,28 +71,30 @@ def sample_connector_config() -> ConnectorConfig:
 
 
 @pytest.fixture
-def sample_documents() -> list[Document]:
+def sample_documents(
+    mock_current_datetime: datetime,
+) -> list[Document]:
     return [
         Document(
             id="doc1",
             title="Test title 1",
             content="Test content 1",
             url="https://example.com/1",
-            created_at="2024-01-01T12:00:00",
+            created_at=mock_current_datetime,
         ),
         Document(
             id="doc2",
             title="Test title 2",
             content="Test content 2",
             url="https://example.com/2",
-            created_at="2024-01-01T12:00:00",
+            created_at=mock_current_datetime,
         ),
         Document(
             id="doc3",
             title="Test title 3",
             content="Test content 3",
             url="https://example.com/3",
-            created_at="2024-01-01T12:00:00",
+            created_at=mock_current_datetime,
         ),
     ]
 
@@ -120,7 +122,7 @@ def source_sync_service(
     mock_redis_client: RedisClient,
     mock_settings: Settings,
     mock_openai_client: OpenAI,
-    mock_document_store: RedisDocumentStore,
+    mock_document_store: DocumentStoreBackend,
     mock_metadata_store: SourceMetadataStore,
     mock_connector_service: ConnectorService,
     mocker: MockerFixture,
@@ -131,9 +133,9 @@ def source_sync_service(
         return_value=mock_openai_client,
     )
 
-    # Mock RedisDocumentStore creation
+    # Mock DocumentStoreBackend creation
     mocker.patch(
-        "src.sources.sync.RedisDocumentStore",
+        "src.sources.sync.get_document_store_backend",
         return_value=mock_document_store,
     )
 
@@ -145,7 +147,7 @@ def source_sync_service(
 
     # Mock SourceMetadataStore creation
     mocker.patch(
-        "src.sources.sync.SourceMetadataStore",
+        "src.sources.sync.get_metadata_store_backend",
         return_value=mock_metadata_store,
     )
 
@@ -164,7 +166,7 @@ async def test_sync_documents_success(
     source_sync_service: SourceSyncService,
     sample_documents: list[Document],
     patch_extract_documents: AsyncMock,
-    mock_current_datetime: str,
+    mock_current_datetime: datetime,
     mocker: MockerFixture,
 ) -> None:
     # Mock current datetime
@@ -227,7 +229,7 @@ async def test_sync_documents_with_existing_docs(
     source_sync_service: SourceSyncService,
     sample_documents: list[Document],
     patch_extract_documents: AsyncMock,
-    mock_current_datetime: str,
+    mock_current_datetime: datetime,
     mocker: MockerFixture,
 ) -> None:
     # Set existing document IDs
@@ -283,7 +285,7 @@ async def test_sync_documents_with_stale_docs(
     source_sync_service: SourceSyncService,
     sample_documents: list[Document],
     patch_extract_documents: AsyncMock,
-    mock_current_datetime: str,
+    mock_current_datetime: datetime,
     mocker: MockerFixture,
 ) -> None:
     # Set existing document IDs including a stale one
@@ -333,7 +335,7 @@ async def test_sync_documents_with_stale_docs(
 
 async def test_sync_documents_failure_handling(
     source_sync_service: SourceSyncService,
-    mock_current_datetime: str,
+    mock_current_datetime: datetime,
     mocker: MockerFixture,
 ) -> None:
     # Mock current datetime
@@ -366,7 +368,7 @@ async def test_sync_documents_failure_handling(
 async def test_add_documents_batch_failure(
     source_sync_service: SourceSyncService,
     sample_documents: list[Document],
-    mock_current_datetime: str,
+    mock_current_datetime: datetime,
     mocker: MockerFixture,
 ) -> None:
     # Mock current datetime
@@ -390,7 +392,7 @@ async def test_add_documents_batch_failure(
 
 async def test_remove_stale_documents_failure(
     source_sync_service: SourceSyncService,
-    mock_current_datetime: str,
+    mock_current_datetime: datetime,
     mocker: MockerFixture,
 ) -> None:
     # Mock current datetime

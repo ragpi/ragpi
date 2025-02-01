@@ -26,10 +26,11 @@ class Settings(BaseSettings):
     POSTGRES_URL: str = "postgresql://localhost:5432/ragpi"
 
     # Store Configuration
-    DOCUMENT_STORE_PROVIDER: Literal["postgres", "redis"] = "postgres"
-    METADATA_STORE_PROVIDER: Literal["postgres", "redis"] = "postgres"
-    DOCUMENT_STORE_NAMESPACE: str = "documents"
-    METADATA_STORE_NAMESPACE: str = "metadata"
+    DOCUMENT_STORE_BACKEND: Literal["postgres", "redis"] = "postgres"
+    DOCUMENT_STORE_NAMESPACE: str = "document_store"
+
+    SOURCE_METADATA_BACKEND: Literal["postgres", "redis"] = "postgres"
+    SOURCE_METADATA_NAMESPACE: str = "source_metadata"
 
     # GitHub Configuration
     GITHUB_TOKEN: str | None = None

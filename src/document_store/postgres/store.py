@@ -5,12 +5,12 @@ import numpy as np
 from openai import OpenAI
 
 from src.common.schemas import Document
-from src.document_store.base import DocumentStoreService
-from src.document_store.providers.postgres.model import DocumentStoreModel, Base
+from src.document_store.base import DocumentStoreBackend
+from src.document_store.postgres.model import DocumentStoreModel, Base
 from src.document_store.ranking import reciprocal_rank_fusion
 
 
-class PostgresDocumentStore(DocumentStoreService):
+class PostgresDocumentStore(DocumentStoreBackend):
     def __init__(
         self,
         *,

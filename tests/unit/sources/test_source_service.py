@@ -20,7 +20,7 @@ from src.sources.schemas import (
 )
 from src.sources.service import SourceService
 from src.sources.metadata.base import SourceMetadataStore
-from src.document_store.base import DocumentStoreService
+from src.document_store.base import DocumentStoreBackend
 from src.lock.service import LockService
 
 
@@ -30,8 +30,8 @@ def mock_metadata_store(mocker: MockerFixture) -> SourceMetadataStore:
 
 
 @pytest.fixture
-def mock_document_store(mocker: MockerFixture) -> DocumentStoreService:
-    return mocker.Mock(spec=DocumentStoreService)
+def mock_document_store(mocker: MockerFixture) -> DocumentStoreBackend:
+    return mocker.Mock(spec=DocumentStoreBackend)
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def mock_lock_service(mocker: MockerFixture) -> LockService:
 @pytest.fixture
 def source_service(
     mock_metadata_store: SourceMetadataStore,
-    mock_document_store: DocumentStoreService,
+    mock_document_store: DocumentStoreBackend,
     mock_lock_service: LockService,
 ) -> SourceService:
     return SourceService(
@@ -69,8 +69,8 @@ def sample_source_metadata() -> SourceMetadata:
             sitemap_url="https://example.com/sitemap.xml",
         ),
         num_docs=0,
-        created_at="2024-01-01T12:00:00",
-        updated_at="2024-01-01T12:00:00",
+        created_at=datetime(2024, 1, 1, 12, 0, 0),
+        updated_at=datetime(2024, 1, 1, 12, 0, 0),
     )
 
 
@@ -150,8 +150,7 @@ async def test_create_source_success(
         source_name=sample_create_request.name,
         description=sample_create_request.description,
         connector=sample_create_request.connector,
-        created_at=mock_current_datetime,
-        updated_at=mock_current_datetime,
+        timestamp=mock_current_datetime,
     )
 
     mock_update_metadata.assert_called_once_with(

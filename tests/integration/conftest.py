@@ -30,6 +30,7 @@ def redis_container() -> Generator[RedisContainer, None, None]:
         yield redis
 
 
+# TODO: Run all for postgres too
 @pytest.fixture(scope="session")
 def test_settings(redis_container: RedisContainer) -> Settings:
     return Settings(
@@ -41,6 +42,8 @@ def test_settings(redis_container: RedisContainer) -> Settings:
         GITHUB_TOKEN=os.getenv("GITHUB_TOKEN", ""),
         API_KEYS=None,
         OTEL_ENABLED=False,
+        DOCUMENT_STORE_BACKEND="redis",
+        SOURCE_METADATA_BACKEND="redis",
     )
 
 

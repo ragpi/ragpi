@@ -6,7 +6,7 @@ from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceType,
 )
-from src.document_store.base import DocumentStoreService
+from src.document_store.base import DocumentStoreBackend
 from src.lock.service import LockService
 from src.sources.metadata.base import SourceMetadataStore
 from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
@@ -24,7 +24,7 @@ class SourceService:
     def __init__(
         self,
         metadata_store: SourceMetadataStore,
-        document_store: DocumentStoreService,
+        document_store: DocumentStoreBackend,
         lock_service: LockService,
     ):
         self.document_store = document_store
@@ -45,8 +45,7 @@ class SourceService:
             source_name=source_input.name,
             description=source_input.description,
             connector=source_input.connector,
-            created_at=timestamp,
-            updated_at=timestamp,
+            timestamp=timestamp,
         )
 
         connector_config_dict = source_input.connector.model_dump()

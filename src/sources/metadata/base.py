@@ -17,8 +17,7 @@ class SourceMetadataStore(ABC):
         source_name: str,
         description: str,
         connector: ConnectorConfig,
-        created_at: datetime,
-        updated_at: datetime,
+        timestamp: datetime,
     ) -> SourceMetadata:
         pass
 

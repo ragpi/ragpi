@@ -4,12 +4,12 @@ from src.common.openai import get_embedding_openai_client
 from src.common.redis import RedisClient
 from src.config import Settings
 from src.connectors.service import ConnectorService
-from src.document_store.service import get_document_store_service
+from src.document_store.backend import get_document_store_backend
 from src.sources.exceptions import SyncSourceException
 from src.common.schemas import Document
 from src.connectors.registry import ConnectorConfig
 from src.sources.metadata.schemas import MetadataUpdate
-from src.sources.metadata.service import get_metadata_store_service
+from src.sources.metadata.backend import get_metadata_store_backend
 from src.sources.schemas import SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
 
@@ -33,12 +33,12 @@ class SourceSyncService:
         self.settings = settings
 
         self.openai_client = get_embedding_openai_client(settings=self.settings)
-        self.document_store = get_document_store_service(
+        self.document_store = get_document_store_backend(
             redis_client=self.redis_client,
             openai_client=self.openai_client,
             settings=self.settings,
         )
-        self.metadata_store = get_metadata_store_service(
+        self.metadata_store = get_metadata_store_backend(
             redis_client=self.redis_client,
             settings=self.settings,
         )
