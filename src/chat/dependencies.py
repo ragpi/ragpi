@@ -2,7 +2,7 @@ from fastapi import Depends
 from openai import OpenAI
 from src.chat.service import ChatService
 from src.chat.tools import TOOL_DEFINITIONS
-from src.common.openai import get_chat_openai_client
+from src.llm_providers.client import get_chat_openai_client
 from src.config import Settings, get_settings
 from src.sources.dependencies import get_source_service
 from src.sources.service import SourceService

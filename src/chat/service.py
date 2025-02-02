@@ -13,12 +13,9 @@ from src.chat.exceptions import ChatException
 from src.chat.prompts import get_system_prompt
 from src.chat.schemas import ChatResponse, CreateChatRequest
 from src.chat.tools import ToolDefinition
-from src.common.exceptions import (
-    KnownException,
-    ResourceNotFoundException,
-    ResourceType,
-)
+from src.common.exceptions import KnownException
 from src.document_store.schemas import Document
+from src.llm_providers.exceptions import handle_openai_client_error
 from src.sources.metadata.schemas import SourceMetadata
 from src.sources.schemas import SearchSourceInput
 from src.sources.service import SourceService
@@ -156,8 +153,5 @@ class ChatService:
         except ChatException as e:
             raise KnownException(str(e))
         except APIError as e:
-            if e.code == "model_not_found":
-                raise ResourceNotFoundException(
-                    ResourceType.MODEL, chat_input.chat_model
-                )
+            handle_openai_client_error(e, chat_input.chat_model)
             raise e

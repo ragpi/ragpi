@@ -19,9 +19,13 @@ class ResourceType(str, Enum):
 
 # Exceptions
 class ResourceNotFoundException(Exception):
-    def __init__(self, resource_type: ResourceType, identifier: str):
+    def __init__(
+        self, resource_type: ResourceType, identifier: str, message: str | None = None
+    ):
         self.resource_type = resource_type.value
         self.identifier = identifier
+        if message:
+            super().__init__(message)
         super().__init__(f"{self.resource_type} '{identifier}' not found")
 
 
