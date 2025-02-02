@@ -1,7 +1,7 @@
 from fastapi import Depends
 from openai import OpenAI
 
-from src.common.openai import get_embedding_openai_client
+from src.llm_providers.client import get_embedding_openai_client
 from src.common.redis import get_redis_client, RedisClient
 from src.config import Settings, get_settings
 from src.document_store.base import DocumentStoreBackend
