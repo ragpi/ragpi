@@ -1,13 +1,19 @@
 from openai import APIError
 
-from src.common.exceptions import KnownException
+from src.common.exceptions import (
+    KnownException,
+    ResourceNotFoundException,
+    ResourceType,
+)
 
 
 def handle_openai_client_error(e: APIError, model: str) -> None:
     # OpenAI Model Not Found
     if e.code == "model_not_found":
-        raise KnownException(
-            f"Model '{model}' not found, or you do not have access to it."
+        raise ResourceNotFoundException(
+            ResourceType.MODEL,
+            model,
+            f"Model '{model}' not found, or you do not have access to it.",
         )
 
     # OpenAI model not supporting 'system' prompt.
@@ -21,7 +27,11 @@ def handle_openai_client_error(e: APIError, model: str) -> None:
 
     # Deepseek Model Not Found
     if "Model Not Exists" in e.message:
-        raise KnownException(f"Model '{model}' not found.")
+        raise ResourceNotFoundException(
+            ResourceType.MODEL,
+            model,
+            f"Model '{model}' not found, or you do not have access to it.",
+        )
 
     # Deepseek model not supporting 'tools'
     if "does not support Function Calling" in e.message:
