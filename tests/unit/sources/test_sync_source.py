@@ -18,7 +18,6 @@ from src.connectors.sitemap.config import SitemapConfig
 from src.sources.metadata.base import SourceMetadataStore
 from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
 from src.sources.schemas import SyncSourceOutput
-from src.sources.stable_id import generate_stable_id
 from src.sources.sync.service import SourceSyncService
 
 
@@ -71,66 +70,6 @@ def sample_connector_config() -> ConnectorConfig:
         type=ConnectorType.SITEMAP,
         sitemap_url="https://example.com/sitemap.xml",
     )
-
-
-@pytest.fixture
-def sample_extracted_documents() -> list[ExtractedDocument]:
-    return [
-        ExtractedDocument(
-            title="Test title 1",
-            content="Test content 1",
-            url="https://example.com/1",
-        ),
-        ExtractedDocument(
-            title="Test title 2",
-            content="Test content 2",
-            url="https://example.com/2",
-        ),
-        ExtractedDocument(
-            title="Test title 3",
-            content="Test content 3",
-            url="https://example.com/3",
-        ),
-    ]
-
-
-@pytest.fixture
-def sample_documents(
-    mock_current_datetime: datetime,
-    sample_extracted_documents: list[ExtractedDocument],
-) -> list[Document]:
-    return [
-        Document(
-            **sample_extracted_documents[0].model_dump(),
-            created_at=mock_current_datetime,
-            id=generate_stable_id(
-                "ee747eb2-fd0f-4650-9785-a2e9ae036ff2",
-                "test-source",
-                sample_extracted_documents[0].title,
-                sample_extracted_documents[0].content,
-            ),
-        ),
-        Document(
-            **sample_extracted_documents[1].model_dump(),
-            created_at=mock_current_datetime,
-            id=generate_stable_id(
-                "ee747eb2-fd0f-4650-9785-a2e9ae036ff2",
-                "test-source",
-                sample_extracted_documents[1].title,
-                sample_extracted_documents[1].content,
-            ),
-        ),
-        Document(
-            **sample_extracted_documents[2].model_dump(),
-            created_at=mock_current_datetime,
-            id=generate_stable_id(
-                "ee747eb2-fd0f-4650-9785-a2e9ae036ff2",
-                "test-source",
-                sample_extracted_documents[2].title,
-                sample_extracted_documents[2].content,
-            ),
-        ),
-    ]
 
 
 @pytest.fixture
@@ -194,6 +133,61 @@ def source_sync_service(
         ),
         settings=mock_settings,
     )
+
+
+@pytest.fixture
+def sample_extracted_documents() -> list[ExtractedDocument]:
+    return [
+        ExtractedDocument(
+            title="Test title 1",
+            content="Test content 1",
+            url="https://example.com/1",
+        ),
+        ExtractedDocument(
+            title="Test title 2",
+            content="Test content 2",
+            url="https://example.com/2",
+        ),
+        ExtractedDocument(
+            title="Test title 3",
+            content="Test content 3",
+            url="https://example.com/3",
+        ),
+    ]
+
+
+@pytest.fixture
+def sample_documents(
+    source_sync_service: SourceSyncService,
+    mock_current_datetime: datetime,
+    sample_extracted_documents: list[ExtractedDocument],
+) -> list[Document]:
+    return [
+        Document(
+            **sample_extracted_documents[0].model_dump(),
+            created_at=mock_current_datetime,
+            id=source_sync_service._generate_stable_id(  # type: ignore
+                sample_extracted_documents[0].title,
+                sample_extracted_documents[0].content,
+            ),
+        ),
+        Document(
+            **sample_extracted_documents[1].model_dump(),
+            created_at=mock_current_datetime,
+            id=source_sync_service._generate_stable_id(  # type: ignore
+                sample_extracted_documents[1].title,
+                sample_extracted_documents[1].content,
+            ),
+        ),
+        Document(
+            **sample_extracted_documents[2].model_dump(),
+            created_at=mock_current_datetime,
+            id=source_sync_service._generate_stable_id(  # type: ignore
+                sample_extracted_documents[2].title,
+                sample_extracted_documents[2].content,
+            ),
+        ),
+    ]
 
 
 async def test_sync_documents_success(

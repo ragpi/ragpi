@@ -29,5 +29,5 @@ def get_document_store_backend(
         )
     else:
         raise ValueError(
-            f"Unsupported document store provider: {settings.DOCUMENT_STORE_BACKEND}"
+            f"Unsupported document store backend: {settings.DOCUMENT_STORE_BACKEND}"
         )

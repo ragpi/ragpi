@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID, uuid5
 
 from src.common.openai import get_embedding_openai_client
 from src.common.redis import RedisClient
@@ -12,7 +13,6 @@ from src.sources.metadata.schemas import MetadataUpdate
 from src.sources.metadata.backend import get_metadata_store_backend
 from src.sources.schemas import SyncSourceOutput
 from src.common.current_datetime import get_current_datetime
-from src.sources.stable_id import generate_stable_id
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +62,7 @@ class SourceSyncService:
             async for extracted_doc in self.connector_service.extract_documents(
                 self.connector_config
             ):
-                stable_id = generate_stable_id(
-                    uuid_namespace=self.settings.DOCUMENT_UUID_NAMESPACE,
-                    source=self.source_name,
+                stable_id = self._generate_stable_id(
                     title=extracted_doc.title,
                     content=extracted_doc.content,
                 )
@@ -117,6 +115,11 @@ class SourceSyncService:
         except Exception as e:
             logger.exception(f"Failed to sync documents for source {self.source_name}")
             raise e
+
+    def _generate_stable_id(self, title: str, content: str) -> str:
+        """Generates a stable ID for a document."""
+        namespace = UUID(self.settings.DOCUMENT_UUID_NAMESPACE)
+        return str(uuid5(namespace, f"{self.source_name}:{title}:{content}"))
 
     def _add_documents_batch(
         self, docs: list[Document], current_doc_count: int

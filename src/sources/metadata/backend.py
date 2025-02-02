@@ -20,5 +20,5 @@ def get_metadata_store_backend(
         )
     else:
         raise ValueError(
-            f"Unsupported metadata store provider: {settings.SOURCE_METADATA_BACKEND}"
+            f"Unsupported source metadata backend: {settings.SOURCE_METADATA_BACKEND}"
         )
