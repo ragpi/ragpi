@@ -10,7 +10,7 @@ readme = "README.md"
 python = "^3.11"
 fastapi = { extras = ["standard"], version = "^0.114.1" }
 html2text = "^2024.2.26"
-openai = "^1.51.1"
+openai = "^1.61.0"
 redis = "^5.1.1"
 celery = "^5.4.0"
 redisvl = "^0.3.5"
