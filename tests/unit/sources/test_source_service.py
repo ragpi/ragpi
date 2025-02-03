@@ -413,7 +413,6 @@ async def test_search_source_success(
         source_service.document_store, "hybrid_search", return_value=mock_results
     )
 
-    # search_input = SearchSourceInput(name="test-source", query="test query", top_k=2)
     result = source_service.search_source(
         source_name="test-source",
         semantic_query="test semantic query",
