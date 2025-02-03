@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     # Chat Settings
     CHAT_HISTORY_LIMIT: int = 20
     MAX_CHAT_ITERATIONS: int = 5
+    RETRIEVAL_TOP_K: int = 10
 
     # Document Processing Configuration
     DOCUMENT_UUID_NAMESPACE: str = "ee747eb2-fd0f-4650-9785-a2e9ae036ff2"

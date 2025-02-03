@@ -35,9 +35,3 @@ class SyncSourceOutput(BaseModel):
     source: SourceMetadata
     docs_added: int
     docs_removed: int
-
-
-class SearchSourceInput(BaseModel):
-    name: str = Field(description="Source name")
-    query: str = Field(description="Search query")
-    top_k: int = Field(description="Number of documents to retrieve")

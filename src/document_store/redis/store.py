@@ -135,7 +135,7 @@ class RedisDocumentStore(DocumentStoreBackend):
         if keys:
             self.index.drop_keys(keys)
 
-    def vector_based_search(
+    def semantic_search(
         self, source_name: str, query: str, top_k: int
     ) -> list[Document]:
         query_embedding = (
@@ -185,12 +185,9 @@ class RedisDocumentStore(DocumentStoreBackend):
         search_results = ft.search(query_obj)  # type: ignore
         return [self._map_document(source_name, doc) for doc in search_results.docs]
 
-    def search_documents(
-        self, source_name: str, query: str, top_k: int
+    def hybrid_search(
+        self, *, source_name: str, semantic_query: str, full_text_query: str, top_k: int
     ) -> list[Document]:
-        vector_search_results = self.vector_based_search(source_name, query, top_k)
-        text_search_results = self.full_text_search(source_name, query, top_k)
-
-        return reciprocal_rank_fusion(
-            [vector_search_results, text_search_results], top_k
-        )
+        semantic_results = self.semantic_search(source_name, semantic_query, top_k)
+        text_results = self.full_text_search(source_name, full_text_query, top_k)
+        return reciprocal_rank_fusion([semantic_results, text_results], top_k)

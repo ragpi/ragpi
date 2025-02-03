@@ -12,12 +12,12 @@ from openai.types.chat import (
 from src.chat.exceptions import ChatException
 from src.chat.prompts import get_system_prompt
 from src.chat.schemas import ChatResponse, CreateChatRequest
-from src.chat.tools import ToolDefinition
+from src.chat.tools.definitions import ToolDefinition
+from src.chat.tools.schamas import RetrieveDocuments
 from src.common.exceptions import KnownException
 from src.document_store.schemas import Document
 from src.llm_providers.exceptions import handle_openai_client_error
 from src.sources.metadata.schemas import SourceMetadata
-from src.sources.schemas import SearchSourceInput
 from src.sources.service import SourceService
 
 
@@ -31,12 +31,14 @@ class ChatService:
         tool_definitions: list[ToolDefinition],
         chat_history_limit: int,
         max_iterations: int,
+        retrieval_top_k: int,
     ):
         self.chat_client = openai_client
         self.source_service = source_service
         self.base_system_prompt = base_system_prompt
         self.chat_history_limit = chat_history_limit
         self.max_iterations = max_iterations
+        self.retrieval_top_k = retrieval_top_k
         self.tools = [
             pydantic_function_tool(
                 model=tool.model,
@@ -78,11 +80,18 @@ class ChatService:
         tool_call: ChatCompletionMessageToolCall,
     ) -> tuple[ChatCompletionToolMessageParam, list[Document]]:
         """Handle a tool call and append the result to messages."""
-        if tool_call.function.name != "search_source":
+        if tool_call.function.name != "retrieve_documents":
             raise ValueError(f"Unknown tool call: {tool_call.function.name}")
 
         args = json.loads(tool_call.function.arguments)
-        documents = self.source_service.search_source(SearchSourceInput(**args))
+        source_input = RetrieveDocuments(**args)
+        documents = self.source_service.search_source(
+            source_name=source_input.source_name,
+            semantic_query=source_input.semantic_query,
+            full_text_query=source_input.full_text_query,
+            top_k=self.retrieval_top_k,
+        )
+
         content = json.dumps(
             [{"url": doc.url, "content": doc.content} for doc in documents]
         )

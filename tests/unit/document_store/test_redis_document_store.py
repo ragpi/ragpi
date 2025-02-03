@@ -13,7 +13,8 @@ TEST_INDEX_NAME = "test_index"
 TEST_SOURCE = "test_source"
 EMBEDDING_MODEL = "test-embedding-model"
 EMBEDDING_DIMENSIONS = 1536
-TEST_QUERY = "Test query"
+TEST_SEMANTIC_QUERY = "Test semantic query"
+TEST_FULL_TEXT_QUERY = "Test full text query"
 TOP_K = 2
 
 
@@ -196,7 +197,7 @@ def test_get_document_ids(
     assert ids == ["doc1", "doc2"]
 
 
-def test_vector_based_search(
+def test_semantic_search(
     mocker: MockerFixture, document_store: RedisDocumentStore
 ) -> None:
     mock_embedding: list[float] = [0.1] * EMBEDDING_DIMENSIONS
@@ -230,12 +231,12 @@ def test_vector_based_search(
     ]
     mocker.patch.object(document_store.index, "query", return_value=mock_search_results)
 
-    results: list[Document] = document_store.vector_based_search(
-        TEST_SOURCE, TEST_QUERY, TOP_K
+    results: list[Document] = document_store.semantic_search(
+        TEST_SOURCE, TEST_SEMANTIC_QUERY, TOP_K
     )
 
     mock_create.assert_called_once_with(
-        input=TEST_QUERY,
+        input=TEST_SEMANTIC_QUERY,
         model=EMBEDDING_MODEL,
         dimensions=EMBEDDING_DIMENSIONS,
     )
@@ -278,7 +279,7 @@ def test_full_text_search(
     mocker.patch.object(document_store.client, "ft", return_value=ft_mock)
 
     results: list[Document] = document_store.full_text_search(
-        TEST_SOURCE, TEST_QUERY, TOP_K
+        TEST_SOURCE, TEST_FULL_TEXT_QUERY, TOP_K
     )
     assert len(results) == TOP_K
     assert results[0].id == "doc1"
@@ -287,7 +288,7 @@ def test_full_text_search(
     assert results[1].content == "Test content 2"
 
 
-def test_search_documents(
+def test_hybrid_search(
     mocker: MockerFixture, document_store: RedisDocumentStore
 ) -> None:
     vector_results: list[Document] = [
@@ -339,21 +340,24 @@ def test_search_documents(
     ]
 
     mock_vector_search = mocker.patch.object(
-        document_store, "vector_based_search", return_value=vector_results
+        document_store, "semantic_search", return_value=vector_results
     )
     mock_text_search = mocker.patch.object(
         document_store, "full_text_search", return_value=text_results
     )
 
-    combined_results: list[Document] = document_store.search_documents(
-        TEST_SOURCE, TEST_QUERY, TOP_K
+    combined_results: list[Document] = document_store.hybrid_search(
+        source_name=TEST_SOURCE,
+        semantic_query=TEST_SEMANTIC_QUERY,
+        full_text_query=TEST_FULL_TEXT_QUERY,
+        top_k=TOP_K,
     )
 
-    mock_vector_search.assert_called_once_with(TEST_SOURCE, TEST_QUERY, TOP_K)
-    mock_text_search.assert_called_once_with(TEST_SOURCE, TEST_QUERY, TOP_K)
+    mock_vector_search.assert_called_once_with(TEST_SOURCE, TEST_SEMANTIC_QUERY, TOP_K)
+    mock_text_search.assert_called_once_with(TEST_SOURCE, TEST_FULL_TEXT_QUERY, TOP_K)
 
     assert len(combined_results) == TOP_K
-    # search_documents uses a reciprocal rank fusion algorithm to combine results
+    # hybrid_search uses a reciprocal rank fusion algorithm to combine results
     # doc2 and doc3 appear in both vector and text results, so they should be ranked highest
     # with doc2 ranked higher than doc3.
     assert combined_results[0].id == "doc2"

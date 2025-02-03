@@ -27,7 +27,7 @@ class DocumentStoreBackend(ABC):
         pass
 
     @abstractmethod
-    def search_documents(
-        self, source_name: str, query: str, top_k: int
+    def hybrid_search(
+        self, *, source_name: str, semantic_query: str, full_text_query: str, top_k: int
     ) -> list[Document]:
         pass

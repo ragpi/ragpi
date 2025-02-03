@@ -11,7 +11,6 @@ from src.common.workers_enabled_check import workers_enabled_check
 from src.sources.dependencies import get_source_service
 from src.sources.metadata.schemas import SourceMetadata
 from src.sources.schemas import (
-    SearchSourceInput,
     CreateSourceRequest,
     SourceTask,
     UpdateSourceRequest,
@@ -98,6 +97,7 @@ def get_source_documents(
     return source_service.get_source_documents(source_name, limit, offset)
 
 
+# TODO: Update search endpoint querying
 @router.get(
     "/{source_name}/search",
     responses={**resource_not_found_response(ResourceType.SOURCE)},
@@ -109,5 +109,8 @@ def search_source(
     source_service: SourceService = Depends(get_source_service),
 ) -> list[Document]:
     return source_service.search_source(
-        SearchSourceInput(name=source_name, query=query, top_k=top_k)
+        source_name=source_name,
+        semantic_query=query,
+        full_text_query=query,
+        top_k=top_k,
     )
