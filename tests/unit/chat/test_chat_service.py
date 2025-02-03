@@ -15,7 +15,6 @@ from src.chat.schemas import ChatMessage, ChatResponse, CreateChatRequest
 from src.common.exceptions import ResourceNotFoundException, ResourceType
 from src.document_store.schemas import Document
 from src.sources.service import SourceService
-from src.sources.schemas import SearchSourceInput
 
 
 @pytest.fixture
@@ -63,6 +62,7 @@ def chat_service(
         tool_definitions=[],
         chat_history_limit=10,
         max_iterations=3,
+        retrieval_top_k=5,
     )
 
 
@@ -137,8 +137,8 @@ def test_generate_response_with_tool_calls(
                             id="call-1",
                             type="function",
                             function=Function(
-                                name="search_source",
-                                arguments='{"query": "test query", "name": "source1", "top_k": 3}',
+                                name="retrieve_documents",
+                                arguments='{"source_name": "source1", "semantic_query": "test semantic query", "full_text_query": "test full text query"}',
                             ),
                         )
                     ],
@@ -187,7 +187,10 @@ def test_generate_response_with_tool_calls(
     assert response.message == "Here is the answer based on the search"
     assert mock_create_completion.call_count == 2
     mock_search_source.assert_called_once_with(
-        SearchSourceInput(query="test query", name="source1", top_k=3)
+        source_name="source1",
+        semantic_query="test semantic query",
+        full_text_query="test full text query",
+        top_k=5,
     )
 
 
@@ -214,8 +217,8 @@ def test_generate_response_max_iterations_exceeded(
                             id="call-1",
                             type="function",
                             function=Function(
-                                name="search_source",
-                                arguments='{"query": "test query", "name": "source1", "top_k": 3}',
+                                name="retrieve_documents",
+                                arguments='{"source_name": "source1", "semantic_query": "test semantic query", "full_text_query": "test full text query"}',
                             ),
                         )
                     ],

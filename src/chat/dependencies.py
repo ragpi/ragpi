@@ -1,7 +1,7 @@
 from fastapi import Depends
 from openai import OpenAI
 from src.chat.service import ChatService
-from src.chat.tools import TOOL_DEFINITIONS
+from src.chat.tools.definitions import TOOL_DEFINITIONS
 from src.llm_providers.client import get_chat_openai_client
 from src.config import Settings, get_settings
 from src.sources.dependencies import get_source_service
@@ -20,4 +20,5 @@ def get_chat_service(
         tool_definitions=TOOL_DEFINITIONS,
         chat_history_limit=settings.CHAT_HISTORY_LIMIT,
         max_iterations=settings.MAX_CHAT_ITERATIONS,
+        retrieval_top_k=settings.RETRIEVAL_TOP_K,
     )

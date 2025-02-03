@@ -14,7 +14,6 @@ from src.connectors.sitemap.config import SitemapConfig
 from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
 from src.sources.schemas import (
     CreateSourceRequest,
-    SearchSourceInput,
     SourceTask,
     UpdateSourceRequest,
 )
@@ -410,15 +409,24 @@ async def test_search_source_success(
         source_service.metadata_store, "metadata_exists", return_value=True
     )
     mock_results = [{"id": "doc1"}, {"id": "doc2"}]
-    mock_search_documents = mocker.patch.object(
-        source_service.document_store, "search_documents", return_value=mock_results
+    mock_hybrid_search = mocker.patch.object(
+        source_service.document_store, "hybrid_search", return_value=mock_results
     )
 
-    search_input = SearchSourceInput(name="test-source", query="test query", top_k=2)
-    result = source_service.search_source(search_input)
+    result = source_service.search_source(
+        source_name="test-source",
+        semantic_query="test semantic query",
+        full_text_query="test full text query",
+        top_k=2,
+    )
 
     assert result == mock_results
-    mock_search_documents.assert_called_once_with("test-source", "test query", 2)
+    mock_hybrid_search.assert_called_once_with(
+        source_name="test-source",
+        semantic_query="test semantic query",
+        full_text_query="test full text query",
+        top_k=2,
+    )
 
 
 async def test_delete_source_success(

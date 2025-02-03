@@ -12,7 +12,6 @@ from src.sources.metadata.base import SourceMetadataStore
 from src.sources.metadata.schemas import MetadataUpdate, SourceMetadata
 from src.sources.schemas import (
     CreateSourceRequest,
-    SearchSourceInput,
     SourceTask,
     UpdateSourceRequest,
 )
@@ -146,10 +145,15 @@ class SourceService:
 
         return self.document_store.get_documents(source_name, limit, offset)
 
-    def search_source(self, source_input: SearchSourceInput):
-        if not self.metadata_store.metadata_exists(source_input.name):
-            raise ResourceNotFoundException(ResourceType.SOURCE, source_input.name)
+    def search_source(
+        self, *, source_name: str, semantic_query: str, full_text_query: str, top_k: int
+    ):
+        if not self.metadata_store.metadata_exists(source_name):
+            raise ResourceNotFoundException(ResourceType.SOURCE, source_name)
 
-        return self.document_store.search_documents(
-            source_input.name, source_input.query, source_input.top_k
+        return self.document_store.hybrid_search(
+            source_name=source_name,
+            semantic_query=semantic_query,
+            full_text_query=full_text_query,
+            top_k=top_k,
         )
