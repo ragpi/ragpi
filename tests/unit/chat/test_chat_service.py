@@ -74,7 +74,7 @@ def sample_chat_input() -> CreateChatRequest:
             ChatMessage(role="assistant", content="Hi there!"),
             ChatMessage(role="user", content="What is the weather?"),
         ],
-        chat_model="test-model",
+        model="test-model",
         sources=["source1", "source2"],
     )
 
@@ -273,4 +273,4 @@ def test_generate_response_model_not_found(
         chat_service.generate_response(sample_chat_input)
 
     assert exc_info.value.resource_type == ResourceType.MODEL
-    assert exc_info.value.identifier == sample_chat_input.chat_model
+    assert exc_info.value.identifier == sample_chat_input.model

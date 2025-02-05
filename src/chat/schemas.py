@@ -14,7 +14,7 @@ class ChatMessage(BaseModel):
 
 class CreateChatRequest(BaseModel):
     sources: list[str] | None = None
-    chat_model: str = settings.DEFAULT_CHAT_MODEL
+    model: str = settings.DEFAULT_CHAT_MODEL
     messages: list[ChatMessage]
 
 

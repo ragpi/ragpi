@@ -132,7 +132,7 @@ class ChatService:
             # Generate response
             for _ in range(self.max_iterations):
                 response = self.chat_client.chat.completions.create(
-                    model=chat_input.chat_model,
+                    model=chat_input.model,
                     messages=messages,
                     tools=self.tools,
                 )
@@ -162,5 +162,5 @@ class ChatService:
         except ChatException as e:
             raise KnownException(str(e))
         except APIError as e:
-            handle_openai_client_error(e, chat_input.chat_model)
+            handle_openai_client_error(e, chat_input.model)
             raise e
