@@ -25,7 +25,7 @@ services:
     container_name: api
     image: ragpi/ragpi:${RAGPI_API_VERSION:-latest}
     ports:
-      - "127.0.0.1:8000:8000"
+      - "${DOCKER_API_PORT_MAPPING:-127.0.0.1:8000:8000}"
     environment:
       - REDIS_URL=redis://redis:6379
       - POSTGRES_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}
