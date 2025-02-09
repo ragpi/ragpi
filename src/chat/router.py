@@ -9,7 +9,7 @@ from src.common.exceptions import ResourceType, resource_not_found_response
 router = APIRouter(
     prefix="/chat",
     tags=[
-        "chat",
+        "Chat",
     ],
 )
 

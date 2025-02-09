@@ -20,7 +20,7 @@ from src.sources.service import SourceService
 
 router = APIRouter(
     prefix="/sources",
-    tags=["sources"],
+    tags=["Sources"],
 )
 
 

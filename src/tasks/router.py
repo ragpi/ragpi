@@ -10,7 +10,7 @@ from src.tasks.service import TaskService
 
 router = APIRouter(
     prefix="/tasks",
-    tags=["tasks"],
+    tags=["Tasks"],
 )
 
 
