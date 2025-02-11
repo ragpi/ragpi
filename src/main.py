@@ -57,7 +57,7 @@ app = FastAPI(
         **internal_error_response,
         **validation_error_response,
     },
-    version=settings.RAGPI_API_VERSION,
+    version=settings.RAGPI_VERSION,
 )
 
 if settings.OTEL_ENABLED:

@@ -9,7 +9,7 @@ from src.llm_providers.validators import validate_provider_settings
 
 class Settings(BaseSettings):
     # Application Configuration
-    RAGPI_API_VERSION: str = "v0.2.x"
+    RAGPI_VERSION: str = "v0.2.x"
     API_NAME: str = "Ragpi"
     API_SUMMARY: str = "Ragpi is an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
     API_KEYS: list[str] | None = None

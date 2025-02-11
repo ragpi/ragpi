@@ -23,7 +23,7 @@ services:
 
   api:
     container_name: api
-    image: ragpi/ragpi:${RAGPI_API_VERSION:-latest}
+    image: ragpi/ragpi:${RAGPI_VERSION:-latest}
     ports:
       - "${DOCKER_API_PORT_MAPPING:-127.0.0.1:8000:8000}"
     environment:
@@ -33,7 +33,7 @@ services:
 
   task-worker:
     container_name: task-worker
-    image: ragpi/ragpi:${RAGPI_API_VERSION:-latest}
+    image: ragpi/ragpi:${RAGPI_VERSION:-latest}
     command: celery --app=src.celery.celery_app worker --concurrency=2 --max-tasks-per-child=1 --loglevel=INFO
     environment:
       - REDIS_URL=redis://redis:6379
