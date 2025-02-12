@@ -8,6 +8,7 @@ services:
       - redis-data:/data
     environment:
       - REDIS_ARGS=--appendonly yes
+    restart: unless-stopped
 
   postgres:
     container_name: postgres
@@ -20,6 +21,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-ragpi}
+    restart: unless-stopped
 
   api:
     container_name: api
@@ -30,6 +32,9 @@ services:
       - REDIS_URL=redis://redis:6379
       - POSTGRES_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
   task-worker:
     container_name: task-worker
@@ -39,6 +44,9 @@ services:
       - REDIS_URL=redis://redis:6379
       - POSTGRES_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
   discord:
     container_name: discord
@@ -48,6 +56,7 @@ services:
     env_file: .env
     profiles:
       - discord
+    restart: unless-stopped
 
 volumes:
   redis-data:

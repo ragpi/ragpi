@@ -140,12 +140,9 @@ class SourceSyncService:
                 f"Added a batch of {len(docs)} documents to source {self.source_name}"
             )
         except Exception:
-            logger.exception(
-                f"Failed to add batch of documents to source {self.source_name}"
-            )
-            raise SyncSourceException(
-                f"Failed to sync documents for source {self.source_name}"
-            )
+            message = f"Failed to add batch of documents to source {self.source_name}"
+            logger.exception(message)
+            raise SyncSourceException(message)
 
     def _remove_stale_documents(
         self, doc_ids_to_remove: set[str], current_doc_count: int
@@ -168,9 +165,6 @@ class SourceSyncService:
                 f"Removed {len(doc_ids_to_remove)} documents from source {self.source_name}"
             )
         except Exception:
-            logger.exception(
-                f"Failed to remove documents from source {self.source_name}"
-            )
-            raise SyncSourceException(
-                f"Failed to sync documents for source {self.source_name}"
-            )
+            message = f"Failed to remove documents from source {self.source_name}"
+            logger.exception(message)
+            raise SyncSourceException(message)
