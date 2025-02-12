@@ -418,7 +418,7 @@ async def test_add_documents_batch_failure(
     with pytest.raises(SyncSourceException) as exc:
         await source_sync_service._add_documents_batch(sample_extracted_documents, 0)  # type: ignore
 
-    assert str(exc.value) == "Failed to sync documents for source test-source"
+    assert str(exc.value) == "Failed to add batch of documents to source test-source"
 
 
 async def test_remove_stale_documents_failure(
@@ -444,4 +444,4 @@ async def test_remove_stale_documents_failure(
     with pytest.raises(SyncSourceException) as exc:
         await source_sync_service._remove_stale_documents(doc_ids_to_remove, 0)  # type: ignore
 
-    assert str(exc.value) == "Failed to sync documents for source test-source"
+    assert str(exc.value) == "Failed to remove documents from source test-source"
