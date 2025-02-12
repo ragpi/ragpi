@@ -9,10 +9,15 @@ from src.llm_providers.validators import validate_provider_settings
 
 class Settings(BaseSettings):
     # Application Configuration
+    PROJECT_NAME: str = "the current project"
+    PROJECT_DESCRIPTION: str = "determined by the available sources"
+
     RAGPI_VERSION: str = "v0.2.x"
     API_NAME: str = "Ragpi"
     API_SUMMARY: str = "Ragpi is an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
+
     API_KEYS: list[str] | None = None
+
     WORKERS_ENABLED: bool = True
     TASK_RETENTION_DAYS: int = 7
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"

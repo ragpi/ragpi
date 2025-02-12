@@ -27,6 +27,8 @@ class ChatService:
         *,
         source_service: SourceService,
         openai_client: OpenAI,
+        project_name: str,
+        project_description: str,
         base_system_prompt: str,
         tool_definitions: list[ToolDefinition],
         chat_history_limit: int,
@@ -35,6 +37,8 @@ class ChatService:
     ):
         self.chat_client = openai_client
         self.source_service = source_service
+        self.project_name = project_name
+        self.project_description = project_description
         self.base_system_prompt = base_system_prompt
         self.chat_history_limit = chat_history_limit
         self.max_iterations = max_iterations
@@ -108,7 +112,11 @@ class ChatService:
             # Initialize chat context
             sources = self._get_sources(chat_input.sources)
             system_prompt = get_system_prompt(
-                self.base_system_prompt, sources, self.max_iterations
+                project_name=self.project_name,
+                project_description=self.project_description,
+                base_prompt=self.base_system_prompt,
+                sources=sources,
+                max_attempts=self.max_iterations,
             )
 
             # Prepare chat history
@@ -144,7 +152,11 @@ class ChatService:
                     for tool_call in message.tool_calls:
                         tool_response, docs = self._handle_tool_call(tool_call)
                         messages.append(tool_response)
-                        retrieved_documents.extend(docs)
+                        existing_ids: set[str] = {doc.id for doc in retrieved_documents}
+                        new_docs: list[Document] = [
+                            doc for doc in docs if doc.id not in existing_ids
+                        ]
+                        retrieved_documents.extend(new_docs)
                 elif message.content:
                     return ChatResponse(
                         message=message.content, retrieved_documents=retrieved_documents

@@ -58,6 +58,8 @@ def chat_service(
     return ChatService(
         source_service=mock_source_service,
         openai_client=mock_openai_client,
+        project_name="Test Project",
+        project_description="This is a test project.",
         base_system_prompt="You are a helpful assistant.",
         tool_definitions=[],
         chat_history_limit=10,
