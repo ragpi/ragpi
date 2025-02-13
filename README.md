@@ -1,8 +1,8 @@
 # Ragpi
 
-[![Documentation](https://img.shields.io/badge/docs-ragpi.io-blue)](https://docs.ragpi.io)
-
 Ragpi is an open-source AI assistant that answers technical questions using your documentation, GitHub issues, and READMEs. It combines LLMs with intelligent search to provide accurate, context-aware answers through a simple API.
+
+[Documentation](https://docs.ragpi.io) | [API Reference](https://docs.ragpi.io/api)
 
 ## Key Features
 
@@ -99,7 +99,3 @@ Ragpi supports multiple LLM providers for generating responses and embeddings:
 - [**Discord**](https://github.com/ragpi/ragpi-discord)
 
 [Set up Discord integration →](https://docs.ragpi.io/integrations/discord)
-
-## Documentation
-
-For detailed instructions on how to set up and use Ragpi, check out the [official documentation](https://docs.ragpi.io).
