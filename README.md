@@ -36,6 +36,7 @@ curl -X POST http://localhost:8000/sources \
   -H "Content-Type: application/json" \
   -d '{
     "name": "example-docs",
+    "description": "Documentation for example project",
     "connector": {
       "type": "sitemap",
       "sitemap_url": "https://your-docs.com/sitemap.xml"
