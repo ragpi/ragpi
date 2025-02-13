@@ -102,4 +102,4 @@ Ragpi supports multiple LLM providers for generating responses and embeddings:
 
 ## Documentation
 
-Full documentation available at [docs.ragpi.io](https://docs.ragpi.io).
+For detailed instructions on how to set up and use Ragpi, check out the [official documentation](https://docs.ragpi.io).
