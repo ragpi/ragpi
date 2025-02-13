@@ -96,7 +96,7 @@ Ragpi supports multiple LLM providers for generating responses and embeddings:
 
 ## Integrations
 
-- **Discord**
+- [**Discord**](https://github.com/ragpi/ragpi-discord)
 
 [Set up Discord integration →](https://docs.ragpi.io/integrations/discord)
 
