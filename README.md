@@ -60,7 +60,7 @@ curl http://localhost:8000/tasks/{task_id}
 
 ### 5. Ask questions:
 
-Once the task is completed, you can ask questions:
+Once the source is synchronized, you can ask questions:
 
 ```bash
 curl -X POST http://localhost:8000/chat \
