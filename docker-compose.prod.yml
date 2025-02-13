@@ -8,13 +8,12 @@ services:
       - redis-data:/data
     environment:
       - REDIS_ARGS=--appendonly yes
-    profiles:
-      - internal-redis
+    restart: unless-stopped
 
   postgres:
     container_name: postgres
     image: pgvector/pgvector:pg17
-    ports:
+    ports: 
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -22,29 +21,42 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-ragpi}
-    profiles:
-      - internal-postgres
+    restart: unless-stopped
 
   api:
     container_name: api
-    image: ragpi/ragpi:${API_VERSION:-latest}
+    image: ragpi/ragpi:${RAGPI_VERSION:-latest}
     ports:
-      - "8000:8000"
+      - "${DOCKER_API_PORT_MAPPING:-127.0.0.1:8000:8000}"
     environment:
-      # Use the REDIS_URL env var if available or default to the internal redis container.
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
-      # Use the POSTGRES_URL env var if available or default to the internal postgres container.
-      - POSTGRES_URL=${POSTGRES_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}}
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
   task-worker:
     container_name: task-worker
-    image: ragpi/ragpi:${API_VERSION:-latest}
+    image: ragpi/ragpi:${RAGPI_VERSION:-latest}
     command: celery --app=src.celery.celery_app worker --concurrency=2 --max-tasks-per-child=1 --loglevel=INFO
     environment:
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
-      - POSTGRES_URL=${POSTGRES_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}}
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ragpi}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  discord:
+    container_name: discord
+    image: ragpi/ragpi-discord:${RAGPI_DISCORD_VERSION:-latest}
+    environment:
+      - RAGPI_BASE_URL=http://api:8000
+    env_file: .env
+    profiles:
+      - discord
+    restart: unless-stopped
 
 volumes:
   redis-data:

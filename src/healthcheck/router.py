@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.get(
     "/healthcheck",
-    tags=["healthcheck"],
+    tags=["Healthcheck"],
     status_code=status.HTTP_200_OK,
     responses={
         200: {
