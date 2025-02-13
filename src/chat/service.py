@@ -15,7 +15,6 @@ from src.chat.schemas import ChatResponse, CreateChatRequest
 from src.chat.tools.definitions import ToolDefinition
 from src.chat.tools.schamas import RetrieveDocuments
 from src.common.exceptions import KnownException
-from src.document_store.schemas import Document
 from src.llm_providers.exceptions import handle_openai_client_error
 from src.sources.metadata.schemas import SourceMetadata
 from src.sources.service import SourceService
@@ -82,7 +81,7 @@ class ChatService:
     def _handle_tool_call(
         self,
         tool_call: ChatCompletionMessageToolCall,
-    ) -> tuple[ChatCompletionToolMessageParam, list[Document]]:
+    ) -> ChatCompletionToolMessageParam:
         """Handle a tool call and append the result to messages."""
         if tool_call.function.name != "retrieve_documents":
             raise ValueError(f"Unknown tool call: {tool_call.function.name}")
@@ -104,7 +103,7 @@ class ChatService:
             tool_call_id=tool_call.id,
             content=content,
             role="tool",
-        ), documents
+        )
 
     def generate_response(self, chat_input: CreateChatRequest) -> ChatResponse:
         """Generate a response based on chat input."""
@@ -135,8 +134,6 @@ class ChatService:
                 system_prompt, chat_history, chat_input.messages[-1].content
             )
 
-            retrieved_documents: list[Document] = []
-
             # Generate response
             for _ in range(self.max_iterations):
                 response = self.chat_client.chat.completions.create(
@@ -150,25 +147,17 @@ class ChatService:
 
                 if message.tool_calls:
                     for tool_call in message.tool_calls:
-                        tool_response, docs = self._handle_tool_call(tool_call)
+                        tool_response = self._handle_tool_call(tool_call)
                         messages.append(tool_response)
-                        existing_ids: set[str] = {doc.id for doc in retrieved_documents}
-                        new_docs: list[Document] = [
-                            doc for doc in docs if doc.id not in existing_ids
-                        ]
-                        retrieved_documents.extend(new_docs)
                 elif message.content:
-                    return ChatResponse(
-                        message=message.content, retrieved_documents=retrieved_documents
-                    )
+                    return ChatResponse(message=message.content)
                 else:
                     raise ValueError(
                         "No response content or tool call found in completion."
                     )
 
             return ChatResponse(
-                message="I'm sorry, but I don't have the information you're looking for.",
-                retrieved_documents=retrieved_documents,
+                message="I'm sorry, but I don't have the information you're looking for."
             )
 
         except ChatException as e:

@@ -1,7 +1,6 @@
 from typing import Literal
 from pydantic import BaseModel
 
-from src.document_store.schemas import Document
 from src.config import get_settings
 
 settings = get_settings()
@@ -20,4 +19,3 @@ class CreateChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     message: str | None
-    retrieved_documents: list[Document]
