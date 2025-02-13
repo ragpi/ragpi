@@ -1,6 +1,6 @@
 # Ragpi
 
-Ragpi is an open-source AI assistant that answers technical questions using your documentation, GitHub issues, and READMEs. It combines LLMs with intelligent search to provide accurate, context-aware answers through a simple API.
+Ragpi is an open-source AI assistant API that answers questions using your documentation, GitHub issues, and READMEs. It combines LLMs with intelligent search to provide relevant, documentation-backed answers through a simple API.
 
 [Documentation](https://docs.ragpi.io) | [API Reference](https://docs.ragpi.io/api)
 
