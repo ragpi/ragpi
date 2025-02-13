@@ -16,6 +16,8 @@ Ragpi is an open-source AI assistant that answers technical questions using your
 
 ### 1. Clone and configure:
 
+Clone the repository and create a `.env` file with your OpenAI key:
+
 ```bash
 git clone https://github.com/ragpi/ragpi.git
 cd ragpi
@@ -25,11 +27,15 @@ cp .env.example .env
 
 ### 2. Start services:
 
+Start Ragpi using Docker Compose:
+
 ```bash
 docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### 3. Add your first source:
+
+Use the Sitemap Connector to create a new source:
 
 ```bash
 curl -X POST http://localhost:8000/sources \
@@ -44,7 +50,17 @@ curl -X POST http://localhost:8000/sources \
   }'
 ```
 
-### 4. Ask questions:
+### 4. Monitor Synchronization Progress:
+
+Get the `task_id` from the response of the above command and monitor the source synchronization progress:
+
+```bash
+curl http://localhost:8000/tasks/{task_id}
+```
+
+### 5. Ask questions:
+
+Once the task is completed, you can ask questions:
 
 ```bash
 curl -X POST http://localhost:8000/chat \
@@ -57,9 +73,7 @@ curl -X POST http://localhost:8000/chat \
   }'
 ```
 
-## Core Components
-
-### Connectors
+## Connectors
 
 Ragpi supports multiple connectors to fetch data from various sources:
 
@@ -69,7 +83,7 @@ Ragpi supports multiple connectors to fetch data from various sources:
 
 [Explore connectors →](https://docs.ragpi.io/connectors)
 
-### LLM Providers
+## Providers
 
 Ragpi supports multiple LLM providers for generating responses and embeddings:
 
@@ -80,7 +94,7 @@ Ragpi supports multiple LLM providers for generating responses and embeddings:
 
 [Configure providers →](https://docs.ragpi.io/providers/overview)
 
-### Integrations
+## Integrations
 
 - **Discord**
 
