@@ -77,7 +77,7 @@ curl -X POST http://localhost:8000/chat \
 
 Ragpi supports multiple connectors to fetch data from various sources:
 
-- **Documentation Website (Using Sitemap)**
+- **Documentation Website (Sitemap)**
 - **GitHub Issues**
 - **GitHub README Files**
 
