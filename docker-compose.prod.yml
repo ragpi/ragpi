@@ -58,6 +58,16 @@ services:
       - discord
     restart: unless-stopped
 
+  slack:
+    container_name: slack
+    image: ragpi/ragpi-slack:${RAGPI_SLACK_VERSION:-latest}
+    environment:
+      - RAGPI_BASE_URL=http://api:8000
+    env_file: .env
+    profiles:
+      - slack
+    restart: unless-stopped
+
 volumes:
   redis-data:
   postgres-data:
