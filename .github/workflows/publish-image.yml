@@ -43,6 +43,11 @@ jobs:
           images: |
             ragpi/ragpi
             ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
+          tags: |
+            type=semver,pattern={{raw}}
+            type=raw,value=latest,enable=${{ !contains(github.ref, '-') }}
 
       - name: Build and push Docker images
         id: push
