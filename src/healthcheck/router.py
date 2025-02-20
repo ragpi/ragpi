@@ -2,6 +2,7 @@ from typing import Any
 from celery import Celery
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine, text
 
 from src.config import Settings, get_settings
 from src.common.redis import RedisClient, get_redis_client
@@ -22,6 +23,7 @@ router = APIRouter()
                     "example": {
                         "api": {"status": "ok"},
                         "redis": {"status": "ok"},
+                        "postgres": {"status": "ok"},
                         "workers": {"status": "ok", "active_workers": 2},
                     }
                 }
@@ -34,6 +36,10 @@ router = APIRouter()
                     "example": {
                         "api": {"status": "ok"},
                         "redis": {"status": "error", "message": "Connection error"},
+                        "postgres": {
+                            "status": "error",
+                            "message": "Connection error or unexpected result",
+                        },
                         "workers": {
                             "status": "error",
                             "message": "No active workers found",
@@ -52,9 +58,9 @@ def healthcheck(
     health_status: dict[str, Any] = {
         "api": {"status": "ok"},
         "redis": {"status": "ok"},
+        "postgres": {"status": "ok"},
         "workers": {"status": "ok"},
     }
-
     has_error = False
 
     # Check Redis connection
@@ -63,6 +69,23 @@ def healthcheck(
     except Exception as e:
         health_status["redis"].update({"status": "error", "message": str(e)})
         has_error = True
+
+    # Check PostgreSQL connection
+    if (
+        settings.SOURCE_METADATA_BACKEND == "postgres"
+        or settings.DOCUMENT_STORE_BACKEND == "postgres"
+    ):
+        try:
+            engine = create_engine(settings.POSTGRES_URL)
+            with engine.connect() as connection:
+                result = connection.execute(text("SELECT 1")).scalar()
+                if result != 1:
+                    raise Exception("Postgres health check failed")
+        except Exception as e:
+            health_status["postgres"].update({"status": "error", "message": str(e)})
+            has_error = True
+    else:
+        del health_status["postgres"]
 
     # Check Celery Worker status
     if not settings.WORKERS_ENABLED:
