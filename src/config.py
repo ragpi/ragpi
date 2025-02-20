@@ -1,6 +1,6 @@
 from functools import lru_cache
 from typing import Literal
-from pydantic import field_validator, model_validator
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 from src.llm_providers.constants import ChatProvider, EmbeddingProvider
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     API_NAME: str = "Ragpi"
     API_SUMMARY: str = "Ragpi is an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
 
-    API_KEYS: list[str] | None = None
+    RAGPI_API_KEY: str | None = None
 
     WORKERS_ENABLED: bool = True
     TASK_RETENTION_DAYS: int = 7
@@ -74,10 +74,6 @@ class Settings(BaseSettings):
     # OpenTelemetry Settings
     OTEL_ENABLED: bool = False
     OTEL_SERVICE_NAME: str = "ragpi"
-
-    @field_validator("API_KEYS", mode="before")
-    def split_api_keys(cls, value: str) -> list[str]:
-        return value.split(",") if value else []
 
     @model_validator(mode="after")
     def validate_llm_providers(self):
