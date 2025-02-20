@@ -47,7 +47,7 @@ def test_settings(
     common_settings: dict[str, Any] = {
         "OPENAI_API_KEY": "test-key",
         "GITHUB_TOKEN": os.getenv("GITHUB_TOKEN", ""),
-        "API_KEYS": None,
+        "RAGPI_API_KEY": None,
         "OTEL_ENABLED": False,
         "REDIS_URL": f"redis://{redis_container.get_container_host_ip()}:{redis_container.get_exposed_port(6379)}",
     }
