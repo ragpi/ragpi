@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "the current project"
     PROJECT_DESCRIPTION: str = "determined by the available sources"
 
-    RAGPI_VERSION: str = "v0.2.x"
+    RAGPI_VERSION: str = "v0.3.x"
     API_NAME: str = "Ragpi"
     API_SUMMARY: str = "Ragpi is an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
 
