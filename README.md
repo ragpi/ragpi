@@ -1,8 +1,10 @@
 # Ragpi
 
-Ragpi is an open-source AI assistant API that answers questions using your documentation, GitHub issues, and READMEs. It combines LLMs with intelligent search to provide relevant, documentation-backed answers through a simple API.
-
 [Documentation](https://docs.ragpi.io) | [API Reference](https://docs.ragpi.io/api)
+
+Ragpi is an open-source AI assistant that answers questions using your documentation, GitHub issues, and READMEs. It combines LLMs with intelligent search to provide relevant, documentation-backed answers through a simple API. It supports multiple providers like OpenAI, Ollama, and Deepseek, and has built-in integrations with Discord and Slack.
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/7ihedX?referralCode=Z4YGGz)
 
 ## Key Features
 
@@ -14,16 +16,37 @@ Ragpi is an open-source AI assistant API that answers questions using your docum
 
 ## Quick Start
 
+This is a quick guide to get you started with Ragpi locally. To deploy Ragpi to a production environment, refer to the [Deployment Documentation](https://docs.ragpi.io/deployment) to learn more about different deployment options.
+
 ### 1. Clone and configure:
 
-Clone the repository and create a `.env` file with your OpenAI key:
+Clone the repository and navigate to the project directory:
 
 ```bash
 git clone https://github.com/ragpi/ragpi.git
 cd ragpi
-cp .env.example .env
-# Edit .env with your OpenAI key
 ```
+
+Copy the example environment file and open it for editing:
+
+```bash
+cp .env.example .env
+```
+
+Configure the essential environment variables in `.env`:
+
+```env
+# Add your OpenAI API key
+OPENAI_API_KEY=your_api_key_here
+
+# Optional: Add your GtiHub Token if using a GitHub connector
+GITHUB_TOKEN=your_github_token
+
+# Optional: Add API authentication
+RAGPI_API_KEY=your_secret_api_key
+```
+
+**Note:** If you would like to enable API authentication, set the `RAGPI_API_KEY` environment variable to a [self-generated key](https://docs.ragpi.io/configuration#generating-an-api-key). Include this key in the `x-api-key` header for all requests.
 
 ### 2. Start services:
 
@@ -96,6 +119,7 @@ Ragpi supports multiple LLM providers for generating responses and embeddings:
 
 ## Integrations
 
-- [**Discord**](https://github.com/ragpi/ragpi-discord)
+Ragpi supports integrations with popular platforms like Discord and Slack:
 
-[Set up Discord integration →](https://docs.ragpi.io/integrations/discord)
+- [**Discord**](https://docs.ragpi.io/integrations/discord)
+- [**Slack**](https://docs.ragpi.io/integrations/slack)
