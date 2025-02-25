@@ -52,6 +52,7 @@ services:
     container_name: discord
     image: ragpi/ragpi-discord:${RAGPI_DISCORD_VERSION:-latest}
     environment:
+      - NODE_ENV=production
       - RAGPI_BASE_URL=http://api:8000
     env_file: .env
     profiles:
@@ -62,6 +63,7 @@ services:
     container_name: slack
     image: ragpi/ragpi-slack:${RAGPI_SLACK_VERSION:-latest}
     environment:
+      - NODE_ENV=production
       - RAGPI_BASE_URL=http://api:8000
     env_file: .env
     profiles:
