@@ -7,13 +7,15 @@ from src.connectors.connector_type import ConnectorType
 from src.connectors.sitemap.config import SitemapConfig
 from src.connectors.github_issues.config import GithubIssuesConfig
 from src.connectors.github_readme.config import GithubReadmeConfig
+from src.connectors.pdf.config import PdfConfig 
 from src.connectors.base.connector import BaseConnector
 from src.connectors.sitemap.connector import SitemapConnector
 from src.connectors.github_issues.connector import GithubIssuesConnector
 from src.connectors.github_readme.connector import GithubReadmeConnector
+from src.connectors.pdf.connector import PdfConnector
 
 ConnectorConfig = Annotated[
-    Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig],
+    Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig, PdfConfig], 
     Field(discriminator="type"),
 ]
 
@@ -39,9 +41,13 @@ CONNECTOR_REGISTRY: ConnectorRegistryType = {
         config_schema=GithubReadmeConfig,
         connector_class=GithubReadmeConnector,
     ),
+    ConnectorType.PDF: ConnectorRegistryEntry(     
+        config_schema=PdfConfig,
+        connector_class=PdfConnector,
+    ),
 }
 
-ConfigClassType = Type[Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig]]
+ConfigClassType = Type[Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig, PdfConfig]] 
 
 
 def get_connector_config_schema(connector_type: ConnectorType) -> ConfigClassType:
