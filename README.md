@@ -1,10 +1,8 @@
 # Ragpi
 
-[Documentation](https://docs.ragpi.io) | [API Reference](https://docs.ragpi.io/api)
-
 Ragpi is an open-source AI assistant that answers questions using your documentation, GitHub issues, and READMEs. It combines LLMs with intelligent search to provide relevant, documentation-backed answers through a simple API. It supports multiple providers like OpenAI, Ollama, and Deepseek, and has built-in integrations with Discord and Slack.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/7ihedX?referralCode=Z4YGGz)
+[Documentation](https://docs.ragpi.io) | [API Reference](https://docs.ragpi.io/api)
 
 ## Key Features
 
@@ -98,7 +96,7 @@ curl -X POST http://localhost:8000/chat \
 
 ## Connectors
 
-Ragpi supports multiple connectors to fetch data from various sources:
+Ragpi supports the following connectors for building knowledge bases:
 
 - **Documentation Website (Sitemap)**
 - **GitHub Issues**
@@ -108,7 +106,7 @@ Ragpi supports multiple connectors to fetch data from various sources:
 
 ## Providers
 
-Ragpi supports multiple LLM providers for generating responses and embeddings:
+Ragpi supports the following LLM providers for generating responses and embeddings:
 
 - **OpenAI** (default)
 - **Ollama**
@@ -119,7 +117,7 @@ Ragpi supports multiple LLM providers for generating responses and embeddings:
 
 ## Integrations
 
-Ragpi supports integrations with popular platforms like Discord and Slack:
+Ragpi supports the following integrations for interacting with the AI assistant:
 
 - [**Discord**](https://docs.ragpi.io/integrations/discord)
 - [**Slack**](https://docs.ragpi.io/integrations/slack)
