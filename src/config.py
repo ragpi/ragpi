@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.llm_providers.constants import ChatProvider, EmbeddingProvider
 from src.llm_providers.validators import validate_provider_settings
@@ -82,6 +82,8 @@ class Settings(BaseSettings):
     @field_validator("LOG_LEVEL", mode="before")
     def normalize_log_level(cls, v: str):
         return v.upper()
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 @lru_cache
