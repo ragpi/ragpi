@@ -9,90 +9,49 @@ Ragpi is an open-source AI assistant that answers questions using your documenta
 - 📚 Builds knowledge bases from docs, GitHub issues and READMEs
 - 🤖 Agentic RAG system for dynamic document retrieval
 - 🔌 Supports OpenAI, Ollama, Deepseek & OpenAI-Compatible models
-- 💬 Discord integration for community support
+- 💬 Discord and slack integrations for community support
 - 🚀 API-first design with Docker deployment
 
-## Quick Start
+## Example Workflow
 
-This is a quick guide to get you started with Ragpi locally. To deploy Ragpi to a production environment, refer to the [Deployment Documentation](https://docs.ragpi.io/deployment) to learn more about different deployment options.
+Here's a simple workflow to get started with Ragpi once it's deployed:
 
-### 1. Clone and configure:
+### 1. Set up a Source with a Connector
 
-Clone the repository and navigate to the project directory:
+- Use the [`/sources`](https://docs.ragpi.io/api#tag/Sources/operation/create_source_sources_post) endpoint to configure a source with your chosen connector.
+- Each connector type has its own configuration parameters.
 
-```bash
-git clone https://github.com/ragpi/ragpi.git
-cd ragpi
+Example payload using the Sitemap connector:
+
+```json
+{
+  "name": "example-docs",
+  "description": "Documentation for example project. It contains information about configuration, usage, and deployment.",
+  "connector": {
+    "type": "sitemap",
+    "sitemap_url": "https://docs.example.com/sitemap.xml"
+  }
+}
 ```
 
-Copy the example environment file and open it for editing:
+### 2. Monitor Source Synchronization
 
-```bash
-cp .env.example .env
-```
+- After adding a source, documents will be synced automatically. You can monitor the sync process through the [`/tasks`](https://docs.ragpi.io/api#tag/Tasks/operation/get_task_tasks__task_id__get) endpoint.
 
-Configure the essential environment variables in `.env`:
+### 3. Chat with the AI Assistant
 
-```env
-# Add your OpenAI API key
-OPENAI_API_KEY=your_api_key_here
+- Use the [`/chat`](https://docs.ragpi.io/api#tag/Chat/operation/chat_chat_post) endpoint to query the AI assistant using the configured sources:
 
-# Optional: Add your GtiHub Token if using a GitHub connector
-GITHUB_TOKEN=your_github_token
+  ```json
+  {
+    "sources": ["example-docs"],
+    "messages": [
+      { "role": "user", "content": "How do I deploy the example project?" }
+    ]
+  }
+  ```
 
-# Optional: Add API authentication
-RAGPI_API_KEY=your_secret_api_key
-```
-
-**Note:** If you would like to enable API authentication, set the `RAGPI_API_KEY` environment variable to a [self-generated key](https://docs.ragpi.io/configuration#generating-an-api-key). Include this key in the `x-api-key` header for all requests.
-
-### 2. Start services:
-
-Start Ragpi using Docker Compose:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d
-```
-
-### 3. Add your first source:
-
-Use the Sitemap Connector to create a new source:
-
-```bash
-curl -X POST http://localhost:8000/sources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "example-docs",
-    "description": "Documentation for example project",
-    "connector": {
-      "type": "sitemap",
-      "sitemap_url": "https://your-docs.com/sitemap.xml"
-    }
-  }'
-```
-
-### 4. Monitor Synchronization Progress:
-
-Get the `task_id` from the response of the above command and monitor the source synchronization progress:
-
-```bash
-curl http://localhost:8000/tasks/{task_id}
-```
-
-### 5. Ask questions:
-
-Once the source is synchronized, you can ask questions:
-
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [{
-      "role": "user",
-      "content": "How do I configure X?"
-    }]
-  }'
-```
+- You can also interact with the AI assistant through the [Discord](https://docs.ragpi.io/integrations/discord) or [Slack](https://docs.ragpi.io/integrations/slack) integration.
 
 ## Connectors
 
