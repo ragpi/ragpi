@@ -80,3 +80,7 @@ Ragpi supports the following integrations for interacting with the AI assistant:
 
 - [**Discord**](https://docs.ragpi.io/integrations/discord)
 - [**Slack**](https://docs.ragpi.io/integrations/slack)
+
+## Contributing
+
+Contributions to Ragpi are welcome! Please check out the [contributing guidelines](CONTRIBUTING.md) for more information.
