@@ -1,3 +1,4 @@
+import logging
 from openai import APIError
 
 from src.common.exceptions import (
@@ -5,6 +6,8 @@ from src.common.exceptions import (
     ResourceNotFoundException,
     ResourceType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def handle_openai_client_error(e: APIError, model: str) -> None:
@@ -36,3 +39,9 @@ def handle_openai_client_error(e: APIError, model: str) -> None:
     # Deepseek model not supporting 'tools'
     if "does not support Function Calling" in e.message:
         raise KnownException(f"Model '{model}' is not supported.")
+
+    logging.error(e)
+
+    raise KnownException(
+        "Error calling model. Verify the model exists, you have access, and it supports function/tool calling."
+    )
