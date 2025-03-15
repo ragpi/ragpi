@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     RAGPI_VERSION: str = "v0.3.x"
     API_NAME: str = "Ragpi"
-    API_SUMMARY: str = "Ragpi is an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
+    API_SUMMARY: str = "An open-source AI assistant answering questions using your docs"
 
     RAGPI_API_KEY: str | None = None
 
