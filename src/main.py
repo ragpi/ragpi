@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from redis.exceptions import ConnectionError
 
 from src.common.api_key import get_api_key
@@ -62,6 +63,15 @@ app = FastAPI(
 
 if settings.OTEL_ENABLED:
     setup_opentelemetry(settings.OTEL_SERVICE_NAME, app)
+
+if settings.CORS_ENABLED:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.exception_handler(RequestValidationError)(validation_exception_handler)
 app.exception_handler(ResourceNotFoundException)(resource_not_found_handler)

@@ -47,7 +47,11 @@ def get_system_prompt(
    - Avoid revealing your internal chain of thought or the step-by-step reasoning behind how you derived your answer.  
    - When you lack sufficient information, clearly state it rather than guessing or fabricating content.
 
-7. **Fallback Behavior**  
+7. **Response Formatting**  
+   - Format all responses using Markdown.  
+   - Use headers, bullet points, code blocks, tables and bold/italic text where appropriate to improve readability.
+
+8. **Fallback Behavior**  
    - If you cannot find sufficient information after exhausting all {max_attempts} attempts, respond with:  
      "I'm sorry, but I don't have the information you're looking for."
 """

@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     USER_AGENT: str = "Ragpi"
     MAX_CONCURRENT_REQUESTS: int = 10
+
+    CORS_ENABLED: bool = False
+    CORS_ORIGINS: list[str] = ["*"]
 
     # Provider Configuration
     CHAT_PROVIDER: ChatProvider = ChatProvider.OPENAI
@@ -80,8 +83,16 @@ class Settings(BaseSettings):
         return validate_provider_settings(self)
 
     @field_validator("LOG_LEVEL", mode="before")
-    def normalize_log_level(cls, v: str):
-        return v.upper()
+    def normalize_log_level(cls, v: Any):
+        if isinstance(v, str):
+            return v.upper()
+        return v
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    def validate_list_from_string(cls, v: Any):
+        if isinstance(v, str):
+            return [item.strip() for item in v.split(",")]
+        return v
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
