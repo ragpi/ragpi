@@ -13,7 +13,7 @@ services:
   postgres:
     container_name: postgres
     image: pgvector/pgvector:pg17
-    ports: 
+    ports:
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -68,6 +68,20 @@ services:
     env_file: .env
     profiles:
       - slack
+    restart: unless-stopped
+
+  recaptcha-gateway:
+    container_name: recaptcha-gateway
+    image: ragpi/ragpi-recaptcha-gateway:${RAGPI_RECAPTCHA_GATEWAY_VERSION:-latest}
+    ports:
+      - "${DOCKER_RECAPTCHA_GATEWAY_PORT_MAPPING:-127.0.0.1:8001:8001}"
+    environment:
+      - NODE_ENV=production
+      - PORT=8001
+      - RAGPI_BASE_URL=http://api:8000
+    env_file: .env
+    profiles:
+      - recaptcha-gateway
     restart: unless-stopped
 
 volumes:
