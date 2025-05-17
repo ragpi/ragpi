@@ -2,7 +2,7 @@
 
 Ragpi is an open-source AI assistant that answers questions using your documentation, GitHub issues, and READMEs. It combines LLMs with intelligent search to provide relevant, documentation-backed answers through a simple API. It supports multiple providers like OpenAI, Ollama, and Deepseek, and has built-in integrations with Discord and Slack. A web widget integration is also available to embed the assistant in your website.
 
-[Documentation](https://docs.ragpi.io) | [API Reference](https://docs.ragpi.io/api) | [Join Discord](https://discord.gg/tXN8dkqvcE)
+[Documentation](https://docs.ragpi.io) | [API Reference](https://docs.ragpi.io/api)
 
 ## Key Features
 
