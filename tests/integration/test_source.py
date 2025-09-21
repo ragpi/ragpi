@@ -71,7 +71,6 @@ class TestSource:
                     "repo_owner": "ragpi",
                     "repo_name": "ragpi",
                     "include_root": True,
-                    "sub_dirs": ["packages/server"],
                 },
             },
         )
