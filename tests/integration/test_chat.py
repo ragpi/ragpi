@@ -18,8 +18,8 @@ class TestChat:
                     "description": "Test source for chat",
                     "connector": {
                         "type": "sitemap",
-                        "sitemap_url": "https://gateweaver.io/sitemap.xml",
-                        "include_pattern": "https://gateweaver.io/docs/getting-started",
+                        "sitemap_url": "https://docs.ragpi.io/sitemap.xml",
+                        "include_pattern": "https://docs.ragpi.io/getting-started",
                     },
                 },
             )

@@ -14,8 +14,8 @@ class TestSource:
             "description": "Test source description",
             "connector": {
                 "type": "sitemap",
-                "sitemap_url": "https://gateweaver.io/sitemap.xml",
-                "include_pattern": "https://gateweaver.io/docs/getting-started",
+                "sitemap_url": "https://docs.ragpi.io/sitemap.xml",
+                "include_pattern": "https://docs.ragpi.io/getting-started",
             },
         }
 
@@ -68,8 +68,8 @@ class TestSource:
                 "description": "Repository documentation",
                 "connector": {
                     "type": "github_readme",
-                    "repo_owner": "gateweaver",
-                    "repo_name": "gateweaver",
+                    "repo_owner": "ragpi",
+                    "repo_name": "ragpi",
                     "include_root": True,
                     "sub_dirs": ["packages/server"],
                 },
@@ -131,7 +131,7 @@ class TestSource:
             "sync": True,
             "connector": {
                 "type": "sitemap",
-                "sitemap_url": "https://gateweaver.io/sitemap.xml",
+                "sitemap_url": "https://docs.ragpi.io/sitemap.xml",
             },
         }
         response = test_client.put(f"/sources/{source_data['name']}", json=update_data)
