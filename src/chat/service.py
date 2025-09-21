@@ -147,7 +147,7 @@ class ChatService:
 
                 if message.tool_calls:
                     for tool_call in message.tool_calls:
-                        tool_response = self._handle_tool_call(tool_call)
+                        tool_response = self._handle_tool_call(tool_call)  # type: ignore
                         messages.append(tool_response)
                 elif message.content:
                     return ChatResponse(message=message.content)
