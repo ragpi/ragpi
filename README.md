@@ -61,6 +61,7 @@ Ragpi supports the following connectors for building knowledge bases:
 - **Documentation Website (Sitemap)**
 - **GitHub Issues**
 - **GitHub README Files**
+- **GitHub PDF Files**
 
 [Explore connectors →](https://docs.ragpi.io/connectors)
 
