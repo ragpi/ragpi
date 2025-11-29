@@ -18,7 +18,13 @@ from src.connectors.restful.connector import RestfulConnector
 
 
 ConnectorConfig = Annotated[
-    Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig, GithubPdfConfig],
+    Union[
+        SitemapConfig,
+        GithubIssuesConfig,
+        GithubReadmeConfig,
+        GithubPdfConfig,
+        RestfulConfig,
+    ],
     Field(discriminator="type"),
 ]
 
