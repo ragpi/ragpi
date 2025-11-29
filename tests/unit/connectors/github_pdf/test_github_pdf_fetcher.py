@@ -63,13 +63,23 @@ async def test_fetch_pdfs_success(
     mocker: MockerFixture,
 ) -> None:
     # Mock repository info response
-    repo_response = {"default_branch": "main"}
+    repo_response = {
+        "default_branch": "main"
+    }
 
     # Mock ref response
-    ref_response = {"object": {"sha": "commit123"}}
+    ref_response = {
+        "object": {
+            "sha": "commit123"
+        }
+    }
 
     # Mock commit response
-    commit_response = {"tree": {"sha": "tree123"}}
+    commit_response = {
+        "tree": {
+            "sha": "tree123"
+        }
+    }
 
     # Mock tree response with PDF files
     tree_response = {
@@ -77,30 +87,30 @@ async def test_fetch_pdfs_success(
             {
                 "path": "docs/schematic.pdf",
                 "type": "blob",
-                "url": "https://api.github.com/repos/test/repo/git/blobs/blob123",
+                "url": "https://api.github.com/repos/test/repo/git/blobs/blob123"
             },
             {
                 "path": "README.md",
                 "type": "blob",
-                "url": "https://api.github.com/repos/test/repo/git/blobs/blob456",
+                "url": "https://api.github.com/repos/test/repo/git/blobs/blob456"
             },
             {
                 "path": "hardware/datasheet.PDF",
                 "type": "blob",
-                "url": "https://api.github.com/repos/test/repo/git/blobs/blob789",
-            },
+                "url": "https://api.github.com/repos/test/repo/git/blobs/blob789"
+            }
         ]
     }
 
     # Mock blob responses for PDFs
     blob_response_1 = {
         "content": base64.b64encode(SAMPLE_PDF_BYTES).decode("utf-8"),
-        "encoding": "base64",
+        "encoding": "base64"
     }
 
     blob_response_2 = {
         "content": base64.b64encode(SAMPLE_PDF_BYTES).decode("utf-8"),
-        "encoding": "base64",
+        "encoding": "base64"
     }
 
     mock_request = mocker.patch.object(github_pdf_fetcher.client, "request")
@@ -124,9 +134,7 @@ async def test_fetch_pdfs_success(
     assert len(pdf_docs) == 2
     assert all(isinstance(doc, PdfDocument) for doc in pdf_docs)
     assert pdf_docs[0].path == "docs/schematic.pdf"
-    assert (
-        pdf_docs[0].url == "https://github.com/test/repo/blob/main/docs/schematic.pdf"
-    )
+    assert pdf_docs[0].url == "https://github.com/test/repo/blob/main/docs/schematic.pdf"
     assert "Hello PDF" in pdf_docs[0].content
     assert pdf_docs[1].path == "hardware/datasheet.PDF"
 
@@ -144,19 +152,19 @@ async def test_fetch_pdfs_with_path_filter(
             {
                 "path": "docs/schematic.pdf",
                 "type": "blob",
-                "url": "https://api.github.com/repos/test/repo/git/blobs/blob123",
+                "url": "https://api.github.com/repos/test/repo/git/blobs/blob123"
             },
             {
                 "path": "hardware/datasheet.pdf",
                 "type": "blob",
-                "url": "https://api.github.com/repos/test/repo/git/blobs/blob789",
-            },
+                "url": "https://api.github.com/repos/test/repo/git/blobs/blob789"
+            }
         ]
     }
 
     blob_response = {
         "content": base64.b64encode(SAMPLE_PDF_BYTES).decode("utf-8"),
-        "encoding": "base64",
+        "encoding": "base64"
     }
 
     mock_request = mocker.patch.object(github_pdf_fetcher.client, "request")
@@ -171,7 +179,9 @@ async def test_fetch_pdfs_with_path_filter(
     pdf_docs = [
         doc
         async for doc in github_pdf_fetcher.fetch_pdfs(
-            repo_owner="test", repo_name="repo", path_filter="docs/"
+            repo_owner="test",
+            repo_name="repo",
+            path_filter="docs/"
         )
     ]
 
@@ -198,7 +208,9 @@ async def test_fetch_pdfs_with_ref(
     pdf_docs = [
         doc
         async for doc in github_pdf_fetcher.fetch_pdfs(
-            repo_owner="test", repo_name="repo", ref="develop"
+            repo_owner="test",
+            repo_name="repo",
+            ref="develop"
         )
     ]
 
@@ -223,7 +235,7 @@ async def test_fetch_pdfs_no_pdfs_found(
             {
                 "path": "README.md",
                 "type": "blob",
-                "url": "https://api.github.com/repos/test/repo/git/blobs/blob123",
+                "url": "https://api.github.com/repos/test/repo/git/blobs/blob123"
             }
         ]
     }
@@ -278,7 +290,7 @@ async def test_fetch_pdfs_invalid_pdf(
             {
                 "path": "corrupt.pdf",
                 "type": "blob",
-                "url": "https://api.github.com/repos/test/repo/git/blobs/blob123",
+                "url": "https://api.github.com/repos/test/repo/git/blobs/blob123"
             }
         ]
     }
@@ -286,7 +298,7 @@ async def test_fetch_pdfs_invalid_pdf(
     # Invalid PDF content
     blob_response = {
         "content": base64.b64encode(b"Not a valid PDF").decode("utf-8"),
-        "encoding": "base64",
+        "encoding": "base64"
     }
 
     mock_request = mocker.patch.object(github_pdf_fetcher.client, "request")
