@@ -3,22 +3,22 @@ from typing import AsyncGenerator
 from src.config import Settings
 from src.connectors.base.connector import BaseConnector
 from src.connectors.common.schemas import ExtractedDocument
-from src.connectors.restful.config import RestfulConfig
-from src.connectors.restful.chunker import chunk_restful_document
-from src.connectors.restful.fetcher import RestfulFetcher
+from src.connectors.rest_api.config import RestApiConfig
+from src.connectors.rest_api.chunker import chunk_rest_api_document
+from src.connectors.rest_api.fetcher import RestApiFetcher
 
 
-class RestfulConnector(BaseConnector):
-    """Connector for fetching and indexing data from RESTful API endpoints."""
+class RestApiConnector(BaseConnector):
+    """Connector for fetching and indexing data from REST API endpoints."""
 
-    config: RestfulConfig
+    config: RestApiConfig
 
-    def __init__(self, settings: Settings, config: RestfulConfig):
+    def __init__(self, settings: Settings, config: RestApiConfig):
         super().__init__(settings, config)
 
     async def extract(self) -> AsyncGenerator[ExtractedDocument, None]:
         """
-        Extract documents from a RESTful API endpoint.
+        Extract documents from a REST API endpoint.
 
         This method:
         1. Creates a fetcher to send HTTP requests to the configured endpoint
@@ -29,14 +29,14 @@ class RestfulConnector(BaseConnector):
         Yields:
             ExtractedDocument: Document chunks ready for indexing
         """
-        fetcher = RestfulFetcher(
+        fetcher = RestApiFetcher(
             config=self.config,
             user_agent=self.settings.USER_AGENT,
         )
 
-        async for restful_doc in fetcher.fetch_documents():
-            chunks = chunk_restful_document(
-                restful_doc=restful_doc,
+        async for rest_api_doc in fetcher.fetch_documents():
+            chunks = chunk_rest_api_document(
+                rest_api_doc=rest_api_doc,
                 chunk_size=self.settings.CHUNK_SIZE,
                 chunk_overlap=self.settings.CHUNK_OVERLAP,
             )

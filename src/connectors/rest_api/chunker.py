@@ -1,21 +1,21 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.connectors.common.schemas import ExtractedDocument
-from src.connectors.restful.schemas import RestfulDocument
+from src.connectors.rest_api.schemas import RestApiDocument
 
 
-def chunk_restful_document(
-    *, restful_doc: RestfulDocument, chunk_size: int, chunk_overlap: int
+def chunk_rest_api_document(
+    *, rest_api_doc: RestApiDocument, chunk_size: int, chunk_overlap: int
 ) -> list[ExtractedDocument]:
     """
-    Chunk a RESTful API document into smaller pieces for indexing.
+    Chunk a REST API document into smaller pieces for indexing.
 
     For JSON content from APIs, we use a recursive character text splitter
     that respects natural boundaries like paragraphs, lines, and sentences.
     If the content is already small enough, it won't be split.
 
     Args:
-        restful_doc: The RESTful document to chunk
+        rest_api_doc: The REST API document to chunk
         chunk_size: Maximum size of each chunk in tokens
         chunk_overlap: Number of overlapping tokens between chunks
 
@@ -36,20 +36,20 @@ def chunk_restful_document(
     )
 
     # Split the content into chunks
-    chunks = text_splitter.split_text(restful_doc.content)
+    chunks = text_splitter.split_text(rest_api_doc.content)
 
     docs: list[ExtractedDocument] = []
 
     for i, chunk in enumerate(chunks, start=1):
         # Create a title that includes the original title and chunk number
-        title = restful_doc.title
+        title = rest_api_doc.title
         if len(chunks) > 1:
             title += f" (Part {i}/{len(chunks)})"
 
         doc = ExtractedDocument(
             content=chunk,
             title=title,
-            url=restful_doc.url,
+            url=rest_api_doc.url,
         )
 
         docs.append(doc)

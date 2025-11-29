@@ -6,4 +6,4 @@ class ConnectorType(str, Enum):
     GITHUB_ISSUES = "github_issues"
     GITHUB_README = "github_readme"
     GITHUB_PDF = "github_pdf"
-    RESTFUL = "restful"
+    REST_API = "rest_api"

@@ -8,13 +8,13 @@ from src.connectors.sitemap.config import SitemapConfig
 from src.connectors.github_issues.config import GithubIssuesConfig
 from src.connectors.github_readme.config import GithubReadmeConfig
 from src.connectors.github_pdf.config import GithubPdfConfig
-from src.connectors.restful.config import RestfulConfig
+from src.connectors.rest_api.config import RestApiConfig
 from src.connectors.base.connector import BaseConnector
 from src.connectors.sitemap.connector import SitemapConnector
 from src.connectors.github_issues.connector import GithubIssuesConnector
 from src.connectors.github_readme.connector import GithubReadmeConnector
 from src.connectors.github_pdf.connector import GithubPdfConnector
-from src.connectors.restful.connector import RestfulConnector
+from src.connectors.rest_api.connector import RestApiConnector
 
 
 ConnectorConfig = Annotated[
@@ -23,7 +23,7 @@ ConnectorConfig = Annotated[
         GithubIssuesConfig,
         GithubReadmeConfig,
         GithubPdfConfig,
-        RestfulConfig,
+        RestApiConfig,
     ],
     Field(discriminator="type"),
 ]
@@ -54,9 +54,9 @@ CONNECTOR_REGISTRY: ConnectorRegistryType = {
         config_schema=GithubPdfConfig,
         connector_class=GithubPdfConnector,
     ),
-    ConnectorType.RESTFUL: ConnectorRegistryEntry(
-        config_schema=RestfulConfig,
-        connector_class=RestfulConnector,
+    ConnectorType.REST_API: ConnectorRegistryEntry(
+        config_schema=RestApiConfig,
+        connector_class=RestApiConnector,
     ),
 }
 
@@ -66,7 +66,7 @@ ConfigClassType = Type[
         GithubIssuesConfig,
         GithubReadmeConfig,
         GithubPdfConfig,
-        RestfulConfig,
+        RestApiConfig,
     ]
 ]
 

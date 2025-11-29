@@ -62,7 +62,7 @@ Ragpi supports the following connectors for building knowledge bases:
 - **GitHub Issues**
 - **GitHub README Files**
 - **GitHub PDF Files**
-- **RESTful API Responses**
+- **REST API Responses**
 
 [Explore connectors →](https://docs.ragpi.io/connectors)
 

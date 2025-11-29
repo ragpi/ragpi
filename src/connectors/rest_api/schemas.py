@@ -3,8 +3,8 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
-class RestfulDocument(BaseModel):
-    """Internal model for documents fetched from RESTful API."""
+class RestApiDocument(BaseModel):
+    """Internal model for documents fetched from a REST API."""
 
     url: str = Field(
         description="URL to the source document or API endpoint"

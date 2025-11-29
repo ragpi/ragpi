@@ -5,16 +5,16 @@ from typing import Any, AsyncGenerator
 import aiohttp
 
 from src.connectors.exceptions import ConnectorException
-from src.connectors.restful.config import RestfulConfig
-from src.connectors.restful.schemas import RestfulDocument
+from src.connectors.rest_api.config import RestApiConfig
+from src.connectors.rest_api.schemas import RestApiDocument
 
 logger = logging.getLogger(__name__)
 
 
-class RestfulFetcher:
-    """Fetches data from RESTful API endpoints."""
+class RestApiFetcher:
+    """Fetches data from REST API endpoints."""
 
-    def __init__(self, config: RestfulConfig, user_agent: str):
+    def __init__(self, config: RestApiConfig, user_agent: str):
         self.config = config
         self.user_agent = user_agent
 
@@ -52,14 +52,14 @@ class RestfulFetcher:
 
     def _extract_documents_from_response(
         self, response_data: Any
-    ) -> list[RestfulDocument]:
+    ) -> list[RestApiDocument]:
         """Extract documents from API response data.
 
         Args:
             response_data: The JSON response data from the API
 
         Returns:
-            List of RestfulDocument objects
+            List of RestApiDocument objects
 
         Raises:
             ConnectorException: If data cannot be extracted properly
@@ -119,7 +119,7 @@ class RestfulFetcher:
             }
 
             documents.append(
-                RestfulDocument(
+                RestApiDocument(
                     url=url,
                     title=str(title),
                     content=content,
@@ -129,11 +129,11 @@ class RestfulFetcher:
 
         return documents
 
-    async def fetch_documents(self) -> AsyncGenerator[RestfulDocument, None]:
-        """Fetch documents from the RESTful API endpoint.
+    async def fetch_documents(self) -> AsyncGenerator[RestApiDocument, None]:
+        """Fetch documents from the REST API endpoint.
 
         Yields:
-            RestfulDocument objects
+            RestApiDocument objects
 
         Raises:
             ConnectorException: If the request fails or data cannot be parsed

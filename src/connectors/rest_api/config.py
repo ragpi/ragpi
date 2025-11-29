@@ -6,14 +6,14 @@ from src.connectors.base.config import BaseConnectorConfig
 from src.connectors.connector_type import ConnectorType
 
 
-class RestfulConfig(BaseConnectorConfig):
-    """Configuration for RESTful API connector.
+class RestApiConfig(BaseConnectorConfig):
+    """Configuration for REST API connector.
 
     This connector sends HTTP requests to arbitrary cloud endpoints
     and indexes the returned JSON data.
     """
 
-    type: Literal[ConnectorType.RESTFUL] = Field(
+    type: Literal[ConnectorType.REST_API] = Field(
         description="Connector type identifier"
     )
     url: str = Field(
