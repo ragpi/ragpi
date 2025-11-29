@@ -33,7 +33,7 @@ pgvector = "^0.3.6"
 sqlalchemy-utils = "^0.41.2"
 psycopg2-binary = "^2.9.10"
 sqlalchemy = "^2.0.37"
-pypdf = "^5.1.0"
+pypdf = "^6.4.0"
 
 
 [tool.poetry.group.dev.dependencies]
