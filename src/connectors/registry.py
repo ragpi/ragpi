@@ -8,14 +8,23 @@ from src.connectors.sitemap.config import SitemapConfig
 from src.connectors.github_issues.config import GithubIssuesConfig
 from src.connectors.github_readme.config import GithubReadmeConfig
 from src.connectors.github_pdf.config import GithubPdfConfig
+from src.connectors.rest_api.config import RestApiConfig
 from src.connectors.base.connector import BaseConnector
 from src.connectors.sitemap.connector import SitemapConnector
 from src.connectors.github_issues.connector import GithubIssuesConnector
 from src.connectors.github_readme.connector import GithubReadmeConnector
 from src.connectors.github_pdf.connector import GithubPdfConnector
+from src.connectors.rest_api.connector import RestApiConnector
+
 
 ConnectorConfig = Annotated[
-    Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig, GithubPdfConfig],
+    Union[
+        SitemapConfig,
+        GithubIssuesConfig,
+        GithubReadmeConfig,
+        GithubPdfConfig,
+        RestApiConfig,
+    ],
     Field(discriminator="type"),
 ]
 
@@ -45,9 +54,21 @@ CONNECTOR_REGISTRY: ConnectorRegistryType = {
         config_schema=GithubPdfConfig,
         connector_class=GithubPdfConnector,
     ),
+    ConnectorType.REST_API: ConnectorRegistryEntry(
+        config_schema=RestApiConfig,
+        connector_class=RestApiConnector,
+    ),
 }
 
-ConfigClassType = Type[Union[SitemapConfig, GithubIssuesConfig, GithubReadmeConfig, GithubPdfConfig]]
+ConfigClassType = Type[
+    Union[
+        SitemapConfig,
+        GithubIssuesConfig,
+        GithubReadmeConfig,
+        GithubPdfConfig,
+        RestApiConfig,
+    ]
+]
 
 
 def get_connector_config_schema(connector_type: ConnectorType) -> ConfigClassType:
