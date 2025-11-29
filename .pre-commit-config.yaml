@@ -14,8 +14,6 @@ repos:
     hooks:
       - id: ruff
         name: run ruff linter
-      - id: ruff-format
-        name: run ruff formatter
 
   - repo: local
     hooks:
