@@ -196,7 +196,7 @@ async def test_fetch_pdfs_with_ref(
 ) -> None:
     ref_response = {"object": {"sha": "commit456"}}
     commit_response = {"tree": {"sha": "tree456"}}
-    tree_response = {"tree": []}
+    tree_response: dict[str, Any] = {"tree": []}
 
     mock_request = mocker.patch.object(github_pdf_fetcher.client, "request")
     mock_request.side_effect = [
