@@ -109,6 +109,22 @@ class SitemapCrawler:
 
             sitemap_xml = await response.text()
             soup = BeautifulSoup(sitemap_xml, "xml")
+
+            # Check if this is a sitemap index (contains references to other sitemaps)
+            if soup.find("sitemapindex"):
+                logger.info(f"Found sitemap index at {sitemap_url}, parsing nested sitemaps...")
+                nested_sitemap_urls = [loc.text for loc in soup.find_all("loc")]
+
+                # Recursively parse each nested sitemap
+                all_urls = []
+                for nested_url in nested_sitemap_urls:
+                    nested_urls = await self.parse_sitemap(nested_url)
+                    all_urls.extend(nested_urls)
+
+                logger.info(f"Extracted {len(all_urls)} total URLs from sitemap index")
+                return all_urls
+
+            # Regular sitemap with page URLs
             urls = [loc.text for loc in soup.find_all("loc")]
             return urls
 
