@@ -45,7 +45,12 @@ class Settings(BaseSettings):
 
     # Database Configuration
     REDIS_URL: str = "redis://localhost:6379"
-    POSTGRES_URL: str = "postgresql://localhost:5432/ragpi"  # Assumes a local Postgres db named 'ragpi' exists
+    POSTGRES_URL: str = (
+        "postgresql://localhost:5432/ragpi"  # Assumes a local Postgres db named 'ragpi' exists
+    )
+    POSTGRES_POOL_SIZE: int = 10
+    POSTGRES_MAX_OVERFLOW: int = 10
+    POSTGRES_POOL_RECYCLE: int = 1800
 
     DOCUMENT_STORE_BACKEND: Literal["postgres", "redis"] = "postgres"
     DOCUMENT_STORE_NAMESPACE: str = "document_store"
@@ -54,7 +59,9 @@ class Settings(BaseSettings):
     SOURCE_METADATA_NAMESPACE: str = "source_metadata"
 
     # Chat Settings
-    BASE_SYSTEM_PROMPT: str = "You are an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
+    BASE_SYSTEM_PROMPT: str = (
+        "You are an AI assistant specialized in retrieving and synthesizing technical information to provide relevant answers to queries."
+    )
     CHAT_HISTORY_LIMIT: int = 20
     MAX_CHAT_ITERATIONS: int = 5
     RETRIEVAL_TOP_K: int = 10

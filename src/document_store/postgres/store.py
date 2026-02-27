@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text, func
+from sqlalchemy import Engine, text, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 import numpy as np
@@ -14,12 +14,12 @@ class PostgresDocumentStore(DocumentStoreBackend):
     def __init__(
         self,
         *,
-        database_url: str,
+        engine: Engine,
         openai_client: OpenAI,
         embedding_model: str,
         embedding_dimensions: int,
     ):
-        self.engine = create_engine(database_url)
+        self.engine = engine
         self.Session = sessionmaker(bind=self.engine)
         self.embedding_client = openai_client.embeddings
         self.embedding_model = embedding_model

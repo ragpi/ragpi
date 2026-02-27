@@ -2,7 +2,9 @@ from typing import Any
 from celery import Celery
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
+
+from src.common.postgres import get_postgres_engine
 
 from src.config import Settings, get_settings
 from src.common.redis import RedisClient, get_redis_client
@@ -76,7 +78,7 @@ def healthcheck(
         or settings.DOCUMENT_STORE_BACKEND == "postgres"
     ):
         try:
-            engine = create_engine(settings.POSTGRES_URL)
+            engine = get_postgres_engine(settings)
             with engine.connect() as connection:
                 result = connection.execute(text("SELECT 1")).scalar()
                 if result != 1:
