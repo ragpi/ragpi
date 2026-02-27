@@ -10,7 +10,6 @@ from src.document_store.postgres.store import PostgresDocumentStore
 from src.document_store.postgres.model import DocumentStoreModel
 from src.document_store.schemas import Document
 
-TEST_DATABASE_URL = "postgresql://test:test@localhost:5432/test"
 TEST_SOURCE = "test_source"
 EMBEDDING_MODEL = "test-embedding-model"
 EMBEDDING_DIMENSIONS = 1536
@@ -53,17 +52,24 @@ def mock_openai_client(mocker: MockerFixture) -> Mock:
 
 
 @pytest.fixture
+def mock_engine(mocker: MockerFixture) -> Mock:
+    engine = mocker.MagicMock()
+    engine.begin.return_value.__enter__ = mocker.Mock()
+    engine.begin.return_value.__exit__ = mocker.Mock(return_value=False)
+    return engine
+
+
+@pytest.fixture
 def document_store(
-    mocker: MockerFixture, mock_session: Mock, mock_openai_client: Mock
+    mocker: MockerFixture, mock_engine: Mock, mock_session: Mock, mock_openai_client: Mock
 ) -> PostgresDocumentStore:
-    mocker.patch("src.document_store.postgres.store.create_engine")
     mocker.patch(
         "src.document_store.postgres.store.sessionmaker",
         return_value=lambda: mock_session,
     )
 
     store = PostgresDocumentStore(
-        database_url=TEST_DATABASE_URL,
+        engine=mock_engine,
         openai_client=mock_openai_client,
         embedding_model=EMBEDDING_MODEL,
         embedding_dimensions=EMBEDDING_DIMENSIONS,
