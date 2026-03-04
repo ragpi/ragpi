@@ -1,5 +1,6 @@
 from openai import OpenAI
 
+from src.common.postgres import get_postgres_engine
 from src.common.redis import RedisClient
 from src.config import Settings
 from src.document_store.base import DocumentStoreBackend
@@ -14,7 +15,7 @@ def get_document_store_backend(
 ) -> DocumentStoreBackend:
     if settings.DOCUMENT_STORE_BACKEND == "postgres":
         return PostgresDocumentStore(
-            database_url=settings.POSTGRES_URL,
+            engine=get_postgres_engine(settings),
             openai_client=openai_client,
             embedding_model=settings.EMBEDDING_MODEL,
             embedding_dimensions=settings.EMBEDDING_DIMENSIONS,

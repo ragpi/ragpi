@@ -23,6 +23,7 @@ from src.common.exceptions import (
     validation_error_response,
 )
 from src.common.opentelemetry import setup_opentelemetry
+from src.common.postgres import dispose_postgres_engine
 from src.common.redis import create_redis_client
 from src.config import get_settings
 from src.sources.router import router as source_router
@@ -45,6 +46,7 @@ async def lifespan(app: FastAPI):
     app.state.redis_client = create_redis_client(settings.REDIS_URL)
     app.state.celery_app = celery_app
     yield
+    dispose_postgres_engine()
     app.state.redis_client.close()
 
 

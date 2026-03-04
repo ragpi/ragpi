@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import create_engine
+from sqlalchemy import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
@@ -19,8 +19,8 @@ from src.sources.metadata.utils import (
 
 
 class PostgresMetadataStore(SourceMetadataStore):
-    def __init__(self, database_url: str):
-        self.engine = create_engine(database_url)
+    def __init__(self, engine: Engine):
+        self.engine = engine
         self.Session = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 

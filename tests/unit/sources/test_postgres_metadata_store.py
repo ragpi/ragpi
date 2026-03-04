@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import pytest
+from sqlalchemy import create_engine
 
 from src.common.exceptions import (
     ResourceNotFoundException,
@@ -25,7 +26,8 @@ def test_database_url(tmp_path: Path) -> str:
 
 @pytest.fixture
 def metadata_store(test_database_url: str) -> PostgresMetadataStore:
-    return PostgresMetadataStore(database_url=test_database_url)
+    engine = create_engine(test_database_url)
+    return PostgresMetadataStore(engine=engine)
 
 
 @pytest.fixture
